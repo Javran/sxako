@@ -1,0 +1,61 @@
+name: sxako
+version: 0.1.0.0
+github: Javran/sxako
+license: BSD3
+author: Javran Cheng
+maintainer: javran.c@gmail.com
+copyright: "Copyright: (c) 2019 Javran Cheng"
+
+description: description
+
+dependencies:
+- base
+- vector
+- split
+- attoparsec
+- SVGFonts
+- diagrams-core
+- diagrams-lib
+- diagrams-rasterific
+- bytestring
+- containers
+- fixed-vector
+
+data-files: 
+- data/ChessMerida.svg
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+
+executables:
+  demo:
+    main: Main.hs
+    source-dirs: exe
+    dependencies:
+      - sxako
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+tests:
+  hspec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - sxako
+      - QuickCheck
+      - hspec
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -main-is Spec

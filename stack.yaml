@@ -1,0 +1,9 @@
+resolver: lts-16.31
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/Javran/fixed-vector.git
+  commit: 99e6ccefcff1edd2c669769e5232342fd6771dda
+  subdirs:
+    - fixed-vector

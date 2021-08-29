@@ -1,0 +1,8 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "sxako:lib"
+    - path: "./exe"
+      component: "sxako:exe:demo"
+    - path: "./test"
+      component: "sxako:test:hspec"

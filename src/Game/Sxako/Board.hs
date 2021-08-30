@@ -11,6 +11,7 @@ module Game.Sxako.Board
   , emptyHb
   , hbAt
   , at
+  , pprBoard
   )
 where
 
@@ -84,3 +85,44 @@ at (bs, ws) c = asum $ zipWith go (toList bs <> toList ws) whats
       (,)
         <$> universe @Color
           <*> universe @PieceType
+
+pprPiece :: Piece -> Char
+pprPiece (c, pt) = cs !! pInd
+  where
+    pInd = fromEnum pt
+    cs = case c of
+      White -> "PNBRQK"
+      Black -> "pnbrqk"
+
+{-
+  TODO: stockfish `d` command output:
+
+ +---+---+---+---+---+---+---+---+
+ | r | n | b | q | k | b | n | r | 8
+ +---+---+---+---+---+---+---+---+
+ | p | p | p | p | p | p | p | p | 7
+ +---+---+---+---+---+---+---+---+
+ |   |   |   |   |   |   |   |   | 6
+ +---+---+---+---+---+---+---+---+
+ |   |   |   |   |   |   |   |   | 5
+ +---+---+---+---+---+---+---+---+
+ |   |   |   |   |   |   |   |   | 4
+ +---+---+---+---+---+---+---+---+
+ |   |   |   |   |   |   |   |   | 3
+ +---+---+---+---+---+---+---+---+
+ | P | P | P | P | P | P | P | P | 2
+ +---+---+---+---+---+---+---+---+
+ | R | N | B | Q | K | B | N | R | 1
+ +---+---+---+---+---+---+---+---+
+   a   b   c   d   e   f   g   h
+
+ -}
+pprBoard :: Board -> IO ()
+pprBoard bd =
+  forM_ fenCoords $ \rankCoords -> do
+    let thisRank =
+          fmap
+            (\c -> maybe ' ' pprPiece (at bd c))
+            rankCoords
+    putStrLn thisRank
+    pure ()

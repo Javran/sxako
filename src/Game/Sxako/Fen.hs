@@ -5,6 +5,7 @@ module Game.Sxako.Fen
   , Placement
   , fenP
   , initRecord
+  , dragonRecord
   )
 where
 
@@ -44,11 +45,14 @@ data Record = Record
  -}
 type Square = Maybe Piece
 
-rawStandardBoard :: IsString s => s
+rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-initRecord :: Record
+rawDragonBoard = "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5"
+
+initRecord, dragonRecord :: Record
 Right initRecord = parseOnly fenP rawStandardBoard
+Right dragonRecord = parseOnly fenP rawDragonBoard
 
 pElemP :: Parser (Sum Word8, [Square])
 pElemP =

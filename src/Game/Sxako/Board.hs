@@ -19,6 +19,7 @@ import Control.Monad
 import Control.Monad.ST.Strict
 import Data.Bits
 import Data.Foldable
+import Data.List
 import Data.Maybe
 import qualified Data.Vector.Fixed as VF
 import qualified Data.Vector.Fixed.Boxed as VFB
@@ -95,34 +96,18 @@ pprPiece (c, pt) = cs !! pInd
       Black -> "pnbrqk"
 
 {-
-  TODO: stockfish `d` command output:
-
- +---+---+---+---+---+---+---+---+
- | r | n | b | q | k | b | n | r | 8
- +---+---+---+---+---+---+---+---+
- | p | p | p | p | p | p | p | p | 7
- +---+---+---+---+---+---+---+---+
- |   |   |   |   |   |   |   |   | 6
- +---+---+---+---+---+---+---+---+
- |   |   |   |   |   |   |   |   | 5
- +---+---+---+---+---+---+---+---+
- |   |   |   |   |   |   |   |   | 4
- +---+---+---+---+---+---+---+---+
- |   |   |   |   |   |   |   |   | 3
- +---+---+---+---+---+---+---+---+
- | P | P | P | P | P | P | P | P | 2
- +---+---+---+---+---+---+---+---+
- | R | N | B | Q | K | B | N | R | 1
- +---+---+---+---+---+---+---+---+
-   a   b   c   d   e   f   g   h
-
+  Pretty-print a board similar to stockfish's `d` command.
  -}
 pprBoard :: Board -> IO ()
-pprBoard bd =
-  forM_ fenCoords $ \rankCoords -> do
+pprBoard bd = do
+  let vSep = intercalate "+" $ "" : replicate 8 "---" <> [""]
+  putStrLn vSep
+  forM_ (zip fenCoords [8 :: Int, 7 ..]) $ \(rankCoords, r) -> do
     let thisRank =
           fmap
             (\c -> maybe ' ' pprPiece (at bd c))
             rankCoords
-    putStrLn thisRank
-    pure ()
+    putStrLn $
+      "|" <> intercalate "|" (fmap (\c -> [' ', c, ' ']) thisRank) <> "| " <> show r
+    putStrLn vSep
+  putStrLn $ "  " <> intercalate "   " (fmap (:[]) ['a' .. 'h'])

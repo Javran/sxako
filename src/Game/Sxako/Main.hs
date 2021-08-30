@@ -29,8 +29,11 @@ pieceToFontChar (c, pt) = cs !! pInd
       Black -> "omvtwl"
 
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
-renderPiece font p = stroke (textSVG' opts [ch]) # fc black # lcA transparent
+renderPiece font p = d # fc black # lw 0
   where
+    d = strokeP p
+      where
+        p = (textSVG' opts [ch])
     opts = TextOpts font INSIDE_H KERN False 1 70
     ch = pieceToFontChar p
 
@@ -52,7 +55,7 @@ renderBoard font bd = vcat (fmap renderRank fenCoords) # bg white
       where
         go c = case Board.at bd c of
           Nothing -> square 70
-          Just p -> square 70 <> center (renderPiece font p # fc white)
+          Just p -> square 70 <> center (renderPiece font p)
 
 mainRender :: IO ()
 mainRender = do

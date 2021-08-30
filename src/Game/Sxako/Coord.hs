@@ -11,6 +11,7 @@ module Game.Sxako.Coord
   , allCoords
   , toBit
   , fenCoords
+  , isDark
   {- ORMOLU_DISABLE -}
   , a1, b1, c1, d1, e1, f1, g1, h1
   , a2, b2, c2, d2, e2, f2, g2, h2
@@ -84,6 +85,9 @@ withRankAndFile (Coord c) action =
   where
     r = shiftR c 3
     f = c .&. 7
+
+isDark :: Coord -> Bool
+isDark c = withRankAndFile c (\r f -> even (r + f :: Word8))
 
 {-
   Produces a bitboard with only the specified coord set.

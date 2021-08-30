@@ -20,6 +20,7 @@ dependencies:
 - bytestring
 - containers
 - fixed-vector
+- colour
 
 data-files: 
 - data/ChessMerida.svg

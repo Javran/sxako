@@ -27,7 +27,7 @@ import Game.Sxako.Types
   - https://ia902908.us.archive.org/26/items/pgn-standard-1994-03-12/PGN_standard_1994-03-12.txt
  -}
 
-type Placement = EightElems (EightElems (Maybe (Color, PieceType)))
+type Placement = EightElems (EightElems (Maybe Piece))
 
 data Record = Record
   { placement :: Placement
@@ -42,7 +42,7 @@ data Record = Record
 {-
   Information of one sqaure: empty or there's something on it.
  -}
-type Square = Maybe (Color, PieceType)
+type Square = Maybe Piece
 
 rawStandardBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

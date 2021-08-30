@@ -57,7 +57,7 @@ fromPlacement :: Placement -> Board
 fromPlacement ps2d = runST $ do
   whiteHb <- VFM.thaw emptyHb
   blackHb <- VFM.thaw emptyHb
-  let pairs :: [] (Coord, (Color, PieceType))
+  let pairs :: [] (Coord, Piece)
       pairs =
         catMaybes
           (zipWith
@@ -73,13 +73,13 @@ fromPlacement ps2d = runST $ do
     VFM.unsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
   (,) <$> VFM.unsafeFreeze whiteHb <*> VFM.unsafeFreeze blackHb
 
-at :: Board -> Coord -> Maybe (Color, PieceType)
+at :: Board -> Coord -> Maybe Piece
 at (bs, ws) c = asum $ zipWith go (toList bs <> toList ws) whats
   where
     cb = toBit c
-    go :: Bitboard -> (Color, PieceType) -> Maybe (Color, PieceType)
+    go :: Bitboard -> Piece -> Maybe Piece
     go (Bitboard bb) v = v <$ guard (bb .&. cb /= 0)
-    whats :: [(Color, PieceType)]
+    whats :: [Piece]
     whats =
       (,)
         <$> universe @Color

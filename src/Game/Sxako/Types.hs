@@ -4,6 +4,7 @@ module Game.Sxako.Types
   ( EightElems
   , PieceType (..)
   , Color (..)
+  , Piece
   , Side (..)
   , universe
   )
@@ -61,6 +62,8 @@ data PieceType
  -}
 
 data Color = White | Black deriving (Enum, Eq, Ord, Bounded, Show)
+
+type Piece = (Color, PieceType)
 
 universe :: (Enum a, Bounded a) => [a]
 universe = [minBound .. maxBound]

@@ -1,7 +1,5 @@
 module Game.Sxako.Main where
 
-import Data.Colour.RGBSpace
-import Data.Word
 import Diagrams.Backend.Rasterific.CmdLine
 import Diagrams.Prelude hiding (font)
 import Game.Sxako.Board as Board
@@ -12,14 +10,6 @@ import Graphics.SVGFonts
 import Graphics.SVGFonts.ReadFont
 import Paths_sxako
 
-testTexts =
-  [ "tmvwlvmt"
-  , "oooooooo"
-  , "pppppppp"
-  , "rnbqkbnr"
-  ]
-
--- TODO: not tested yet.
 pieceToFontChar :: Piece -> Char
 pieceToFontChar (c, pt) = cs !! pInd
   where
@@ -31,16 +21,10 @@ pieceToFontChar (c, pt) = cs !! pInd
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p = d # fc black # lw 0
   where
-    d = strokeP p
-      where
-        p = (textSVG' opts [ch])
+    d = strokeP $textSVG' opts [ch]
     opts = TextOpts font INSIDE_H KERN False 1 70
     ch = pieceToFontChar p
 
-chessPieces :: PreparedFont Double -> Diagram B
-chessPieces font = vcat (fmap (\t -> stroke (textSVG' opts t) # fc black # lcA transparent) testTexts) # bg white
-  where
-    opts = TextOpts font INSIDE_H KERN False 1 70
 
 {-
   TODO: for now color bleeds to foreground, not sure how to fix yet.

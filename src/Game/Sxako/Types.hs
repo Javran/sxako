@@ -1,7 +1,13 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.Types where
+module Game.Sxako.Types
+  ( EightElems
+  , PieceType (..)
+  , Color (..)
+  , Side (..)
+  , universe
+  )
+where
 
 import qualified Data.Vector.Fixed as VF
 
@@ -21,7 +27,7 @@ data PieceType
   deriving (Enum, Eq, Ord, Bounded, Show)
 
 {-
-  Plan to implement all legal moves:
+  TODO: Plan to implement all legal moves:
 
   If we ignore absolute pins and checks
 
@@ -54,6 +60,9 @@ data PieceType
 
  -}
 
-data Color = White | Black deriving (Show)
+data Color = White | Black deriving (Enum, Eq, Ord, Bounded, Show)
+
+universe :: (Enum a, Bounded a) => [a]
+universe = [minBound .. maxBound]
 
 data Side = KingSide | QueenSide deriving (Eq, Ord, Show)

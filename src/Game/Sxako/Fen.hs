@@ -4,7 +4,7 @@ module Game.Sxako.Fen
   ( Record (..)
   , Placement
   , fenP
-  , fenParseTest
+  , initRecord
   )
 where
 
@@ -15,6 +15,7 @@ import Data.Bifunctor
 import Data.Char
 import Data.Containers.ListUtils
 import Data.Monoid
+import Data.String
 import qualified Data.Vector.Fixed as VF
 import Data.Word
 import Game.Sxako.Coord
@@ -43,9 +44,11 @@ data Record = Record
  -}
 type Square = Maybe (Color, PieceType)
 
+rawStandardBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-fenParseTest = parseOnly fenP rawStandardBoard
+initRecord :: Record
+Right initRecord = parseOnly fenP rawStandardBoard
 
 pElemP :: Parser (Sum Word8, [Square])
 pElemP =

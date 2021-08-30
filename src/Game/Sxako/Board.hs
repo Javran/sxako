@@ -2,12 +2,22 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.Board where
+module Game.Sxako.Board
+  ( Board
+  , Halfboard
+  , fromPlacement
+  , emptyHb
+  , hbAt
+  , at
+  )
+where
 
 import Control.Monad
 import Control.Monad.ST.Strict
 import Data.Bits
+import Data.Foldable
 import Data.Maybe
 import qualified Data.Vector.Fixed as VF
 import qualified Data.Vector.Fixed.Boxed as VFB
@@ -38,10 +48,6 @@ emptyHb = VF.replicate (Bitboard 0)
 hbAt :: Halfboard -> PieceType -> Bitboard
 hbAt hb pt = hb VF.! fromEnum pt
 
-bd =
-  let Right r = fenParseTest
-   in fromPlacement (placement r)
-
 {-
   (<white side>, <black side>)
  -}
@@ -66,3 +72,15 @@ fromPlacement ps2d = runST $ do
     Bitboard v <- VFM.unsafeRead hb pInd
     VFM.unsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
   (,) <$> VFM.unsafeFreeze whiteHb <*> VFM.unsafeFreeze blackHb
+
+at :: Board -> Coord -> Maybe (Color, PieceType)
+at (bs, ws) c = asum $ zipWith go (toList bs <> toList ws) whats
+  where
+    cb = toBit c
+    go :: Bitboard -> (Color, PieceType) -> Maybe (Color, PieceType)
+    go (Bitboard bb) v = v <$ guard (bb .&. cb /= 0)
+    whats :: [(Color, PieceType)]
+    whats =
+      (,)
+        <$> universe @Color
+          <*> universe @PieceType

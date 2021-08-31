@@ -1,10 +1,18 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.CoordSpec where
 
+import Control.Monad
 import Game.Sxako.Coord
+import Game.Sxako.Types
 import Test.Hspec
 
 spec :: Spec
-spec =
+spec = do
+  describe "Coord" $
+    specify "Read & Show instances" $ do
+      forM_ (universe @Coord) $ \c ->
+        read (show c) `shouldBe` c
   describe "nextCorods" $ do
     specify "e3, all directions" $ do
       let d ~> result = nextCoords d e3 `shouldBe` result

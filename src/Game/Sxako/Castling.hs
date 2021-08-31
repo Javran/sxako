@@ -3,6 +3,9 @@
 
 {-
   A simple bitset representing the availability of castling.
+
+  Show and Read instance of Castling follows FEN spec.
+
  -}
 
 module Game.Sxako.Castling
@@ -42,33 +45,39 @@ bitmask c s = case (c, s) of
 canCastle :: Castling -> Color -> Side -> Bool
 canCastle v c s = v .&. bitmask c s /= none
 
+{-
+  Ordering matters as we are respecting FEN castling notations.
+ -}
+symTable :: [(Char, Castling)]
+symTable =
+  [ ('K', whiteKingSide)
+  , ('Q', whiteQueenSide)
+  , ('k', blackKingSide)
+  , ('q', blackQueenSide)
+  ]
+
 instance Show Castling where
   show c =
     if c == none
       then "-"
       else
-        let m ?=> ch =
-              if m .&. c /= none
-                then (ch :)
-                else id
-         in (whiteKingSide ?=> 'K')
-              . (whiteQueenSide ?=> 'Q')
-              . (blackKingSide ?=> 'k')
-              . (blackQueenSide ?=> 'q')
-              $ ""
+        foldr
+          (\(ch, m) r ->
+             if m .&. c /= none
+               then (ch :) . r
+               else r)
+          id
+          symTable
+          ""
 
 instance Read Castling where
   readsPrec _ =
     readP_to_S $
       (none <$ char '-')
         <++ (foldr (.|.) none
-               <$> sequence
-                 (let ch ?=> m =
-                        look >>= \case
-                          c : _ | c == ch -> m <$ get
-                          _ -> pure none
-                   in [ 'K' ?=> whiteKingSide
-                      , 'Q' ?=> whiteQueenSide
-                      , 'k' ?=> blackKingSide
-                      , 'q' ?=> blackQueenSide
-                      ]))
+               <$> mapM
+                 (\(ch, m) ->
+                    look >>= \case
+                      c : _ | c == ch -> m <$ get
+                      _ -> pure none)
+                 symTable)

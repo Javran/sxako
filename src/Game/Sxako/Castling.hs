@@ -15,6 +15,7 @@ module Game.Sxako.Castling
   , whiteQueenSide
   , blackKingSide
   , blackQueenSide
+  , allAllowed
   , canCastle
   )
 where
@@ -27,13 +28,17 @@ import Text.ParserCombinators.ReadP
 newtype Castling = Castling Word8
   deriving (Eq, Bits) via Word8
 
-none, whiteKingSide, whiteQueenSide, blackKingSide, blackQueenSide :: Castling
-[ none
-  , whiteKingSide
-  , whiteQueenSide
-  , blackKingSide
-  , blackQueenSide
-  ] = fmap Castling [0, 1, 2, 4, 8]
+none, whiteKingSide, whiteQueenSide, blackKingSide, blackQueenSide, allAllowed :: Castling
+( [ none
+    , whiteKingSide
+    , whiteQueenSide
+    , blackKingSide
+    , blackQueenSide
+    ]
+  , allAllowed
+  ) = (xs, foldr1 (.|.) xs)
+    where
+      xs = fmap Castling [0, 1, 2, 4, 8]
 
 bitmask :: Color -> Side -> Castling
 bitmask c s = case (c, s) of
@@ -55,6 +60,10 @@ symTable =
   , ('k', blackKingSide)
   , ('q', blackQueenSide)
   ]
+
+instance Bounded Castling where
+  minBound = none
+  maxBound = allAllowed
 
 instance Show Castling where
   show c =

@@ -18,13 +18,16 @@ pieceToFontChar (c, pt) = cs !! pInd
       White -> "pnbrqk"
       Black -> "omvtwl"
 
+{-
+  TODO: to fix the background, one possible way is to hard-code trail indices.
+  See details in: https://groups.google.com/g/diagrams-discuss/c/r8ePb2ZhPq8
+ -}
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p = d # fc black # lw 0
   where
-    d = strokeP $textSVG' opts [ch]
+    d = strokeP $ textSVG' opts [ch]
     opts = TextOpts font INSIDE_H KERN False 1 70
     ch = pieceToFontChar p
-
 
 {-
   TODO: for now color bleeds to foreground, not sure how to fix yet.

@@ -6,6 +6,8 @@ module Game.Sxako.Types
   , Color (..)
   , Piece
   , Side (..)
+  , Placement2D
+  , Square
   , universe
   )
 where
@@ -69,3 +71,13 @@ universe :: (Enum a, Bounded a) => [a]
 universe = [minBound .. maxBound]
 
 data Side = KingSide | QueenSide deriving (Eq, Ord, Show)
+
+{-
+  2D list of a Chess board - used for intermediate representations.
+ -}
+type Placement2D = EightElems (EightElems (Maybe Piece))
+
+{-
+  Information of one sqaure: empty or there's something on it.
+ -}
+type Square = Maybe Piece

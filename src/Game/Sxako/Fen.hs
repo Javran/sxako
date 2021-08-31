@@ -3,7 +3,7 @@
 
 module Game.Sxako.Fen
   ( Record (..)
-  , Placement
+  , Placement2D
   , fenP
   , initRecord
   , dragonRecord
@@ -22,6 +22,7 @@ import Data.Word
 import Game.Sxako.Castling
 import Game.Sxako.Coord
 import Game.Sxako.Types
+import Game.Sxako.Board
 
 {-
   Reference:
@@ -29,10 +30,8 @@ import Game.Sxako.Types
   - https://ia902908.us.archive.org/26/items/pgn-standard-1994-03-12/PGN_standard_1994-03-12.txt
  -}
 
-type Placement = EightElems (EightElems (Maybe Piece))
-
 data Record = Record
-  { placement :: Placement
+  { placement :: Board
   , activeColor :: Color
   , castling :: Castling
   , enPassantTarget :: Maybe Coord
@@ -40,11 +39,6 @@ data Record = Record
   , fullMove :: Int
   }
   deriving (Show)
-
-{-
-  Information of one sqaure: empty or there's something on it.
- -}
-type Square = Maybe Piece
 
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -84,8 +78,8 @@ rankP = do
   (Sum 8, es) <- mconcat <$> many1 pElemP
   pure $ VF.fromList' es
 
-placementP :: Parser Placement
-placementP = do
+placement2dP :: Parser Placement2D
+placement2dP = do
   fs <- (:) <$> rankP <*> replicateM 7 (char '/' *> rankP)
   pure $ VF.fromList' fs
 
@@ -110,7 +104,7 @@ enPassantTargetP = (Nothing <$ char '-') <|> Just <$> enPassantSquareP
 
 fenP :: Parser Record
 fenP =
-  Record <$> tok placementP
+  Record <$> tok (fromPlacement2d <$> placement2dP)
     <*> tok activeColorP
     <*> tok castlingP
     <*> tok enPassantTargetP

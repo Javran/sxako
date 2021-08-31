@@ -7,7 +7,7 @@
 module Game.Sxako.Board
   ( Board
   , Halfboard
-  , fromPlacement
+  , fromPlacement2d
   , emptyHb
   , hbAt
   , at
@@ -26,7 +26,6 @@ import qualified Data.Vector.Fixed.Boxed as VFB
 import qualified Data.Vector.Fixed.Mutable as VFM
 import Game.Sxako.Bitboard
 import Game.Sxako.Coord
-import Game.Sxako.Fen
 import Game.Sxako.Types
 
 {-
@@ -55,8 +54,8 @@ hbAt hb pt = hb VF.! fromEnum pt
  -}
 type Board = (Halfboard, Halfboard)
 
-fromPlacement :: Placement -> Board
-fromPlacement ps2d = runST $ do
+fromPlacement2d :: Placement2D -> Board
+fromPlacement2d ps2d = runST $ do
   whiteHb <- VFM.thaw emptyHb
   blackHb <- VFM.thaw emptyHb
   let pairs :: [] (Coord, Piece)

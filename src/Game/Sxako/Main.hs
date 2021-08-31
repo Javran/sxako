@@ -43,14 +43,14 @@ renderBoard font bd = vcat (fmap renderRank fenCoords) # bg white
 
 mainRender :: IO ()
 mainRender = do
-  let bd = fromPlacement (placement dragonRecord)
+  let bd = placement dragonRecord
   fp <- getDataFileName "data/ChessMerida.svg"
   font <- loadFont fp
   mainWith (renderBoard font bd)
   pure ()
 
 mainCmd :: IO ()
-mainCmd = pprBoard (fromPlacement (placement initRecord))
+mainCmd = pprBoard (placement initRecord)
 
 main :: IO ()
 main = mainRender

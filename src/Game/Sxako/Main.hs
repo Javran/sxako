@@ -13,23 +13,16 @@ import Graphics.SVGFonts
 import Graphics.SVGFonts.ReadFont
 import Paths_sxako
 
-{-
-  TODO: to fix the background, one possible way is to hard-code trail indices.
-  See details in: https://groups.google.com/g/diagrams-discuss/c/r8ePb2ZhPq8
- -}
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p =
-  strokeP chessPath # fc black # lw 0 <> strokeLocTrail outline # fc white # lw none
+  strokeP chessPath # fc black # lw 0 <> strokeP outline # fc white # lw none
   where
     chessPath :: Path V2 Double
     chessPath = textSVG' opts [ch]
     opts = TextOpts font INSIDE_H KERN False 1 70
-    (ch, bgInd) = meridaMeta M.! p
-    outline = pathTrails chessPath !! bgInd
+    (ch, bgInds) = meridaMeta M.! p
+    outline = toPath (fmap (pathTrails chessPath !!) bgInds)
 
-{-
-  TODO: for now color bleeds to foreground, not sure how to fix yet.
- -}
 renderBoard :: PreparedFont Double -> Board -> Diagram B
 renderBoard font bd = vcat (fmap renderRank fenCoords) # bg white
   where
@@ -55,29 +48,31 @@ mainCmd = pprBoard (placement initRecord)
 
 {-
   Metadata accompanying with ChessMerida font.
+
+  See details in: https://groups.google.com/g/diagrams-discuss/c/r8ePb2ZhPq8
  -}
 meridaMeta
   :: M.Map
        Piece
        ( {- char corresponding to the Chess piece -}
          Char
-       , {- Trail index of the outline -}
-         Int
+       , {- Trail indices of the outline -}
+         [Int]
        )
 meridaMeta =
   M.fromList
-    [ ((Black, Pawn), ('p', 3))
-    , ((Black, Knight), ('n', 5))
-    , ((Black, Bishop), ('b', 13))
-    , ((Black, Rook), ('r', 1))
-    , ((Black, Queen), ('q', 21))
-    , ((Black, King), ('k', 3))
-    , ((White, Pawn), ('o', 1))
-    , ((White, Knight), ('m', 9))
-    , ((White, Bishop), ('v', 9))
-    , ((White, Rook), ('t', 1))
-    , ((White, Queen), ('w', 11))
-    , ((White, King), ('l', 9))
+    [ ((White, Pawn), ('p', [3]))
+    , ((White, Knight), ('n', [5]))
+    , ((White, Bishop), ('b', [13]))
+    , ((White, Rook), ('r', [1]))
+    , ((White, Queen), ('q', [1,21,25,31,33,39]))
+    , ((White, King), ('k', [3]))
+    , ((Black, Pawn), ('o', [1]))
+    , ((Black, Knight), ('m', [9]))
+    , ((Black, Bishop), ('v', [9]))
+    , ((Black, Rook), ('t', [1]))
+    , ((Black, Queen), ('w', [11]))
+    , ((Black, King), ('l', [9]))
     ]
 
 mainFindTrailIndices :: IO ()

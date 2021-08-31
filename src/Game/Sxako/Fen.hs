@@ -76,6 +76,9 @@ pElemP =
       pure (1, [Just (color, pt)])
     _ ~> _ = error "unreachable"
 
+{-
+  Parsing a rank, should produce exactly 8 elements.
+ -}
 rankP :: Parser (EightElems Square)
 rankP = do
   (Sum 8, es) <- mconcat <$> many1 pElemP

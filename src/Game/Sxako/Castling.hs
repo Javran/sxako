@@ -26,7 +26,7 @@ import Game.Sxako.Types
 import Text.ParserCombinators.ReadP
 
 newtype Castling = Castling Word8
-  deriving (Eq, Bits) via Word8
+  deriving (Eq, Enum, Bits) via Word8
 
 none, whiteKingSide, whiteQueenSide, blackKingSide, blackQueenSide, allAllowed :: Castling
 ( [ none
@@ -86,6 +86,10 @@ instance Read Castling where
         <++ (foldr (.|.) none
                <$> mapM
                  (\(ch, m) ->
+                    {-
+                      using lookahead rather than optional
+                      to avoid unwanted branches.
+                     -}
                     look >>= \case
                       c : _ | c == ch -> m <$ get
                       _ -> pure none)

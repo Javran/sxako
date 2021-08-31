@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 
 {-
@@ -12,6 +13,8 @@ module Game.Sxako.Coord
   , toBit
   , fenCoords
   , isDark
+  , Dir (..)
+  , nextCoords
   {- ORMOLU_DISABLE -}
   , a1, b1, c1, d1, e1, f1, g1, h1
   , a2, b2, c2, d2, e2, f2, g2, h2
@@ -40,6 +43,46 @@ import Text.ParserCombinators.ReadP
   - high bits (3~5) represents rank
  -}
 newtype Coord = Coord Word8 deriving (Eq)
+
+{-
+  Direction for Coords to move to next.
+
+  This is defined from the perspective of white:
+
+  - North: rank += 1
+  - East: file += 1
+  - South: rank -= 1
+  - West: file -= 1
+
+ -}
+data Dir
+  = DN
+  | DNE
+  | DE
+  | DSE
+  | DS
+  | DSW
+  | DW
+  | DNW
+
+nextCoord :: Dir -> Coord -> Maybe Coord
+nextCoord d c = withRankAndFile @Int c $ \rInd fInd ->
+  case d of
+    DN -> fromRankAndFile (rInd + 1) fInd
+    DNE -> fromRankAndFile (rInd + 1) (fInd + 1)
+    DE -> fromRankAndFile rInd (fInd + 1)
+    DSE -> fromRankAndFile (rInd -1) (fInd + 1)
+    DS -> fromRankAndFile (rInd - 1) fInd
+    DSW -> fromRankAndFile (rInd -1) (fInd - 1)
+    DW -> fromRankAndFile rInd (fInd - 1)
+    DNW -> fromRankAndFile (rInd + 1) (fInd -1)
+
+nextCoords :: Dir -> Coord -> [Coord]
+nextCoords d =
+  unfoldr
+    (\c -> do
+       cNext <- nextCoord d c
+       pure (cNext, cNext))
 
 instance Show Coord where
   show c =

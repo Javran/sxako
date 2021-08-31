@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.Fen
   ( Record (..)
@@ -12,13 +13,13 @@ where
 import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
-import Data.Bifunctor
+import qualified Data.ByteString.Char8 as BSC
 import Data.Char
-import Data.Containers.ListUtils
 import Data.Monoid
 import Data.String
 import qualified Data.Vector.Fixed as VF
 import Data.Word
+import Game.Sxako.Castling
 import Game.Sxako.Coord
 import Game.Sxako.Types
 
@@ -33,7 +34,7 @@ type Placement = EightElems (EightElems (Maybe Piece))
 data Record = Record
   { placement :: Placement
   , activeColor :: Color
-  , castling :: ([Side], [Side]) -- TODO: probably just Set or a Word8?
+  , castling :: Castling
   , enPassantTarget :: Maybe Coord
   , halfMove :: Int
   , fullMove :: Int
@@ -47,7 +48,6 @@ type Square = Maybe Piece
 
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
 rawDragonBoard = "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5"
 
 initRecord, dragonRecord :: Record
@@ -92,27 +92,12 @@ placementP = do
 activeColorP :: Parser Color
 activeColorP = (White <$ char 'w') <|> (Black <$ char 'b')
 
-{-
-  TODO: We can make the representation a lot more compact by using bitset.
-
-  TODO: according to spec, this can only be:
-
-  - either "-"
-  - or "KQkq" with some missing chars (not all missing)
-
-  We can write a stricter version.
-
- -}
-castlingP :: Parser ([Side], [Side])
-castlingP = bimap nubOrd nubOrd . mconcat <$> many1 chP
-  where
-    chP =
-      choice
-        [ ([KingSide], []) <$ char 'K'
-        , ([QueenSide], []) <$ char 'Q'
-        , ([], [KingSide]) <$ char 'k'
-        , ([], [QueenSide]) <$ char 'q'
-        ]
+castlingP :: Parser Castling
+castlingP = do
+  -- just grab next non-space chunk and delegate parsing to its Read instance.
+  raw <- BSC.unpack <$> Parser.takeWhile1 (/= ' ')
+  [(r, "")] <- pure $ reads @Castling raw
+  pure r
 
 enPassantTargetP :: Parser (Maybe Coord)
 enPassantTargetP = (Nothing <$ char '-') <|> Just <$> enPassantSquareP

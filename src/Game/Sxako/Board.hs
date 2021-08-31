@@ -19,7 +19,9 @@ import Control.Monad
 import Control.Monad.ST.Strict
 import Data.Bits
 import Data.Foldable
+import Data.Function
 import Data.List
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import qualified Data.Vector.Fixed as VF
 import qualified Data.Vector.Fixed.Boxed as VFB
@@ -52,7 +54,7 @@ hbAt hb pt = hb VF.! fromEnum pt
 {-
   (<white side>, <black side>)
  -}
-type Board = (Halfboard, Halfboard)
+newtype Board = Board (Halfboard, Halfboard)
 
 fromPlacement2d :: Placement2D -> Board
 fromPlacement2d ps2d = runST $ do
@@ -72,13 +74,29 @@ fromPlacement2d ps2d = runST $ do
         pInd = fromEnum pt
     Bitboard v <- VFM.unsafeRead hb pInd
     VFM.unsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
-  (,) <$> VFM.unsafeFreeze whiteHb <*> VFM.unsafeFreeze blackHb
+  w <- VFM.unsafeFreeze whiteHb
+  b <- VFM.unsafeFreeze blackHb
+  pure $ Board (w, b)
 
-at :: Board -> Coord -> Maybe Piece
-at (bs, ws) c = asum $ zipWith go (toList bs <> toList ws) whats
+unpackFenOrd :: Board -> [[Square]]
+unpackFenOrd bd = (fmap . fmap) (at bd) fenCoords
+
+instance Show Board where
+  show bd =
+    intercalate "/"
+      . fmap (concatMap tr . NE.groupBy ((==) `on` isNothing))
+      $ unpackFenOrd bd
+    where
+      tr :: NE.NonEmpty Square -> String
+      tr xs@(v NE.:| _) = case v of
+        Nothing -> show (length xs)
+        Just _ -> toList $ fmap (pprPiece . fromJust) xs
+
+at :: Board -> Coord -> Square
+at (Board (bs, ws)) c = asum $ zipWith go (toList bs <> toList ws) whats
   where
     cb = toBit c
-    go :: Bitboard -> Piece -> Maybe Piece
+    go :: Bitboard -> Piece -> Square
     go (Bitboard bb) v = v <$ guard (bb .&. cb /= 0)
     whats :: [Piece]
     whats =
@@ -109,4 +127,4 @@ pprBoard bd = do
     putStrLn $
       "|" <> intercalate "|" (fmap (\c -> [' ', c, ' ']) thisRank) <> "| " <> show r
     putStrLn vSep
-  putStrLn $ "  " <> intercalate "   " (fmap (:[]) ['a' .. 'h'])
+  putStrLn $ "  " <> intercalate "   " (fmap (: []) ['a' .. 'h'])

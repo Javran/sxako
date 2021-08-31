@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.Main where
 
 import Diagrams.Backend.Rasterific.CmdLine
@@ -7,6 +9,7 @@ import Game.Sxako.Coord
 import Game.Sxako.Fen
 import Game.Sxako.Types
 import Graphics.SVGFonts
+import Graphics.SVGFonts.Fonts
 import Graphics.SVGFonts.ReadFont
 import Paths_sxako
 
@@ -55,5 +58,24 @@ mainRender = do
 mainCmd :: IO ()
 mainCmd = pprBoard (placement initRecord)
 
+mainFindTrailIndices :: IO ()
+mainFindTrailIndices = do
+  let pieceChars = "pnbrqkomvtwl"
+  fp <- getDataFileName "data/ChessMerida.svg"
+  lFont <- lin @Double
+  font <- loadFont @Double fp
+  let opts = TextOpts font INSIDE_H KERN False 1 70
+      paths :: [Path V2 Double]
+      paths = fmap (\ch -> textSVG' opts [ch]) pieceChars
+      pathComponents :: Path V2 Double -> Diagram B
+      pathComponents p =
+        hcat $
+          (\(i, t) ->
+             (strokeP (let opts' = TextOpts lFont INSIDE_H KERN False 1 20 in textSVG' opts' (show i)) # lw 1 # alignBL)
+               <> strokeLocTrail t # fc red # lw none
+               <> square 70 # lw 1 # bg white)
+            <$> zip [0 :: Int ..] (pathTrails p)
+  mainWith (vcat $ fmap pathComponents paths)
+
 main :: IO ()
-main = mainRender
+main = mainFindTrailIndices

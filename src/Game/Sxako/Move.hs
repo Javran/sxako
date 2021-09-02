@@ -32,11 +32,6 @@ data Ply
 
   If we ignore absolute pins and checks
 
-  - Knight:
-
-    + normal knight move rule, target square just need to not be occupied
-      by anything of own color.
-
   - Bishop & Rook:
 
     + anything non-empty stops it
@@ -143,3 +138,24 @@ pawnPlies
             pPiece <- promoTargets
             pure PlyPromo {pFrom, pTo = pNext, pPiece}
           else pure PlyNorm {pFrom, pTo = pNext}
+
+knightPlies :: PlyGen
+knightPlies
+  Record
+    { placement
+    , activeColor
+    }
+  pFrom = do
+    let (rank, file) = withRankAndFile @Int pFrom (,)
+        (wOccupied, bOccupied) = infoOccupied placement
+        Bitboard occupied = case activeColor of
+          White -> wOccupied
+          Black -> bOccupied
+    (lR, lF) <- [(1, 2), (2, 1)]
+    sR <- [-1, 1]
+    sF <- [-1, 1]
+    let nextRank = rank + sR * lR
+        nextFile = file + sF * lF
+    Just pTo <- pure (fromRankAndFile nextRank nextFile)
+    guard $ occupied .&. toBit pTo == 0
+    pure PlyNorm {pFrom, pTo}

@@ -32,14 +32,6 @@ data Ply
 
   If we ignore absolute pins and checks
 
-  - Pawn:
-
-    + can move forward one square if the target square is empty
-    + can move forward two squares if on home square
-    + normal capture rule
-    + en passant
-    + promotion
-
   - Knight:
 
     + normal knight move rule, target square just need to not be occupied

@@ -76,20 +76,21 @@ type PlyGen = Record -> Coord -> [Ply]
 {-
   Pawn moves:
 
-  - normal forward moves:
-    + move forward one square:
+  - normal advancing moves:
+    + advance one square:
       - if target square is not blocked
-      - and is not a promotion (TODO: deal with promotion later)
-    + move forward two squares: if two squares in front of it are not blocked.
+    + advance two squares:
+      - if we can advance one square
+      - if target square is not blocked
 
-  - capture moves: if target square is occupied by an opponent piece.
+  - TODO: capture moves: if target square is occupied by an opponent piece.
     - and is not a promotion (TODO: deal with promotion later)
 
   - TODO: en passant
  -}
 pawnPlies :: PlyGen
 pawnPlies Record {placement, activeColor} pFrom =
-  forwardPlies <> todo
+  advancePlies <> todo
   where
     promoTargets = [Knight, Bishop, Rook, Queen]
     (rank, _) = withRankAndFile @Int pFrom (,)
@@ -99,14 +100,19 @@ pawnPlies Record {placement, activeColor} pFrom =
       case activeColor of
         White -> (rank == 1, rank == 6)
         Black -> (rank == 6, rank == 1)
-    forwardPlies = do
+    advancePlies = do
       let dir = case activeColor of
             White -> DN
             Black -> DS
-      guard $ not isNextPromo
       Just pNext <- pure (nextCoord dir pFrom)
       guard $ bothOccupied .&. toBit pNext == 0
-      pure PlyNorm {pFrom, pTo = pNext} <> do
+      let pNextPlies =
+            if isNextPromo
+              then do
+                pPiece <- promoTargets
+                pure PlyPromo {pFrom, pTo = pNext, pPiece}
+              else pure PlyNorm {pFrom, pTo = pNext}
+      pNextPlies <> do
         guard isHomeRank
         Just pNext2 <- pure (nextCoord dir pNext)
         guard $ bothOccupied .&. toBit pNext2 == 0

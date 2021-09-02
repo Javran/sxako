@@ -11,6 +11,7 @@ module Game.Sxako.Board
   , emptyHb
   , hbAt
   , at
+  , infoOccupied
   , pprBoard
   )
 where
@@ -103,6 +104,9 @@ at (Board (bs, ws)) c = asum $ zipWith go (toList bs <> toList ws) whats
       (,)
         <$> universe @Color
           <*> universe @PieceType
+
+infoOccupied :: Board -> (Bitboard, Bitboard)
+infoOccupied (Board (w, b)) = (foldr1 (.|.) w, foldr1 (.|.) b)
 
 pprPiece :: Piece -> Char
 pprPiece (c, pt) = cs !! pInd

@@ -14,6 +14,7 @@ module Game.Sxako.Coord
   , fenCoords
   , isDark
   , Dir (..)
+  , nextCoord
   , nextCoords
   {- ORMOLU_DISABLE -}
   , a1, b1, c1, d1, e1, f1, g1, h1

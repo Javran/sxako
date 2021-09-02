@@ -25,6 +25,7 @@ data Ply
       , pTo :: Coord
       , pPiece :: PieceType
       }
+  deriving (Show)
 
 {-
   TODO: Plan to implement all legal moves:
@@ -70,6 +71,9 @@ todo = error "TODO"
 
   we generate all legal plies from <coord>.
 
+  TODO: for now whether king is in check is not tested.
+  TODO: PlyGen should also return updated Record.
+
  -}
 type PlyGen = Record -> Coord -> [Ply]
 
@@ -83,37 +87,67 @@ type PlyGen = Record -> Coord -> [Ply]
       - if we can advance one square
       - if target square is not blocked
 
-  - TODO: capture moves: if target square is occupied by an opponent piece.
-    - and is not a promotion (TODO: deal with promotion later)
-
-  - TODO: en passant
+  - capture moves:
+    + if target square is occupied by an opponent piece.
+    + en passant
  -}
 pawnPlies :: PlyGen
-pawnPlies Record {placement, activeColor} pFrom =
-  advancePlies <> todo
-  where
-    promoTargets = [Knight, Bishop, Rook, Queen]
-    (rank, _) = withRankAndFile @Int pFrom (,)
-    (wOccupied, bOccupied) = infoOccupied placement
-    Bitboard bothOccupied = wOccupied .|. bOccupied
-    (isHomeRank, isNextPromo) =
-      case activeColor of
-        White -> (rank == 1, rank == 6)
-        Black -> (rank == 6, rank == 1)
-    advancePlies = do
-      let dir = case activeColor of
-            White -> DN
-            Black -> DS
-      Just pNext <- pure (nextCoord dir pFrom)
-      guard $ bothOccupied .&. toBit pNext == 0
-      let pNextPlies =
-            if isNextPromo
-              then do
-                pPiece <- promoTargets
-                pure PlyPromo {pFrom, pTo = pNext, pPiece}
-              else pure PlyNorm {pFrom, pTo = pNext}
-      pNextPlies <> do
-        guard isHomeRank
-        Just pNext2 <- pure (nextCoord dir pNext)
-        guard $ bothOccupied .&. toBit pNext2 == 0
-        pure PlyNorm {pFrom, pTo = pNext2}
+pawnPlies
+  Record
+    { placement
+    , activeColor
+    , enPassantTarget
+    }
+  pFrom =
+    advances <> captures
+    where
+      promoTargets = [Knight, Bishop, Rook, Queen]
+      (rank, _) = withRankAndFile @Int pFrom (,)
+      (wOccupied, bOccupied) = infoOccupied placement
+      Bitboard bothOccupied = wOccupied .|. bOccupied
+      ( isHomeRank
+        , isNextPromo
+        , advanceDir
+        , captureDirs
+        , Bitboard opponentOccupied
+        ) =
+          case activeColor of
+            White ->
+              ( rank == 1
+              , rank == 6
+              , DN
+              , [DNW, DNE]
+              , bOccupied
+              )
+            Black ->
+              ( rank == 6
+              , rank == 1
+              , DS
+              , [DSW, DSE]
+              , wOccupied
+              )
+      advances = do
+        Just pNext <- pure (nextCoord advanceDir pFrom)
+        guard $ bothOccupied .&. toBit pNext == 0
+        let pNextPlies =
+              if isNextPromo
+                then do
+                  pPiece <- promoTargets
+                  pure PlyPromo {pFrom, pTo = pNext, pPiece}
+                else pure PlyNorm {pFrom, pTo = pNext}
+        pNextPlies <> do
+          guard isHomeRank
+          Just pNext2 <- pure (nextCoord advanceDir pNext)
+          guard $ bothOccupied .&. toBit pNext2 == 0
+          pure PlyNorm {pFrom, pTo = pNext2}
+      captures = do
+        captureDir <- captureDirs
+        Just pNext <- pure (nextCoord captureDir pFrom)
+        guard $
+          (opponentOccupied .&. toBit pNext) /= 0
+            || enPassantTarget == Just pNext
+        if isNextPromo
+          then do
+            pPiece <- promoTargets
+            pure PlyPromo {pFrom, pTo = pNext, pPiece}
+          else pure PlyNorm {pFrom, pTo = pNext}

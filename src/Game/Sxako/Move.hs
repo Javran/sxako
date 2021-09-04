@@ -5,7 +5,6 @@ module Game.Sxako.Move where
 
 import Control.Monad
 import Data.Bits
-import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Coord
 import Game.Sxako.Fen
@@ -91,12 +90,12 @@ pawnPlies
       promoTargets = [Knight, Bishop, Rook, Queen]
       (rank, _) = withRankAndFile @Int pFrom (,)
       (wOccupied, bOccupied) = infoOccupied placement
-      Bitboard bothOccupied = wOccupied .|. bOccupied
+      bothOccupied = wOccupied .|. bOccupied
       ( isHomeRank
         , isNextPromo
         , advanceDir
         , captureDirs
-        , Bitboard opponentOccupied
+        , opponentOccupied
         ) =
           case activeColor of
             White ->
@@ -115,7 +114,7 @@ pawnPlies
               )
       advances = do
         Just pNext <- pure (nextCoord advanceDir pFrom)
-        guard $ bothOccupied .&. toBit pNext == 0
+        guard $ not (testBoard bothOccupied pNext)
         let pNextPlies =
               if isNextPromo
                 then do
@@ -125,13 +124,13 @@ pawnPlies
         pNextPlies <> do
           guard isHomeRank
           Just pNext2 <- pure (nextCoord advanceDir pNext)
-          guard $ bothOccupied .&. toBit pNext2 == 0
+          guard $ not (testBoard bothOccupied pNext2)
           pure PlyNorm {pFrom, pTo = pNext2}
       captures = do
         captureDir <- captureDirs
         Just pNext <- pure (nextCoord captureDir pFrom)
         guard $
-          (opponentOccupied .&. toBit pNext) /= 0
+          testBoard opponentOccupied pNext
             || enPassantTarget == Just pNext
         if isNextPromo
           then do
@@ -148,7 +147,7 @@ knightPlies
   pFrom = do
     let (rank, file) = withRankAndFile @Int pFrom (,)
         (wOccupied, bOccupied) = infoOccupied placement
-        Bitboard occupied = case activeColor of
+        occupied = case activeColor of
           White -> wOccupied
           Black -> bOccupied
     (lR, lF) <- [(1, 2), (2, 1)]
@@ -157,5 +156,5 @@ knightPlies
     let nextRank = rank + sR * lR
         nextFile = file + sF * lF
     Just pTo <- pure (fromRankAndFile nextRank nextFile)
-    guard $ occupied .&. toBit pTo == 0
+    guard $ not (testBoard occupied pTo)
     pure PlyNorm {pFrom, pTo}

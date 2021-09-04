@@ -16,6 +16,7 @@ module Game.Sxako.Coord
   , Dir (..)
   , nextCoord
   , nextCoords
+  , testBoard
   {- ORMOLU_DISABLE -}
   , a1, b1, c1, d1, e1, f1, g1, h1
   , a2, b2, c2, d2, e2, f2, g2, h2
@@ -35,6 +36,7 @@ import Data.Char
 import Data.List
 import Data.List.Split
 import Data.Word
+import Game.Sxako.Bitboard
 import Text.ParserCombinators.ReadP
 
 {-
@@ -141,6 +143,9 @@ toBit (Coord c) = bit (fromIntegral c)
 
 fenCoords :: [[Coord]]
 fenCoords = reverse (chunksOf 8 allCoords)
+
+testBoard :: Bitboard -> Coord -> Bool
+testBoard bb (Coord c) = testBit bb (fromIntegral c)
 
 _gen :: IO ()
 _gen = do

@@ -12,6 +12,7 @@ module Game.Sxako.Board
   , hbAt
   , at
   , infoOccupied
+  , getHalfboard
   , pprBoard
   )
 where
@@ -107,6 +108,11 @@ at (Board (bs, ws)) c = asum $ zipWith go (toList bs <> toList ws) whats
 
 infoOccupied :: Board -> (Bitboard, Bitboard)
 infoOccupied (Board (w, b)) = (foldr1 (.|.) w, foldr1 (.|.) b)
+
+getHalfboard :: Board -> Color -> Halfboard
+getHalfboard (Board (w, b)) c = case c of
+  White -> w
+  Black -> b
 
 pprPiece :: Piece -> Char
 pprPiece (c, pt) = cs !! pInd

@@ -53,9 +53,12 @@ todo :: a
 todo = error "TODO"
 
 {-
-  TODO: impl
   Auxilary function to figure out squares being attacked.
-  En passant rule is not taken into account in this function.
+
+  - It doesn't matter that much whether a occupied square should be
+    considered being attacked, the design choice here is to consider they are
+    to reduce the amount of testing.
+  - En passant rule is not taken into account in this function.
  -}
 attackingSquaresAux :: Board -> Piece -> Coord -> [Coord]
 attackingSquaresAux bd (color, pt) coord = case pt of
@@ -72,8 +75,14 @@ attackingSquaresAux bd (color, pt) coord = case pt of
     let nextRank = rank + sR * lR
         nextFile = file + sF * lF
     maybeToList (fromRankAndFile nextRank nextFile)
-  Bishop -> todo
-  Rook -> todo
+  Bishop -> do
+    dir <- [DNW, DNE, DSW, DSE]
+    coord' <- maybeToList (nextCoord dir coord)
+    torpedo dir coord'
+  Rook -> do
+    dir <- [DN, DE, DS, DW]
+    coord' <- maybeToList (nextCoord dir coord)
+    torpedo dir coord'
   Queen ->
     attackingSquaresAux bd (color, Bishop) coord
       <> attackingSquaresAux bd (color, Rook) coord
@@ -82,6 +91,35 @@ attackingSquaresAux bd (color, pt) coord = case pt of
     maybeToList (nextCoord dir coord)
   where
     (wOccupied, bOccupied) = infoOccupied bd
+    bothOccupied = wOccupied .|. bOccupied
+    {-
+      keep moving and collecting squares in one direction
+      as long as current square is empty.
+      When hitting something non-empty, that square is collected.
+     -}
+    torpedo :: Dir -> Coord -> [Coord]
+    torpedo d curCoord = case testBoard bothOccupied curCoord of
+      False ->
+        -- TODO: a bit awkward here.
+        case nextCoord d curCoord of
+          Nothing -> pure curCoord
+          Just c' -> do
+            curCoord : torpedo d c'
+      True -> pure curCoord
+
+{-
+  TODO: to be tested.
+ -}
+attackingSquares :: Board -> Color -> Bitboard
+attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
+  pt <- [Pawn, Knight, Bishop, Rook, Queen, King]
+  let hb = getHalfboard bd c
+      pieceBd = hbAt hb pt
+  coord <- allCoords
+  guard $ testBoard pieceBd coord
+  let cs :: [Coord]
+      cs = attackingSquaresAux bd (c, pt) coord
+  pure $ Bitboard $ foldr (.|.) 0 (fmap toBit cs)
 
 {-
   for a ply-generating function:

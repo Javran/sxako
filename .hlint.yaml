@@ -7,3 +7,4 @@
 - ignore: {name: Use uncurry}
 - ignore: {name: Redundant pure}
 - ignore: {name: Eta reduce}
+- ignore: {name: Use if}

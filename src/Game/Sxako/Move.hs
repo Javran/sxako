@@ -5,6 +5,8 @@ module Game.Sxako.Move where
 
 import Control.Monad
 import Data.Bits
+import Data.Maybe
+import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Coord
 import Game.Sxako.Fen
@@ -49,6 +51,37 @@ data Ply
 
 todo :: a
 todo = error "TODO"
+
+{-
+  TODO: impl
+  Auxilary function to figure out squares being attacked.
+  En passant rule is not taken into account in this function.
+ -}
+attackingSquaresAux :: Board -> Piece -> Coord -> [Coord]
+attackingSquaresAux bd (color, pt) coord = case pt of
+  Pawn -> do
+    dir <- case color of
+      White -> [DNW, DNE]
+      Black -> [DSW, DSE]
+    maybeToList (nextCoord dir coord)
+  Knight -> do
+    let (rank, file) = withRankAndFile @Int coord (,)
+    (lR, lF) <- [(1, 2), (2, 1)]
+    sR <- [-1, 1]
+    sF <- [-1, 1]
+    let nextRank = rank + sR * lR
+        nextFile = file + sF * lF
+    maybeToList (fromRankAndFile nextRank nextFile)
+  Bishop -> todo
+  Rook -> todo
+  Queen ->
+    attackingSquaresAux bd (color, Bishop) coord
+      <> attackingSquaresAux bd (color, Rook) coord
+  King -> do
+    dir <- [DN, DNE, DE, DSE, DS, DSW, DW, DNW]
+    maybeToList (nextCoord dir coord)
+  where
+    (wOccupied, bOccupied) = infoOccupied bd
 
 {-
   for a ply-generating function:

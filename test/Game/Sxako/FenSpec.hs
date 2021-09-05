@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+
 module Game.Sxako.FenSpec where
 
 import Control.Monad
@@ -33,26 +34,41 @@ spec = describe "fenP" $ do
           , ( "Lichess N3c34"
             , "b5r1/p1pk2pp/8/2b1P3/4n3/2P5/PP4PP/RNB2R1K w - - 3 20"
             )
+          , ( "Lichess 06Wcc"
+            , "3r2k1/pp3pp1/4p3/1q1r2Pp/3B4/P1R2P2/1P3Q1P/1KR5 w - h6 0 26"
+            )
+          , ( "Lichess 0AhvP"
+            , "1r4k1/p4pp1/2r2n1p/2q1p3/Q1Pp4/1P6/P4PPP/2RN1RK1 b - c3 0 24"
+            )
           ]
     forM_ rawFens $ \(tag, rawInp) -> do
       specify tag $
         case parseOnly fenP (BSC.pack rawInp) of
           Left err -> fail err
-          Right Record {placement = bd, halfMove, fullMove} -> do
-            let [ expected
-                  , _activeColor
-                  , _castling
-                  , _enPassant
-                  , halfMoveRaw
-                  , fullMoveRaw
-                  ] = words rawInp
-            {-
-              This relys on the fact that Show instance of a Board
-              is the same as Fen placement notation.
-             -}
-            show bd `shouldBe` expected
-            {-
-              Test that two Ints match repsectively.
-             -}
-            halfMove `shouldBe` read halfMoveRaw
-            fullMove `shouldBe` read fullMoveRaw
+          Right
+            Record
+              { placement = bd
+              , halfMove
+              , fullMove
+              , enPassantTarget
+              } -> do
+              let [ expected
+                    , _activeColor
+                    , _castling
+                    , enPassantRaw
+                    , halfMoveRaw
+                    , fullMoveRaw
+                    ] = words rawInp
+              {-
+                This relys on the fact that Show instance of a Board
+                is the same as Fen placement notation.
+               -}
+              show bd `shouldBe` expected
+              {-
+                Test that two Ints match repsectively.
+               -}
+              halfMove `shouldBe` read halfMoveRaw
+              fullMove `shouldBe` read fullMoveRaw
+              enPassantTarget `shouldBe` case enPassantRaw of
+                "-" -> Nothing
+                _ -> Just $ read enPassantRaw

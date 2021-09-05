@@ -99,7 +99,7 @@ enPassantTargetP = (Nothing <$ char '-') <|> Just <$> enPassantSquareP
     enPassantSquareP = do
       fCh <- satisfy (\ch -> ch >= 'a' && ch <= 'h')
       let f = ord fCh - ord 'a'
-      r <- 3 <$ char '3' <|> 6 <$ char '6'
+      r <- 2 <$ char '3' <|> 5 <$ char '6'
       pure (unsafeFromRankAndFile r f)
 
 fenP :: Parser Record

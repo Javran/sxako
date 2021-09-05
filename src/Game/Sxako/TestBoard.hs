@@ -14,7 +14,7 @@ import Text.ParserCombinators.ReadP
   Provides an alternative text representation of a Board
   for testing and debuging.
  -}
-newtype TestBoard = TestBoard Board
+newtype TestBoard = TestBoard Board deriving (Eq)
 
 instance Show TestBoard where
   show (TestBoard bd) =

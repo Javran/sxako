@@ -57,7 +57,7 @@ hbAt hb pt = hb VF.! fromEnum pt
 {-
   (<white side>, <black side>)
  -}
-newtype Board = Board (Halfboard, Halfboard)
+newtype Board = Board (Halfboard, Halfboard) deriving (Eq)
 
 fromPlacement2d :: Placement2D -> Board
 fromPlacement2d ps2d = runST $ do

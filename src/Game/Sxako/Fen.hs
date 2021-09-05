@@ -3,10 +3,11 @@
 
 module Game.Sxako.Fen
   ( Record (..)
-  , Placement2D
   , fenP
   , initRecord
   , dragonRecord
+  , charToPiece
+  , pieceToChar
   )
 where
 
@@ -15,14 +16,16 @@ import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import Data.Char
+import qualified Data.Map.Strict as M
 import Data.Monoid
 import Data.String
+import Data.Tuple
 import qualified Data.Vector.Fixed as VF
 import Data.Word
+import Game.Sxako.Board
 import Game.Sxako.Castling
 import Game.Sxako.Coord
 import Game.Sxako.Types
-import Game.Sxako.Board
 
 {-
   Reference:
@@ -48,27 +51,43 @@ initRecord, dragonRecord :: Record
 Right initRecord = parseOnly fenP rawStandardBoard
 Right dragonRecord = parseOnly fenP rawDragonBoard
 
-pElemP :: Parser (Sum Word8, [Square])
-pElemP =
-  choice
-    [ "Pp" ~> Pawn
-    , "Nn" ~> Knight
-    , "Bb" ~> Bishop
-    , "Rr" ~> Rook
-    , "Qq" ~> Queen
-    , "Kk" ~> King
-    , do
-        c <- satisfy (\ch -> ch >= '1' && ch <= '8')
-        let cnt = ord c - ord '0'
-        pure (Sum (fromIntegral cnt), replicate cnt Nothing)
+charToPiece :: Char -> Maybe Piece
+charToPiece = (d M.!?)
+  where
+    d = M.fromList pieceTable
+
+pieceToChar :: Piece -> Char
+pieceToChar = (d M.!)
+  where
+    d = M.fromList (fmap swap pieceTable)
+
+pieceTable :: [(Char, Piece)]
+pieceTable =
+  concat
+    [ "Pp" <~> Pawn
+    , "Nn" <~> Knight
+    , "Bb" <~> Bishop
+    , "Rr" <~> Rook
+    , "Qq" <~> Queen
+    , "Kk" <~> King
     ]
   where
-    [wRaw, bRaw] ~> pt = do
-      color <-
-        (White <$ char wRaw)
-          <|> (Black <$ char bRaw)
-      pure (1, [Just (color, pt)])
-    _ ~> _ = error "unreachable"
+    [wCh, bCh] <~> p = [(wCh, (White, p)), (bCh, (Black, p))]
+    _ <~> _ = error "unreachable"
+
+pElemP :: Parser (Sum Word8, [Square])
+pElemP = pieceP <|> emptiesP
+  where
+    pieceP = do
+      ch <- peekChar'
+      guard $ not (Parser.isDigit ch)
+      Just p <- pure (charToPiece ch)
+      _ <- anyChar
+      pure (1, [Just p])
+    emptiesP = do
+      c <- satisfy (\ch -> ch >= '1' && ch <= '8')
+      let cnt = ord c - ord '0'
+      pure (Sum (fromIntegral cnt), replicate cnt Nothing)
 
 {-
   Parsing a rank, should produce exactly 8 elements.

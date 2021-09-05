@@ -14,6 +14,7 @@ module Game.Sxako.Board
   , infoOccupied
   , getHalfboard
   , pprBoard
+  , unpackToFenOrd
   )
 where
 
@@ -80,14 +81,17 @@ fromPlacement2d ps2d = runST $ do
   b <- VFM.unsafeFreeze blackHb
   pure $ Board (w, b)
 
-unpackFenOrd :: Board -> [[Square]]
-unpackFenOrd bd = (fmap . fmap) (at bd) fenCoords
+{-
+  Unpacks a board to a 2D list following FEN order.
+ -}
+unpackToFenOrd :: Board -> [[Square]]
+unpackToFenOrd bd = (fmap . fmap) (at bd) fenCoords
 
 instance Show Board where
   show bd =
     intercalate "/"
       . fmap (concatMap tr . NE.groupBy ((==) `on` isNothing))
-      $ unpackFenOrd bd
+      $ unpackToFenOrd bd
     where
       tr :: NE.NonEmpty Square -> String
       tr xs@(v NE.:| _) = case v of

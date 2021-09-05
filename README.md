@@ -10,3 +10,6 @@ and try to have an implementation of our own without relying on known designs.
 Font source: [Chess Mérida](http://www.enpassant.dk/chess/fonteng.htm),
 converted to SVG Font with fontforge.
 
+## Test data
+
+Some test data are randomly picked from [lichess.org open database](https://database.lichess.org/)

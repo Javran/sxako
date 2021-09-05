@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module Game.Sxako.FenSpec where
 
 import Control.Monad
@@ -37,7 +38,7 @@ spec = describe "fenP" $ do
       specify tag $
         case parseOnly fenP (BSC.pack rawInp) of
           Left err -> fail err
-          Right Record {placement = bd} -> do
+          Right Record {placement = bd, halfMove, fullMove} -> do
             let [ expected
                   , _activeColor
                   , _castling
@@ -45,4 +46,13 @@ spec = describe "fenP" $ do
                   , halfMoveRaw
                   , fullMoveRaw
                   ] = words rawInp
+            {-
+              This relys on the fact that Show instance of a Board
+              is the same as Fen placement notation.
+             -}
             show bd `shouldBe` expected
+            {-
+              Test that two Ints match repsectively.
+             -}
+            halfMove `shouldBe` read halfMoveRaw
+            fullMove `shouldBe` read fullMoveRaw

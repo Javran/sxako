@@ -55,7 +55,7 @@ todo = error "TODO"
 {-
   Auxilary function to figure out squares being attacked.
 
-  - It doesn't matter that much whether a occupied square should be
+  - It doesn't matter that much whether an occupied square should be
     considered being attacked, the design choice here is to consider they are
     to reduce the amount of testing.
   - En passant rule is not taken into account in this function.
@@ -76,6 +76,7 @@ attackingSquaresAux bd (color, pt) coord = case pt of
         nextFile = file + sF * lF
     maybeToList (fromRankAndFile nextRank nextFile)
   Bishop -> do
+    {- TODO: those can be further simplified -}
     dir <- [DNW, DNE, DSW, DSE]
     coord' <- maybeToList (nextCoord dir coord)
     torpedo dir coord'
@@ -109,6 +110,11 @@ attackingSquaresAux bd (color, pt) coord = case pt of
 
 {-
   TODO: to be tested.
+
+  - coverage for each individual piece type
+  - need to provide an alternative representation
+    for better readability (FEN is too compact to see straightforward)
+
  -}
 attackingSquares :: Board -> Color -> Bitboard
 attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do

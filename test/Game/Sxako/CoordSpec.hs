@@ -3,6 +3,7 @@
 module Game.Sxako.CoordSpec where
 
 import Control.Monad
+import Data.Bits
 import Game.Sxako.Coord
 import Game.Sxako.Types
 import Test.Hspec
@@ -24,3 +25,8 @@ spec = do
       DSW ~> [d2, c1]
       DW ~> [d3, c3, b3, a3]
       DNW ~> [d4, c5, b6, a7]
+  describe "toBit" $
+    specify "examples" $ do
+      toBit a1 `shouldBe` bit 0
+      toBit h1 `shouldBe` bit 7
+      toBit h8 `shouldBe` bit 63

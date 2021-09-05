@@ -108,14 +108,6 @@ attackingSquaresAux bd (color, pt) coord = case pt of
             curCoord : torpedo d c'
       True -> pure curCoord
 
-{-
-  TODO: to be tested.
-
-  - coverage for each individual piece type
-  - need to provide an alternative representation
-    for better readability (FEN is too compact to see straightforward)
-
- -}
 attackingSquares :: Board -> Color -> Bitboard
 attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   pt <- [Pawn, Knight, Bishop, Rook, Queen, King]

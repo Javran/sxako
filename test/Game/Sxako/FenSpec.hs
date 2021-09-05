@@ -6,7 +6,6 @@ import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import Game.Sxako.Fen
-import Game.Sxako.Types
 import Test.Hspec
 
 {-
@@ -14,15 +13,7 @@ import Test.Hspec
  -}
 
 spec :: Spec
-spec = do
-  fenPSpec
-  describe "charToPiece & pieceToChar" $
-    specify "charToPiece . pieceToChar === Just" $
-      forM_ [(c, pt) | c <- universe, pt <- universe] $ \p ->
-        (charToPiece . pieceToChar) p `shouldBe` Just p
-
-fenPSpec :: Spec
-fenPSpec = describe "fenP" $ do
+spec = describe "fenP" $ do
   describe "samples" $ do
     let rawFens =
           [ ( "standard initial board"

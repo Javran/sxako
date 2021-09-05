@@ -92,7 +92,7 @@ instance Show Board where
       tr :: NE.NonEmpty Square -> String
       tr xs@(v NE.:| _) = case v of
         Nothing -> show (length xs)
-        Just _ -> toList $ fmap (pprPiece . fromJust) xs
+        Just _ -> toList $ fmap (pieceToChar . fromJust) xs
 
 at :: Board -> Coord -> Square
 at (Board (bs, ws)) c = asum $ zipWith go (toList bs <> toList ws) whats
@@ -114,14 +114,6 @@ getHalfboard (Board (w, b)) c = case c of
   White -> w
   Black -> b
 
-pprPiece :: Piece -> Char
-pprPiece (c, pt) = cs !! pInd
-  where
-    pInd = fromEnum pt
-    cs = case c of
-      White -> "PNBRQK"
-      Black -> "pnbrqk"
-
 {-
   Pretty-print a board similar to stockfish's `d` command.
  -}
@@ -132,7 +124,7 @@ pprBoard bd = do
   forM_ (zip fenCoords [8 :: Int, 7 ..]) $ \(rankCoords, r) -> do
     let thisRank =
           fmap
-            (\c -> maybe ' ' pprPiece (at bd c))
+            (\c -> maybe ' ' pieceToChar (at bd c))
             rankCoords
     putStrLn $
       "|" <> intercalate "|" (fmap (\c -> [' ', c, ' ']) thisRank) <> "| " <> show r

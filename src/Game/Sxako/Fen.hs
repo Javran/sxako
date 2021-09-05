@@ -6,8 +6,6 @@ module Game.Sxako.Fen
   , fenP
   , initRecord
   , dragonRecord
-  , charToPiece
-  , pieceToChar
   )
 where
 
@@ -16,10 +14,8 @@ import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import Data.Char
-import qualified Data.Map.Strict as M
 import Data.Monoid
 import Data.String
-import Data.Tuple
 import qualified Data.Vector.Fixed as VF
 import Data.Word
 import Game.Sxako.Board
@@ -50,30 +46,6 @@ rawDragonBoard = "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5
 initRecord, dragonRecord :: Record
 Right initRecord = parseOnly fenP rawStandardBoard
 Right dragonRecord = parseOnly fenP rawDragonBoard
-
-charToPiece :: Char -> Maybe Piece
-charToPiece = (d M.!?)
-  where
-    d = M.fromList pieceTable
-
-pieceToChar :: Piece -> Char
-pieceToChar = (d M.!)
-  where
-    d = M.fromList (fmap swap pieceTable)
-
-pieceTable :: [(Char, Piece)]
-pieceTable =
-  concat
-    [ "Pp" <~> Pawn
-    , "Nn" <~> Knight
-    , "Bb" <~> Bishop
-    , "Rr" <~> Rook
-    , "Qq" <~> Queen
-    , "Kk" <~> King
-    ]
-  where
-    [wCh, bCh] <~> p = [(wCh, (White, p)), (bCh, (Black, p))]
-    _ <~> _ = error "unreachable"
 
 pElemP :: Parser (Sum Word8, [Square])
 pElemP = pieceP <|> emptiesP

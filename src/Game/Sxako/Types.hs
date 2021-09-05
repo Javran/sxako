@@ -9,9 +9,13 @@ module Game.Sxako.Types
   , Placement2D
   , Square
   , universe
+  , charToPiece
+  , pieceToChar
   )
 where
 
+import qualified Data.Map.Strict as M
+import Data.Tuple
 import qualified Data.Vector.Fixed as VF
 
 type EightElems = VF.VecList 8
@@ -47,3 +51,27 @@ type Placement2D = EightElems (EightElems (Maybe Piece))
   Information of one sqaure: empty or there's something on it.
  -}
 type Square = Maybe Piece
+
+charToPiece :: Char -> Maybe Piece
+charToPiece = (d M.!?)
+  where
+    d = M.fromList pieceTable
+
+pieceToChar :: Piece -> Char
+pieceToChar = (d M.!)
+  where
+    d = M.fromList (fmap swap pieceTable)
+
+pieceTable :: [(Char, Piece)]
+pieceTable =
+  concat
+    [ "Pp" <~> Pawn
+    , "Nn" <~> Knight
+    , "Bb" <~> Bishop
+    , "Rr" <~> Rook
+    , "Qq" <~> Queen
+    , "Kk" <~> King
+    ]
+  where
+    [wCh, bCh] <~> p = [(wCh, (White, p)), (bCh, (Black, p))]
+    _ <~> _ = error "unreachable"

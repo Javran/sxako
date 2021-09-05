@@ -7,3 +7,6 @@ extra-deps:
   commit: 99e6ccefcff1edd2c669769e5232342fd6771dda
   subdirs:
     - fixed-vector
+- QuickCheck-2.14.2
+- random-1.2.0
+- splitmix-0.1.0.3

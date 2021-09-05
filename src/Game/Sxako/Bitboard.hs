@@ -17,6 +17,15 @@ newtype Bitboard = Bitboard
   }
   deriving (Eq, Bits, Bounded) via Word64
 
+{-
+  Show & Read instance:
+
+  - follows FEN placement order.
+  - set bit: '*', cleared bit: '_'.
+  - '|' is separator, no surrounding.
+
+ -}
+
 instance Show Bitboard where
   show (Bitboard v) =
     intercalate "|" . reverse . chunksOf 8 $

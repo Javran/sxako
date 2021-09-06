@@ -75,24 +75,16 @@ attackingSquaresAux bd (color, pt) coord = case pt of
     let nextRank = rank + sR * lR
         nextFile = file + sF * lF
     maybeToList (fromRankAndFile nextRank nextFile)
-  Bishop -> do
-    {- TODO: those can be further simplified -}
-    dir <- [DNW, DNE, DSW, DSE]
-    coord' <- maybeToList (nextCoord dir coord)
-    torpedo dir coord'
-  Rook -> do
-    dir <- [DN, DE, DS, DW]
-    coord' <- maybeToList (nextCoord dir coord)
-    torpedo dir coord'
-  Queen ->
-    attackingSquaresAux bd (color, Bishop) coord
-      <> attackingSquaresAux bd (color, Rook) coord
+  Bishop -> torpedoes diagonalDirs
+  Rook -> torpedoes straightDirs
+  Queen -> torpedoes allDirs
   King -> do
-    dir <- [DN, DNE, DE, DSE, DS, DSW, DW, DNW]
+    dir <- allDirs
     maybeToList (nextCoord dir coord)
   where
     (wOccupied, bOccupied) = infoOccupied bd
     bothOccupied = wOccupied .|. bOccupied
+
     {-
       keep moving and collecting squares in one direction
       as long as current square is empty.
@@ -107,6 +99,12 @@ attackingSquaresAux bd (color, pt) coord = case pt of
           Just c' -> do
             curCoord : torpedo d c'
       True -> pure curCoord
+    {- see `torpedo` -}
+    torpedoes :: [Dir] -> [Coord]
+    torpedoes ds = do
+      dir <- ds
+      coord' <- maybeToList (nextCoord dir coord)
+      torpedo dir coord'
 
 attackingSquares :: Board -> Color -> Bitboard
 attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do

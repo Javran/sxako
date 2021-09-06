@@ -17,6 +17,9 @@ module Game.Sxako.Coord
   , nextCoord
   , nextCoords
   , testBoard
+  , straightDirs
+  , diagonalDirs
+  , allDirs
   {- ORMOLU_DISABLE -}
   , a1, b1, c1, d1, e1, f1, g1, h1
   , a2, b2, c2, d2, e2, f2, g2, h2
@@ -38,6 +41,7 @@ import Data.List.Split
 import Data.Word
 import Game.Sxako.Bitboard
 import Text.ParserCombinators.ReadP
+import Game.Sxako.Types
 
 {-
   INVARIANT: Word8 but only takes the value 0~63 (inclusive).
@@ -67,6 +71,12 @@ data Dir
   | DSW
   | DW
   | DNW
+  deriving (Eq, Bounded, Enum)
+
+straightDirs, diagonalDirs, allDirs :: [Dir]
+straightDirs = [DN, DE, DS, DW]
+diagonalDirs = [DNE, DSE, DSW, DNW]
+allDirs = universe
 
 nextCoord :: Dir -> Coord -> Maybe Coord
 nextCoord d c = withRankAndFile @Int c $ \rInd fInd ->

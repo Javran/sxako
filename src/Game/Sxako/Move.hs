@@ -131,6 +131,44 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
 type PlyGen = Record -> Coord -> [Ply]
 
 {-
+  All PlyGen must be finalized with this function.
+
+  - it checks whether king of the active color is in check
+    and reject those moves that put their king in check
+    (dealing with absolute pins).
+  - it updates `activeColor`, `halfMove` and `fullMove`.
+
+  TODO: not tested yet
+
+ -}
+finalizeRecord :: Bool -> Record -> Maybe Record
+finalizeRecord
+  resetHalfMove
+  r@Record
+    { placement = bd
+    , activeColor
+    , halfMove
+    , fullMove
+    } = do
+    let oppoColor = opposite activeColor
+        kings = hbAt (getHalfboard bd activeColor) King
+        oppoAttacking = attackingSquares bd oppoColor
+    {-
+      It's literally impossible in standard Chess
+      to get multiple kings of the same color.
+      but the data representation allows it,
+      so we choose to deal with this situation anyway.
+      Here let's just say we are fine as long as not all kings are in check.
+     -}
+    guard $ (kings .&. oppoAttacking) /= kings
+    pure $
+      r
+        { activeColor = oppoColor
+        , halfMove = if resetHalfMove then 0 else halfMove + 1
+        , fullMove = if activeColor == Black then fullMove + 1 else fullMove
+        }
+
+{-
   Pawn moves:
 
   - normal advancing moves:

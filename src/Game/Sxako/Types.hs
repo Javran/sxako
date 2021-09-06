@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Game.Sxako.Types
   ( EightElems
@@ -11,6 +12,7 @@ module Game.Sxako.Types
   , universe
   , charToPiece
   , pieceToChar
+  , opposite
   )
 where
 
@@ -34,6 +36,11 @@ data PieceType
   deriving (Enum, Eq, Ord, Bounded, Show)
 
 data Color = White | Black deriving (Enum, Eq, Ord, Bounded, Show)
+
+opposite :: Color -> Color
+opposite = \case
+  White -> Black
+  Black -> White
 
 type Piece = (Color, PieceType)
 

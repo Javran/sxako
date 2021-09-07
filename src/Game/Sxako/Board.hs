@@ -15,6 +15,7 @@ module Game.Sxako.Board
   , getHalfboard
   , pprBoard
   , unpackToFenOrd
+  , setBoardAt
   )
 where
 
@@ -23,6 +24,7 @@ import Control.Monad.ST.Strict
 import Data.Bits
 import Data.Foldable
 import Data.Function
+import Data.Functor.Identity
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -53,6 +55,10 @@ emptyHb = VF.replicate (Bitboard 0)
 
 hbAt :: Halfboard -> PieceType -> Bitboard
 hbAt hb pt = hb VF.! fromEnum pt
+
+modifyBitboard :: (Bitboard -> Bitboard) -> PieceType -> Halfboard -> Halfboard
+modifyBitboard f pt =
+  runIdentity . VF.element (fromEnum pt) (pure . f)
 
 {-
   (<white side>, <black side>)
@@ -117,6 +123,25 @@ getHalfboard :: Board -> Color -> Halfboard
 getHalfboard (Board (w, b)) c = case c of
   White -> w
   Black -> b
+
+modifyHalfboard :: (Halfboard -> Halfboard) -> Color -> Board -> Board
+modifyHalfboard f c (Board (w, b)) = case c of
+  White -> Board (f w, b)
+  Black -> Board (w, f b)
+
+setBoardAt :: Piece -> Coord -> Bool -> Board -> Board
+setBoardAt (color, pt) coord newVal =
+  modifyHalfboard (modifyBitboard modify pt) color
+  where
+    modify :: Bitboard -> Bitboard
+    modify (Bitboard bb) =
+      Bitboard $
+        if newVal
+          then masked .|. cb
+          else masked
+      where
+        cb = toBit coord
+        masked = bb .&. complement cb
 
 {-
   Pretty-print a board similar to stockfish's `d` command.

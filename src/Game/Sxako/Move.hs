@@ -125,10 +125,8 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   we generate all legal plies from <coord>.
 
   TODO: for now whether king is in check is not tested.
-  TODO: PlyGen should also return updated Record.
-
  -}
-type PlyGen = Record -> Coord -> [Ply]
+type PlyGen = Record -> Coord -> [(Ply, Record)]
 
 {-
   All PlyGen must be finalized with this function.
@@ -141,9 +139,10 @@ type PlyGen = Record -> Coord -> [Ply]
   TODO: not tested yet
 
  -}
-finalizeRecord :: Bool -> Record -> Maybe Record
-finalizeRecord
+finalize :: Bool -> Ply -> Record -> [(Ply, Record)]
+finalize
   resetHalfMove
+  ply
   r@Record
     { placement = bd
     , activeColor
@@ -161,12 +160,14 @@ finalizeRecord
       Here let's just say we are fine as long as not all kings are in check.
      -}
     guard $ (kings .&. oppoAttacking) /= kings
-    pure $
-      r
-        { activeColor = oppoColor
-        , halfMove = if resetHalfMove then 0 else halfMove + 1
-        , fullMove = if activeColor == Black then fullMove + 1 else fullMove
-        }
+    pure
+      ( ply
+      , r
+          { activeColor = oppoColor
+          , halfMove = if resetHalfMove then 0 else halfMove + 1
+          , fullMove = if activeColor == Black then fullMove + 1 else fullMove
+          }
+      )
 
 {-
   Pawn moves:
@@ -184,7 +185,7 @@ finalizeRecord
  -}
 pawnPlies :: PlyGen
 pawnPlies
-  Record
+  record@Record
     { placement
     , activeColor
     , enPassantTarget
@@ -192,6 +193,8 @@ pawnPlies
   pFrom =
     advances <> captures
     where
+      -- always reset halfMove as this is a pawn move.
+      fin = finalize True
       promoTargets = [Knight, Bishop, Rook, Queen]
       (rank, _) = withRankAndFile @Int pFrom (,)
       (wOccupied, bOccupied) = infoOccupied placement
@@ -224,13 +227,13 @@ pawnPlies
               if isNextPromo
                 then do
                   pPiece <- promoTargets
-                  pure PlyPromo {pFrom, pTo = pNext, pPiece}
-                else pure PlyNorm {pFrom, pTo = pNext}
+                  pure (PlyPromo {pFrom, pTo = pNext, pPiece}, todo)
+                else pure (PlyNorm {pFrom, pTo = pNext}, todo)
         pNextPlies <> do
           guard isHomeRank
           Just pNext2 <- pure (nextCoord advanceDir pNext)
           guard $ not (testBoard bothOccupied pNext2)
-          pure PlyNorm {pFrom, pTo = pNext2}
+          pure (PlyNorm {pFrom, pTo = pNext2}, todo)
       captures = do
         captureDir <- captureDirs
         Just pNext <- pure (nextCoord captureDir pFrom)
@@ -240,8 +243,8 @@ pawnPlies
         if isNextPromo
           then do
             pPiece <- promoTargets
-            pure PlyPromo {pFrom, pTo = pNext, pPiece}
-          else pure PlyNorm {pFrom, pTo = pNext}
+            pure (PlyPromo {pFrom, pTo = pNext, pPiece}, todo)
+          else pure (PlyNorm {pFrom, pTo = pNext}, todo)
 
 knightPlies :: PlyGen
 knightPlies
@@ -262,4 +265,4 @@ knightPlies
         nextFile = file + sF * lF
     Just pTo <- pure (fromRankAndFile nextRank nextFile)
     guard $ not (testBoard occupied pTo)
-    pure PlyNorm {pFrom, pTo}
+    pure (PlyNorm {pFrom, pTo}, todo)

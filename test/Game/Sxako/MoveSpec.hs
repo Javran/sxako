@@ -1,5 +1,9 @@
 module Game.Sxako.MoveSpec where
 
+import qualified Data.Map.Strict as M
+import Game.Sxako.Castling
+import Game.Sxako.Coord
+import Game.Sxako.Fen
 import Game.Sxako.Move
 import Game.Sxako.TestBoard
 import Game.Sxako.Types
@@ -8,6 +12,7 @@ import Test.Hspec
 spec :: Spec
 spec = do
   attackingSquaresSpec
+  pawnPliesSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -223,3 +228,58 @@ attackingSquaresSpec = describe "attackingSquares" $ do
       "________|________|*_*_*__*|_*_*_***|__**_**_|********|********|_******_"
       -- Black
       "_******_|********|********|*___**_*|_*_*____|________|________|________"
+
+pawnPliesSpec :: Spec
+pawnPliesSpec = describe "pawnPlies" $ do
+  let TestBoard bd =
+        read
+          "___nk___|\
+          \__P_P___|\
+          \________|\
+          \____p_pP|\
+          \___p____|\
+          \__p_____|\
+          \_PPPP___|\
+          \____K___"
+      record =
+        Record
+          { placement = bd
+          , activeColor = White
+          , castling = none
+          , enPassantTarget = Just g6
+          , halfMove = 0
+          , fullMove = 1
+          }
+      plyTable = legalPlies record
+  specify "b-pawn: simple advance" $ do
+    plyTable M.!? PlyNorm b2 b3
+      `shouldSatisfy` (\r ->
+                         case r of
+                           Nothing -> False
+                           Just record' ->
+                             TestBoard (placement record')
+                               == read
+                                 "___nk___|\
+                                 \__P_P___|\
+                                 \________|\
+                                 \____p_pP|\
+                                 \___p____|\
+                                 \_Pp_____|\
+                                 \__PPP___|\
+                                 \____K___")
+  specify "b-pawn: double advance" $ do
+    plyTable M.!? PlyNorm b2 b4
+      `shouldSatisfy` (\r ->
+                         case r of
+                           Nothing -> False
+                           Just record' ->
+                             TestBoard (placement record')
+                               == read
+                                 "___nk___|\
+                                 \__P_P___|\
+                                 \________|\
+                                 \____p_pP|\
+                                 \_P_p____|\
+                                 \__p_____|\
+                                 \__PPP___|\
+                                 \____K___")

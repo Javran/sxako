@@ -232,145 +232,223 @@ attackingSquaresSpec = describe "attackingSquares" $ do
 
 pawnPliesSpec :: Spec
 pawnPliesSpec = describe "pawnPlies" $ do
-  let TestBoard bd =
-        read
-          "___nk___|\
-          \__P_P___|\
-          \________|\
-          \____p_pP|\
-          \___p____|\
-          \__p_____|\
-          \_PPPP___|\
-          \____K___"
-      record =
-        Record
-          { placement = bd
-          , activeColor = White
-          , castling = none
-          , enPassantTarget = Just g6
-          , halfMove = 0
-          , fullMove = 1
-          }
-      plyTable = legalPlies record
-      expectSuccess tag ply withRecord =
-        specify tag $
-          case plyTable M.!? ply of
-            Nothing ->
-              fail $ "Expected " <> show ply <> " to be a legal move."
-            Just r -> withRecord r
-      expectFailure tag ply =
-        specify tag $ plyTable M.!? ply `shouldSatisfy` isNothing
-      matchBoard rawTestBoard r =
-        TestBoard (placement r) `shouldBe` read rawTestBoard
-  expectSuccess
-    "b-pawn: simple advance"
-    (PlyNorm b2 b3)
-    $ matchBoard
-      "___nk___|\
-      \__P_P___|\
-      \________|\
-      \____p_pP|\
-      \___p____|\
-      \_Pp_____|\
-      \__PPP___|\
-      \____K___"
-  expectSuccess
-    "b-pawn: double advance & en passant tag"
-    (PlyNorm b2 b4)
-    $ \r -> do
-      matchBoard
+  let testUtils record =
+        let plyTable = legalPlies record
+            expectSuccess tag ply withRecord =
+              specify tag $
+                case plyTable M.!? ply of
+                  Nothing ->
+                    fail $ "Expected " <> show ply <> " to be a legal move."
+                  Just r -> withRecord r
+            expectFailure tag ply =
+              specify tag $ plyTable M.!? ply `shouldSatisfy` isNothing
+            matchBoard rawTestBoard r =
+              TestBoard (placement r) `shouldBe` read rawTestBoard
+         in (expectSuccess, expectFailure, matchBoard)
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "___nk___|\
+            \__P_P___|\
+            \________|\
+            \____p_pP|\
+            \___p____|\
+            \__p_____|\
+            \_PPPP___|\
+            \____K___"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        (expectSuccess, expectFailure, matchBoard) = testUtils record
+    expectSuccess
+      "b-pawn: simple advance"
+      (PlyNorm b2 b3)
+      $ matchBoard
         "___nk___|\
         \__P_P___|\
         \________|\
         \____p_pP|\
-        \_P_p____|\
-        \__p_____|\
+        \___p____|\
+        \_Pp_____|\
         \__PPP___|\
         \____K___"
-        r
-      enPassantTarget r `shouldBe` Just b3
-  expectFailure
-    "c-pawn: no move (simple)"
-    (PlyNorm c2 c3)
-  expectFailure
-    "c-pawn: no move (advance)"
-    (PlyNorm c2 c4)
-  expectSuccess
-    "d-pawn: simple advance"
-    (PlyNorm d2 d3)
-    $ matchBoard
-      "___nk___|\
-      \__P_P___|\
-      \________|\
-      \____p_pP|\
-      \___p____|\
-      \__pP____|\
-      \_PP_P___|\
-      \____K___"
-  expectFailure
-    "d-pawn: no double advance"
-    (PlyNorm d2 d4)
-  expectSuccess
-    "d-pawn: can capture"
-    (PlyNorm d2 c3)
-    $ matchBoard
-      "___nk___|\
-      \__P_P___|\
-      \________|\
-      \____p_pP|\
-      \___p____|\
-      \__P_____|\
-      \_PP_P___|\
-      \____K___"
-  expectSuccess
-    "h-pawn: simple advance"
-    (PlyNorm h5 h6)
-    $ matchBoard
-      "___nk___|\
-      \__P_P___|\
-      \_______P|\
-      \____p_p_|\
-      \___p____|\
-      \__p_____|\
-      \_PPPP___|\
-      \____K___"
-  expectFailure
-    "h-pawn: no double advance"
-    (PlyNorm h5 h7)
-  expectSuccess
-    "advance to promote"
-    (PlyPromo c7 c8 Queen)
-    $ matchBoard
-      "__Qnk___|\
-      \____P___|\
-      \________|\
-      \____p_pP|\
-      \___p____|\
-      \__p_____|\
-      \_PPPP___|\
-      \____K___"
-  expectSuccess
-    "capture to promote"
-    (PlyPromo e7 d8 Knight)
-    $ matchBoard
-      "___Nk___|\
-      \__P_____|\
-      \________|\
-      \____p_pP|\
-      \___p____|\
-      \__p_____|\
-      \_PPPP___|\
-      \____K___"
-  expectSuccess
-    "en passant"
-    (PlyNorm h5 g6)
-    $ matchBoard
-      "___nk___|\
-      \__P_P___|\
-      \______P_|\
-      \____p___|\
-      \___p____|\
-      \__p_____|\
-      \_PPPP___|\
-      \____K___"
-  -- TODO: coverage for black pieces
+    expectSuccess
+      "b-pawn: double advance & en passant tag"
+      (PlyNorm b2 b4)
+      $ \r -> do
+        matchBoard
+          "___nk___|\
+          \__P_P___|\
+          \________|\
+          \____p_pP|\
+          \_P_p____|\
+          \__p_____|\
+          \__PPP___|\
+          \____K___"
+          r
+        enPassantTarget r `shouldBe` Just b3
+    expectFailure
+      "c-pawn: no move (simple)"
+      (PlyNorm c2 c3)
+    expectFailure
+      "c-pawn: no move (advance)"
+      (PlyNorm c2 c4)
+    expectSuccess
+      "d-pawn: simple advance"
+      (PlyNorm d2 d3)
+      $ matchBoard
+        "___nk___|\
+        \__P_P___|\
+        \________|\
+        \____p_pP|\
+        \___p____|\
+        \__pP____|\
+        \_PP_P___|\
+        \____K___"
+    expectFailure
+      "d-pawn: no double advance"
+      (PlyNorm d2 d4)
+    expectSuccess
+      "d-pawn: can capture"
+      (PlyNorm d2 c3)
+      $ matchBoard
+        "___nk___|\
+        \__P_P___|\
+        \________|\
+        \____p_pP|\
+        \___p____|\
+        \__P_____|\
+        \_PP_P___|\
+        \____K___"
+    expectSuccess
+      "h-pawn: simple advance"
+      (PlyNorm h5 h6)
+      $ matchBoard
+        "___nk___|\
+        \__P_P___|\
+        \_______P|\
+        \____p_p_|\
+        \___p____|\
+        \__p_____|\
+        \_PPPP___|\
+        \____K___"
+    expectFailure
+      "h-pawn: no double advance"
+      (PlyNorm h5 h7)
+    expectSuccess
+      "advance to promote"
+      (PlyPromo c7 c8 Queen)
+      $ matchBoard
+        "__Qnk___|\
+        \____P___|\
+        \________|\
+        \____p_pP|\
+        \___p____|\
+        \__p_____|\
+        \_PPPP___|\
+        \____K___"
+    expectSuccess
+      "capture to promote"
+      (PlyPromo e7 d8 Knight)
+      $ matchBoard
+        "___Nk___|\
+        \__P_____|\
+        \________|\
+        \____p_pP|\
+        \___p____|\
+        \__p_____|\
+        \_PPPP___|\
+        \____K___"
+    expectSuccess
+      "en passant"
+      (PlyNorm h5 g6)
+      $ matchBoard
+        "___nk___|\
+        \__P_P___|\
+        \______P_|\
+        \____p___|\
+        \___p____|\
+        \__p_____|\
+        \_PPPP___|\
+        \____K___"
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "____k___|\
+            \_____p__|\
+            \__p_____|\
+            \___P____|\
+            \pP______|\
+            \________|\
+            \________|\
+            \____K___"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = none
+            , enPassantTarget = Just b3
+            , halfMove = 0
+            , fullMove = 1
+            }
+        (expectSuccess, expectFailure, matchBoard) = testUtils record
+    expectSuccess
+      "f-pawn: simple advance"
+      (PlyNorm f7 f6)
+      $ matchBoard
+        "____k___|\
+        \________|\
+        \__p__p__|\
+        \___P____|\
+        \pP______|\
+        \________|\
+        \________|\
+        \____K___"
+    expectSuccess
+      "f-pawn: double advance & en passant tag"
+      (PlyNorm f7 f5)
+      $ \r -> do
+        matchBoard
+          "____k___|\
+          \________|\
+          \__p_____|\
+          \___P_p__|\
+          \pP______|\
+          \________|\
+          \________|\
+          \____K___"
+          r
+        enPassantTarget r `shouldBe` Just f6
+    expectSuccess
+      "c-pawn: capture"
+      (PlyNorm c6 d5)
+      $ matchBoard
+        "____k___|\
+        \_____p__|\
+        \________|\
+        \___p____|\
+        \pP______|\
+        \________|\
+        \________|\
+        \____K___"
+    expectFailure
+      "c-pawn: no double advance"
+      (PlyNorm c6 c4)
+    expectSuccess
+      "en passant"
+      (PlyNorm a4 b3)
+      $ matchBoard
+        "____k___|\
+        \_____p__|\
+        \__p_____|\
+        \___P____|\
+        \________|\
+        \_p______|\
+        \________|\
+        \____K___"

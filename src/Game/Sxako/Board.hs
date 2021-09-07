@@ -129,6 +129,11 @@ modifyHalfboard f c (Board (w, b)) = case c of
   White -> Board (f w, b)
   Black -> Board (w, f b)
 
+{-
+  Note that this is consider low-level api and does not check
+  the resulting Board at all - meaning it's possible to produce a Board
+  in which different pieces are occupying the same square.
+ -}
 setBoardAt :: Piece -> Coord -> Bool -> Board -> Board
 setBoardAt (color, pt) coord newVal =
   modifyHalfboard (modifyBitboard modify pt) color

@@ -386,7 +386,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
             \___P____|\
             \pP______|\
             \________|\
-            \________|\
+            \p_______|\
             \____K___"
         record =
           Record
@@ -408,7 +408,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \___P____|\
         \pP______|\
         \________|\
-        \________|\
+        \p_______|\
         \____K___"
     expectSuccess
       "f-pawn: double advance & en passant tag"
@@ -421,7 +421,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
           \___P_p__|\
           \pP______|\
           \________|\
-          \________|\
+          \p_______|\
           \____K___"
           r
         enPassantTarget r `shouldBe` Just f6
@@ -435,11 +435,23 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \___p____|\
         \pP______|\
         \________|\
-        \________|\
+        \p_______|\
         \____K___"
     expectFailure
       "c-pawn: no double advance"
       (PlyNorm c6 c4)
+    expectSuccess
+      "a-pawn: promotion"
+      (PlyPromo a2 a1 Rook)
+      $ matchBoard
+        "____k___|\
+        \_____p__|\
+        \__p_____|\
+        \___P____|\
+        \pP______|\
+        \________|\
+        \________|\
+        \r___K___"
     expectSuccess
       "en passant"
       (PlyNorm a4 b3)
@@ -450,5 +462,5 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \___P____|\
         \________|\
         \_p______|\
-        \________|\
+        \p_______|\
         \____K___"

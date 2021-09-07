@@ -49,7 +49,7 @@ import Game.Sxako.Types
   - low bits (0~2) represents file
   - high bits (3~5) represents rank
  -}
-newtype Coord = Coord Word8 deriving (Eq)
+newtype Coord = Coord Word8 deriving (Eq, Ord)
 
 {-
   Direction for Coords to move to next.

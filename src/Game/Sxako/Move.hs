@@ -1,10 +1,16 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.Move where
+module Game.Sxako.Move
+  ( Ply (..)
+  , attackingSquares
+  , legalPlies
+  )
+where
 
 import Control.Monad
 import Data.Bits
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
@@ -26,7 +32,7 @@ data Ply
       , pTo :: Coord
       , pPiece :: PieceType
       }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 {-
   TODO: Plan to implement all legal moves:
@@ -51,6 +57,18 @@ data Ply
 
 todo :: a
 todo = error "TODO"
+
+legalPlies :: Record -> M.Map Ply Record
+legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
+  coord <- universe
+  case at bd coord of
+    Just (color, pt)
+      | color == activeColor ->
+        case pt of
+          Pawn -> pawnPlies r coord
+          Knight -> knightPlies r coord
+          _ -> [] -- TODO
+    _ -> []
 
 {-
   Auxilary function to figure out squares being attacked.
@@ -134,18 +152,21 @@ type PlyGen = Record -> Coord -> [(Ply, Record)]
   - it checks whether king of the active color is in check
     and reject those moves that put their king in check
     (dealing with absolute pins).
-  - it updates `activeColor`, `halfMove` and `fullMove`.
+  - it updates `activeColor`, `enPassantTarget`, `halfMove` and `fullMove`.
 
   TODO: not tested yet
+  TODO: we can also remove invalid castling flags here (say a rook is captured)
 
  -}
-finalize :: Bool -> Ply -> Record -> [(Ply, Record)]
+finalize :: Bool -> Bool -> Ply -> Record -> [(Ply, Record)]
 finalize
+  clearEnPassant
   resetHalfMove
   ply
   r@Record
     { placement = bd
     , activeColor
+    , enPassantTarget
     , halfMove
     , fullMove
     } = do
@@ -164,6 +185,7 @@ finalize
       ( ply
       , r
           { activeColor = oppoColor
+          , enPassantTarget = if clearEnPassant then Nothing else enPassantTarget
           , halfMove = if resetHalfMove then 0 else halfMove + 1
           , fullMove = if activeColor == Black then fullMove + 1 else fullMove
           }
@@ -194,7 +216,10 @@ pawnPlies
     advances <> captures
     where
       -- always reset halfMove as this is a pawn move.
-      fin = finalize True
+      fin = finalize False True
+      -- remove pawn at current coord.
+      bd1 =
+        setBoardAt (activeColor, Pawn) pFrom False placement
       promoTargets = [Knight, Bishop, Rook, Queen]
       (rank, _) = withRankAndFile @Int pFrom (,)
       (wOccupied, bOccupied) = infoOccupied placement
@@ -220,41 +245,83 @@ pawnPlies
               , [DSW, DSE]
               , wOccupied
               )
-      advances = do
-        Just pNext <- pure (nextCoord advanceDir pFrom)
-        guard $ not (testBoard bothOccupied pNext)
-        let pNextPlies =
-              if isNextPromo
-                then do
-                  pPiece <- promoTargets
-                  pure (PlyPromo {pFrom, pTo = pNext, pPiece}, todo)
-                else pure (PlyNorm {pFrom, pTo = pNext}, todo)
-        pNextPlies <> do
-          guard isHomeRank
-          Just pNext2 <- pure (nextCoord advanceDir pNext)
-          guard $ not (testBoard bothOccupied pNext2)
-          pure (PlyNorm {pFrom, pTo = pNext2}, todo)
-      captures = do
-        captureDir <- captureDirs
-        Just pNext <- pure (nextCoord captureDir pFrom)
-        guard $
-          testBoard opponentOccupied pNext
-            || enPassantTarget == Just pNext
+      -- move pawn to target also handle potential promotion.
+      moveToMightPromo pNext =
         if isNextPromo
           then do
             pPiece <- promoTargets
-            pure (PlyPromo {pFrom, pTo = pNext, pPiece}, todo)
-          else pure (PlyNorm {pFrom, pTo = pNext}, todo)
+            fin
+              PlyPromo {pFrom, pTo = pNext, pPiece}
+              record
+                { placement =
+                    setBoardAt (activeColor, pPiece) pNext True bd1
+                }
+          else
+            fin
+              PlyNorm {pFrom, pTo = pNext}
+              record
+                { placement =
+                    setBoardAt (activeColor, Pawn) pNext True bd1
+                }
+      advances = do
+        Just pNext <- pure (nextCoord advanceDir pFrom)
+        guard $ not (testBoard bothOccupied pNext)
+        let pNextPlies = moveToMightPromo pNext
+        pNextPlies <> do
+          -- double advance.
+          guard isHomeRank
+          Just pNext2 <- pure (nextCoord advanceDir pNext)
+          guard $ not (testBoard bothOccupied pNext2)
+          fin
+            PlyNorm {pFrom, pTo = pNext2}
+            record
+              { placement =
+                  setBoardAt (activeColor, Pawn) pNext2 True bd1
+              , enPassantTarget =
+                  -- google en passant
+                  Just pNext
+              }
+      captures = do
+        captureDir <- captureDirs
+        Just pNext <- pure (nextCoord captureDir pFrom)
+        let isEnPassant = enPassantTarget == Just pNext
+            targetSq = at bd1 pNext
+            oppoColor = opposite activeColor
+        guard $ testBoard opponentOccupied pNext || isEnPassant
+        -- handle promotion first then remove captured opponent piece.
+        (ply, record'@Record {placement = bd2}) <- moveToMightPromo pNext
+        fin
+          ply
+          record'
+            { placement =
+                if isEnPassant
+                  then -- holy hell
+
+                    let Just epCaptureSq =
+                          withRankAndFile @Int
+                            pNext
+                            (\rInd fInd ->
+                               fromRankAndFile
+                                 (case oppoColor of
+                                    White -> rInd + 1
+                                    Black -> rInd -1)
+                                 fInd)
+                     in setBoardAt (oppoColor, Pawn) epCaptureSq False bd2
+                  else
+                    let Just p = targetSq
+                     in setBoardAt p pNext False bd2
+            }
 
 knightPlies :: PlyGen
 knightPlies
-  Record
-    { placement
+  record@Record
+    { placement = bd0
     , activeColor
     }
   pFrom = do
-    let (rank, file) = withRankAndFile @Int pFrom (,)
-        (wOccupied, bOccupied) = infoOccupied placement
+    let bd1 = setBoardAt (activeColor, Knight) pFrom False bd0
+        (rank, file) = withRankAndFile @Int pFrom (,)
+        (wOccupied, bOccupied) = infoOccupied bd0
         occupied = case activeColor of
           White -> wOccupied
           Black -> bOccupied
@@ -265,4 +332,12 @@ knightPlies
         nextFile = file + sF * lF
     Just pTo <- pure (fromRankAndFile nextRank nextFile)
     guard $ not (testBoard occupied pTo)
-    pure (PlyNorm {pFrom, pTo}, todo)
+    let bd2 = setBoardAt (activeColor, Knight) pTo True bd1
+        bd3 = case at bd0 pTo of
+          Nothing -> bd2
+          Just p -> setBoardAt p pTo False bd2
+    finalize
+      True
+      False
+      PlyNorm {pFrom, pTo}
+      record {placement = bd3}

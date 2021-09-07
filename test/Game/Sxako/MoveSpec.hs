@@ -6,7 +6,11 @@ import Game.Sxako.Types
 import Test.Hspec
 
 spec :: Spec
-spec = describe "attackingSquares" $ do
+spec = do
+  attackingSquaresSpec
+
+attackingSquaresSpec :: Spec
+attackingSquaresSpec = describe "attackingSquares" $ do
   let mkTest rawBd rawExpectWhite rawExpectBlack = do
         let [(TestBoard bd, "")] = reads rawBd
         specify "White" $ do

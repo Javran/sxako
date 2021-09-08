@@ -67,6 +67,7 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
         case pt of
           Pawn -> pawnPlies r coord
           Knight -> knightPlies r coord
+          Bishop -> bishopPlies r coord
           _ -> [] -- TODO
     _ -> []
 
@@ -388,3 +389,9 @@ oneDirPlies
           <> case nextCoord dir curCoord of
             Just c' -> oneDirPlies pt dir c' record pFrom
             Nothing -> []
+
+bishopPlies :: PlyGen
+bishopPlies r pFrom = do
+  d <- diagonalDirs
+  c' <- maybeToList (nextCoord d pFrom)
+  oneDirPlies Bishop d c' r pFrom

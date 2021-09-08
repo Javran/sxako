@@ -143,6 +143,13 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   we generate all legal plies from <coord>.
 
   TODO: for now whether king is in check is not tested.
+
+  TODO: the eventual expectation is, as long as input Record is valid,
+  PlyGen should keep its output Records valid.
+
+  TODO: probably we can do thins in `StateT Record []` so there's less
+  explicit passing around.
+
  -}
 type PlyGen = Record -> Coord -> [(Ply, Record)]
 
@@ -153,9 +160,15 @@ type PlyGen = Record -> Coord -> [(Ply, Record)]
     and reject those moves that put their king in check
     (dealing with absolute pins).
   - it updates `activeColor`, `enPassantTarget`, `halfMove` and `fullMove`.
+  - (TODO): it also removes castling bit if:
+    + that bit is set
+    + and the Ply's target coord is rook's original location.
+
+    However, don't expect this to be the only function that
+    changes `castling` field, as King or Rook PlyGen might
+    do it too.
 
   TODO: not tested yet
-  TODO: we can also remove invalid castling flags here (say a rook is captured)
 
  -}
 finalize :: Bool -> Bool -> Ply -> Record -> [(Ply, Record)]

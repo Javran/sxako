@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Game.Sxako.MoveSpec where
 
 import qualified Data.Map.Strict as M
@@ -230,21 +232,29 @@ attackingSquaresSpec = describe "attackingSquares" $ do
       -- Black
       "_******_|********|********|*___**_*|_*_*____|________|________|________"
 
+data TestUtils = TestUtils
+  { expectSuccess :: String -> Ply -> (Record -> Expectation) -> Spec
+  , expectFailure :: String -> Ply -> Spec
+  , matchBoard :: String -> Record -> Expectation
+  }
+
+mkTestUtils :: Record -> TestUtils
+mkTestUtils record = TestUtils {..}
+  where
+    plyTable = legalPlies record
+    expectSuccess tag ply withRecord =
+      specify tag $
+        case plyTable M.!? ply of
+          Nothing ->
+            fail $ "Expected " <> show ply <> " to be a legal move."
+          Just r -> withRecord r
+    expectFailure tag ply =
+      specify tag $ plyTable M.!? ply `shouldSatisfy` isNothing
+    matchBoard rawTestBoard r =
+      TestBoard (placement r) `shouldBe` read rawTestBoard
+
 pawnPliesSpec :: Spec
 pawnPliesSpec = describe "pawnPlies" $ do
-  let testUtils record =
-        let plyTable = legalPlies record
-            expectSuccess tag ply withRecord =
-              specify tag $
-                case plyTable M.!? ply of
-                  Nothing ->
-                    fail $ "Expected " <> show ply <> " to be a legal move."
-                  Just r -> withRecord r
-            expectFailure tag ply =
-              specify tag $ plyTable M.!? ply `shouldSatisfy` isNothing
-            matchBoard rawTestBoard r =
-              TestBoard (placement r) `shouldBe` read rawTestBoard
-         in (expectSuccess, expectFailure, matchBoard)
   describe "White" $ do
     let TestBoard bd =
           read
@@ -265,7 +275,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
             , halfMove = 0
             , fullMove = 1
             }
-        (expectSuccess, expectFailure, matchBoard) = testUtils record
+        TestUtils {..} = mkTestUtils record
     expectSuccess
       "b-pawn: simple advance"
       (PlyNorm b2 b3)
@@ -397,7 +407,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
             , halfMove = 0
             , fullMove = 1
             }
-        (expectSuccess, expectFailure, matchBoard) = testUtils record
+        TestUtils {..} = mkTestUtils record
     expectSuccess
       "f-pawn: simple advance"
       (PlyNorm f7 f6)

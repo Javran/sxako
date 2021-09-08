@@ -358,3 +358,33 @@ knightPlies
       False
       PlyNorm {pFrom, pTo}
       record {placement = bd3}
+
+{-
+  Goes in one direction when the square is empty.
+  Stops at the blocking square.
+  Can capture if the blockng square is an empty piece.
+ -}
+oneDirPlies :: PieceType -> Dir -> Coord -> PlyGen
+oneDirPlies
+  pt
+  dir
+  curCoord
+  record@Record {placement = bd0, activeColor}
+  pFrom = do
+    let bd1 = setBoardAt (activeColor, pt) pFrom False bd0
+        fin = finalize True False
+    case at bd1 curCoord of
+      Just (targetColor, targetPt) ->
+        if targetColor == activeColor
+          then []
+          else do
+            let bd2 = setBoardAt (opposite activeColor, targetPt) curCoord False bd1
+                bd3 = setBoardAt (activeColor, pt) curCoord True bd2
+            fin PlyNorm {pFrom, pTo = curCoord} record {placement = bd3}
+      Nothing -> do
+        let bd2 = setBoardAt (activeColor, pt) curCoord True bd1
+        p <- fin PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
+        [p]
+          <> case nextCoord dir curCoord of
+            Just c' -> oneDirPlies pt dir c' record pFrom
+            Nothing -> []

@@ -16,6 +16,7 @@ spec :: Spec
 spec = do
   attackingSquaresSpec
   pawnPliesSpec
+  knightPliesSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -474,3 +475,114 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \_p______|\
         \p_______|\
         \____K___"
+
+knightPliesSpec :: Spec
+knightPliesSpec = describe "knightPlies" $ do
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \n_______|\
+            \__p_____|\
+            \_N______|\
+            \___P____|\
+            \P_P_____|\
+            \________|\
+            \________"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "b5c7"
+      (PlyNorm b5 c7)
+      $ matchBoard
+        "________|\
+        \n_N_____|\
+        \__p_____|\
+        \________|\
+        \___P____|\
+        \P_P_____|\
+        \________|\
+        \________"
+    expectSuccess
+      "b5d6"
+      (PlyNorm b5 d6)
+      $ matchBoard
+        "________|\
+        \n_______|\
+        \__pN____|\
+        \________|\
+        \___P____|\
+        \P_P_____|\
+        \________|\
+        \________"
+    expectFailure
+      "blocked by own piece"
+      (PlyNorm b5 a3)
+    expectSuccess
+      "capture enemy piece"
+      (PlyNorm b5 a7)
+      $ matchBoard
+        "________|\
+        \N_______|\
+        \__p_____|\
+        \________|\
+        \___P____|\
+        \P_P_____|\
+        \________|\
+        \________"
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \n_______|\
+            \__p_____|\
+            \_N______|\
+            \___P____|\
+            \P_P_____|\
+            \________|\
+            \________"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "a7c8"
+      (PlyNorm a7 c8)
+      $ matchBoard
+        "__n_____|\
+        \________|\
+        \__p_____|\
+        \_N______|\
+        \___P____|\
+        \P_P_____|\
+        \________|\
+        \________"
+    expectFailure
+      "blocked by own piece"
+      (PlyNorm a7 c6)
+    expectSuccess
+      "capture enemy piece"
+      (PlyNorm a7 b5)
+      $ matchBoard
+        "________|\
+        \________|\
+        \__p_____|\
+        \_n______|\
+        \___P____|\
+        \P_P_____|\
+        \________|\
+        \________"

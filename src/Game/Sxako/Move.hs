@@ -191,9 +191,13 @@ finalize
       to get multiple kings of the same color.
       but the data representation allows it,
       so we choose to deal with this situation anyway.
-      Here let's just say we are fine as long as not all kings are in check.
+      Here let's just say we are fine as long as:
+
+      - we don't have kings at all (might happen in tests)
+      - not all kings are in check.
+
      -}
-    guard $ (kings .&. oppoAttacking) /= kings
+    guard $ kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
     pure
       ( ply
       , r

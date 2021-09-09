@@ -703,6 +703,13 @@ bishopPliesSpec = describe "bishopPlies" $ do
       (PlyNorm d4 g7)
   describe "Black" $ do
     let TestBoard bd =
+          {-
+            One needs to be careful with test input.
+            h8 used to be a white rook which puts black king in check.
+            We'll do some test cases to specifically cover
+            checks and pins, but for now let's just verify
+            behavior on bishops.
+           -}
           read
             "___N___N|\
             \P______k|\

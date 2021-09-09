@@ -68,7 +68,9 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
           Pawn -> pawnPlies r coord
           Knight -> knightPlies r coord
           Bishop -> bishopPlies r coord
-          _ -> [] -- TODO
+          Rook -> rookPlies r coord
+          Queen -> queenPlies r coord
+          King -> [] -- TODO
     _ -> []
 
 {-
@@ -395,3 +397,15 @@ bishopPlies r pFrom = do
   d <- diagonalDirs
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Bishop d c' r pFrom
+
+rookPlies :: PlyGen
+rookPlies r pFrom = do
+  d <- straightDirs
+  c' <- maybeToList (nextCoord d pFrom)
+  oneDirPlies Rook d c' r pFrom
+
+queenPlies :: PlyGen
+queenPlies r pFrom = do
+  d <- allDirs
+  c' <- maybeToList (nextCoord d pFrom)
+  oneDirPlies Queen d c' r pFrom

@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.CastlingSpec where
 
 import Control.Monad

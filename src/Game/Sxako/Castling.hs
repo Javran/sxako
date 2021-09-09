@@ -1,6 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE LambdaCase #-}
-
 {-
   A simple bitset representing the availability of castling.
 

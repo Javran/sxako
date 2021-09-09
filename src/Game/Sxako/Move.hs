@@ -14,6 +14,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
+import Game.Sxako.Castling
 import Game.Sxako.Coord
 import Game.Sxako.Fen
 import Game.Sxako.Types
@@ -54,9 +55,6 @@ data Ply
   we just need to exclude moves that would result in King being checked.
 
  -}
-
-todo :: a
-todo = error "TODO"
 
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
@@ -409,3 +407,44 @@ queenPlies r pFrom = do
   d <- allDirs
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Queen d c' r pFrom
+
+kingPlies :: PlyGen
+kingPlies
+  record@Record
+    { placement = bd0
+    , activeColor
+    , castling
+    }
+  pFrom = normalKingPlies <> castlePlies
+    where
+      fin = finalize True False
+      bd1 = setBoardAt (activeColor, King) pFrom False bd0
+      normalKingPlies = do
+        {-
+          One square any direction, loses the right to castle.
+         -}
+        let castling' = removeCastleRight activeColor castling
+        d <- allDirs
+        pTo <- maybeToList (nextCoord d pFrom)
+        let bd2 = setBoardAt (activeColor, King) pTo True bd1
+        case at bd1 pTo of
+          Just (targetColor, targetPt) ->
+            if targetColor == activeColor
+              then []
+              else -- capture.
+                let bd3 = setBoardAt (opposite activeColor, targetPt) pTo False bd2
+                 in fin
+                      PlyNorm {pFrom, pTo}
+                      record
+                        { placement = bd3
+                        , castling = castling'
+                        }
+          Nothing ->
+            -- a simple move.
+            fin
+              PlyNorm {pFrom, pTo}
+              record
+                { placement = bd2
+                , castling = castling'
+                }
+      castlePlies = fail "TODO"

@@ -18,6 +18,8 @@ spec = do
   pawnPliesSpec
   knightPliesSpec
   bishopPliesSpec
+  rookPliesSpec
+  queenPliesSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -756,3 +758,202 @@ bishopPliesSpec = describe "bishopPlies" $ do
     expectFailure
       "f6 a1 (blocked by enemy piece)"
       (PlyNorm f6 a1)
+
+rookPliesSpec :: Spec
+rookPliesSpec = describe "rookPlies" $ do
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \___R____|\
+            \_k______|\
+            \________|\
+            \___r_p__|\
+            \________|\
+            \________|\
+            \______K_"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm d7 d8)
+      $ matchBoard
+        "___R____|\
+        \________|\
+        \_k______|\
+        \________|\
+        \___r_p__|\
+        \________|\
+        \________|\
+        \______K_"
+    expectSuccess
+      "capture"
+      (PlyNorm d7 d4)
+      $ matchBoard
+        "________|\
+        \________|\
+        \_k______|\
+        \________|\
+        \___R_p__|\
+        \________|\
+        \________|\
+        \______K_"
+    expectFailure
+      "blocked"
+      (PlyNorm d7 d1)
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \___R____|\
+            \_k______|\
+            \________|\
+            \___r_p__|\
+            \________|\
+            \________|\
+            \______K_"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm d4 a4)
+      $ matchBoard
+        "________|\
+        \___R____|\
+        \_k______|\
+        \________|\
+        \r____p__|\
+        \________|\
+        \________|\
+        \______K_"
+    expectSuccess
+      "capture"
+      (PlyNorm d4 d7)
+      $ matchBoard
+        "________|\
+        \___r____|\
+        \_k______|\
+        \________|\
+        \_____p__|\
+        \________|\
+        \________|\
+        \______K_"
+    expectFailure
+      "blocked"
+      (PlyNorm d4 h4)
+
+queenPliesSpec :: Spec
+queenPliesSpec = describe "queenPlies" $ do
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "K_______|\
+            \_Q___n__|\
+            \________|\
+            \________|\
+            \________|\
+            \________|\
+            \_B___q__|\
+            \______k_"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm b7 d5)
+      $ matchBoard
+        "K_______|\
+        \_____n__|\
+        \________|\
+        \___Q____|\
+        \________|\
+        \________|\
+        \_B___q__|\
+        \______k_"
+    expectSuccess
+      "capture"
+      (PlyNorm b7 f7)
+      $ matchBoard
+        "K_______|\
+        \_____Q__|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \_B___q__|\
+        \______k_"
+    expectFailure
+      "blocked"
+      (PlyNorm b7 h7)
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "K_______|\
+            \_Q___n__|\
+            \________|\
+            \________|\
+            \________|\
+            \________|\
+            \_B___q__|\
+            \______k_"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = none
+            , enPassantTarget = Just g6
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm f2 h4)
+      $ matchBoard
+        "K_______|\
+        \_Q___n__|\
+        \________|\
+        \________|\
+        \_______q|\
+        \________|\
+        \_B______|\
+        \______k_"
+
+    expectSuccess
+      "capture"
+      (PlyNorm f2 b2)
+      $ matchBoard
+        "K_______|\
+        \_Q___n__|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \_q______|\
+        \______k_"
+    expectFailure
+      "blocked"
+      (PlyNorm f2 a2)

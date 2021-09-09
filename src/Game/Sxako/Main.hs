@@ -65,7 +65,7 @@ meridaMeta =
     , ((White, Knight), ('n', [5]))
     , ((White, Bishop), ('b', [13]))
     , ((White, Rook), ('r', [1]))
-    , ((White, Queen), ('q', [1,21,25,31,33,39]))
+    , ((White, Queen), ('q', [1, 21, 25, 31, 33, 39]))
     , ((White, King), ('k', [3]))
     , ((Black, Pawn), ('o', [1]))
     , ((Black, Knight), ('m', [9]))

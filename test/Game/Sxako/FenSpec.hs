@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Game.Sxako.FenSpec where
 
 import Control.Monad

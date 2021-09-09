@@ -26,18 +26,6 @@ dependencies:
 data-files: 
 - data/ChessMerida.svg
 
-default-extensions:
-- DataKinds
-- DerivingVia
-- FlexibleContexts
-- LambdaCase
-- NamedFieldPuns
-- NumericUnderscores
-- ScopedTypeVariables
-- TupleSections
-- TypeApplications
-- OverloadedStrings
-
 library:
   source-dirs: src
   ghc-options:

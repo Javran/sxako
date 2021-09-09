@@ -1,3 +1,5 @@
+{-# LANGUAGE NumericUnderscores #-}
+
 module Game.Sxako.BitboardSpec where
 
 import Game.Sxako.Bitboard

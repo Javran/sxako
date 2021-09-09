@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.BoardSpec where
 
 import Game.Sxako.Board

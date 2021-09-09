@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.Main where
 
 import qualified Data.Map.Strict as M

@@ -1,3 +1,5 @@
+{-# LANGUAGE DerivingVia #-}
+
 module Game.Sxako.Bitboard
   ( Bitboard (..)
   )

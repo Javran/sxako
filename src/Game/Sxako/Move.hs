@@ -1,3 +1,6 @@
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.Move
   ( Ply (..)
   , attackingSquares
@@ -393,9 +396,6 @@ bishopPlies r pFrom = do
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Bishop d c' r pFrom
 
-{-
-  TODO: rook moves should invalidate some castle rights - we can probably do this in the finalizer
- -}
 rookPlies :: PlyGen
 rookPlies r pFrom = do
   d <- straightDirs
@@ -447,20 +447,4 @@ kingPlies
                 { placement = bd2
                 , castling = castling'
                 }
-      castlePlies = do
-        {-
-          White King side:
-          - require empty: f1 g1
-          - require no attack: e1 f1 g1
-          White Queen side:
-          - require empty: b1 c1 d1
-          - require no attack: c1 d1 e1
-
-          Black King side:
-          - require empty: f8 g8
-          - require no attack: e8 f8 g8
-          Black Queen side:
-          - require empty: b8 c8 d8
-          - require no attack: c8 d8 e8
-         -}
-        fail "TODO"
+      castlePlies = fail "TODO"

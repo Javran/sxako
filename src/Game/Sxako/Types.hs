@@ -1,3 +1,6 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
+
 module Game.Sxako.Types
   ( EightElems
   , PieceType (..)

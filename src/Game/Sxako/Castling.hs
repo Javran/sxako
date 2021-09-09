@@ -16,7 +16,7 @@ module Game.Sxako.Castling
   , blackKingSide
   , blackQueenSide
   , allAllowed
-  , canCastle
+  , castleAvailable
   )
 where
 
@@ -47,8 +47,8 @@ bitmask c s = case (c, s) of
   (Black, KingSide) -> blackKingSide
   (Black, QueenSide) -> blackQueenSide
 
-canCastle :: Castling -> Color -> Side -> Bool
-canCastle v c s = v .&. bitmask c s /= none
+castleAvailable :: Castling -> Color -> Side -> Bool
+castleAvailable v c s = v .&. bitmask c s /= none
 
 {-
   Ordering matters as we are respecting FEN castling notations.

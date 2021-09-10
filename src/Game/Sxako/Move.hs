@@ -35,27 +35,6 @@ data Ply
       }
   deriving (Show, Eq, Ord)
 
-{-
-  TODO: Plan to implement all legal moves:
-
-  If we ignore absolute pins and checks
-
-  - Bishop & Rook:
-
-    + anything non-empty stops it
-    + can capture if the blocking square is opposite color.
-
-  - Queen: just pretend it's both a Bishop and a Rook.
-
-  - King:
-    + normal moves
-    + castling
-
-  Now to consider absolute pins and checks,
-  we just need to exclude moves that would result in King being checked.
-
- -}
-
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
   coord <- universe
@@ -396,6 +375,9 @@ bishopPlies r pFrom = do
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Bishop d c' r pFrom
 
+{-
+  TODO: rook moves should invalidate some castle rights - we can probably do this in the finalizer
+ -}
 rookPlies :: PlyGen
 rookPlies r pFrom = do
   d <- straightDirs
@@ -407,6 +389,9 @@ queenPlies r pFrom = do
   d <- allDirs
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Queen d c' r pFrom
+
+coordsToBitboard :: [Coord] -> Bitboard
+coordsToBitboard = foldr (\c a -> Bitboard (toBit c) .|. a) (Bitboard 0)
 
 kingPlies :: PlyGen
 kingPlies
@@ -432,6 +417,7 @@ kingPlies
             if targetColor == activeColor
               then []
               else -- capture.
+
                 let bd3 = setBoardAt (opposite activeColor, targetPt) pTo False bd2
                  in fin
                       PlyNorm {pFrom, pTo}
@@ -448,3 +434,19 @@ kingPlies
                 , castling = castling'
                 }
       castlePlies = fail "TODO"
+
+{-
+  White King side:
+  - require empty: f1 g1
+  - require no attack: e1 f1 g1
+  White Queen side:
+  - require empty: b1 c1 d1
+  - require no attack: c1 d1 e1
+
+  Black King side:
+  - require empty: f8 g8
+  - require no attack: e8 f8 g8
+  Black Queen side:
+  - require empty: b8 c8 d8
+  - require no attack: c8 d8 e8
+  -}

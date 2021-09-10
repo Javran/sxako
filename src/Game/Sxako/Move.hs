@@ -47,7 +47,7 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
           Bishop -> bishopPlies r coord
           Rook -> rookPlies r coord
           Queen -> queenPlies r coord
-          King -> [] -- TODO
+          King -> kingPlies r coord
     _ -> []
 
 {-
@@ -142,13 +142,19 @@ type PlyGen = Record -> Coord -> [(Ply, Record)]
   - it updates `activeColor`, `enPassantTarget`, `halfMove` and `fullMove`.
   - (TODO): it also removes castling bit if:
     + that bit is set
-    + and the Ply's target coord is rook's original location.
+    + For any ply, we can deduce that:
+
+      - moving from rook square means it's a rook move
+      - moving to rook square means it's a rook capture
+
+      In either case, the corresponding castle right is lost.
 
     However, don't expect this to be the only function that
     changes `castling` field, as King or Rook PlyGen might
     do it too.
 
   TODO: not tested yet
+  TODO: probably make it so that only finalizer updates `castling` fields.
 
  -}
 finalize :: Bool -> Bool -> Ply -> Record -> [(Ply, Record)]
@@ -390,9 +396,58 @@ queenPlies r pFrom = do
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Queen d c' r pFrom
 
+{-
+  Returns a Bitboard with only those coords set.
+ -}
 coordsToBitboard :: [Coord] -> Bitboard
 coordsToBitboard = foldr (\c a -> Bitboard (toBit c) .|. a) (Bitboard 0)
 
+data CastleRule = CastleRule
+  { kingFromTo :: (Coord, Coord)
+  , rookFromTo :: (Coord, Coord)
+  , requireEmpty :: Bitboard
+  , requireNoAttack :: Bitboard
+  , castleRight :: Castling
+  }
+
+castleRule :: Color -> Side -> CastleRule
+castleRule c s = case (c, s) of
+  (White, KingSide) ->
+    CastleRule
+      { kingFromTo = (e1, g1)
+      , rookFromTo = (h1, f1)
+      , requireEmpty = coordsToBitboard [f1, g1]
+      , requireNoAttack = coordsToBitboard [e1, f1, g1]
+      , castleRight
+      }
+  (White, QueenSide) ->
+    CastleRule
+      { kingFromTo = (e1, c1)
+      , rookFromTo = (a1, d1)
+      , requireEmpty = coordsToBitboard [b1, c1, d1]
+      , requireNoAttack = coordsToBitboard [c1, d1, e1]
+      , castleRight
+      }
+  (Black, KingSide) ->
+    CastleRule
+      { kingFromTo = (e8, g8)
+      , rookFromTo = (h8, f8)
+      , requireEmpty = coordsToBitboard [f8, g8]
+      , requireNoAttack = coordsToBitboard [e8, f8, g8]
+      , castleRight
+      }
+  (Black, QueenSide) ->
+    CastleRule
+      { kingFromTo = (e8, c8)
+      , rookFromTo = (a8, d8)
+      , requireEmpty = coordsToBitboard [b8, c8, d8]
+      , requireNoAttack = coordsToBitboard [c8, d8, e8]
+      , castleRight
+      }
+  where
+    castleRight = getCastleRight c s
+
+{- TODO: to be tested -}
 kingPlies :: PlyGen
 kingPlies
   record@Record
@@ -402,13 +457,14 @@ kingPlies
     }
   pFrom = normalKingPlies <> castlePlies
     where
+      -- any king move, whether it's normal move or castle, loses right to castle.
+      castling' = removeCastleRight activeColor castling
       fin = finalize True False
       bd1 = setBoardAt (activeColor, King) pFrom False bd0
       normalKingPlies = do
         {-
-          One square any direction, loses the right to castle.
+          One square any direction
          -}
-        let castling' = removeCastleRight activeColor castling
         d <- allDirs
         pTo <- maybeToList (nextCoord d pFrom)
         let bd2 = setBoardAt (activeColor, King) pTo True bd1
@@ -433,20 +489,29 @@ kingPlies
                 { placement = bd2
                 , castling = castling'
                 }
-      castlePlies = fail "TODO"
+      castlePlies = do
+        side <- [KingSide, QueenSide]
+        let (wOccupied, bOccupied) = infoOccupied bd1
+            bothOccupied = wOccupied .|. bOccupied
 
-{-
-  White King side:
-  - require empty: f1 g1
-  - require no attack: e1 f1 g1
-  White Queen side:
-  - require empty: b1 c1 d1
-  - require no attack: c1 d1 e1
-
-  Black King side:
-  - require empty: f8 g8
-  - require no attack: e8 f8 g8
-  Black Queen side:
-  - require empty: b8 c8 d8
-  - require no attack: c8 d8 e8
-  -}
+            CastleRule
+              { kingFromTo = (_kingFrom, kingTo)
+              , rookFromTo = (rookFrom, rookTo)
+              , requireEmpty
+              , requireNoAttack
+              , castleRight
+              } = castleRule activeColor side
+        {-
+          Here we assume `castling` is properly updated, so we don't
+          have to actually check whether rook is in its original place.
+         -}
+        guard $
+          (castleRight .&. castling /= none)
+            && (requireEmpty .&. bothOccupied == Bitboard 0)
+            && (requireNoAttack .&. attackingSquares bd1 (opposite activeColor) == Bitboard 0)
+        let bd2 =
+              setBoardAt (activeColor, Rook) rookFrom False
+                . setBoardAt (activeColor, Rook) rookTo True
+                . setBoardAt (activeColor, King) kingTo True
+                $ bd1
+        fin (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling = castling'}

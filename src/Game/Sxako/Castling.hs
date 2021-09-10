@@ -18,6 +18,7 @@ module Game.Sxako.Castling
   , allAllowed
   , castleAvailable
   , removeCastleRight
+  , getCastleRight
   )
 where
 
@@ -41,15 +42,15 @@ none, whiteKingSide, whiteQueenSide, blackKingSide, blackQueenSide, allAllowed :
     where
       xs = fmap Castling [0, 1, 2, 4, 8]
 
-bitmask :: Color -> Side -> Castling
-bitmask c s = case (c, s) of
+getCastleRight :: Color -> Side -> Castling
+getCastleRight c s = case (c, s) of
   (White, KingSide) -> whiteKingSide
   (White, QueenSide) -> whiteQueenSide
   (Black, KingSide) -> blackKingSide
   (Black, QueenSide) -> blackQueenSide
 
 castleAvailable :: Castling -> Color -> Side -> Bool
-castleAvailable v c s = v .&. bitmask c s /= none
+castleAvailable v c s = v .&. getCastleRight c s /= none
 
 removeCastleRight :: Color -> Castling -> Castling
 removeCastleRight c = case c of

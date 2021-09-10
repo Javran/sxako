@@ -20,6 +20,7 @@ spec = do
   bishopPliesSpec
   rookPliesSpec
   queenPliesSpec
+  kingPliesSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -957,3 +958,84 @@ queenPliesSpec = describe "queenPlies" $ do
     expectFailure
       "blocked"
       (PlyNorm f2 a2)
+
+kingPliesSpec :: Spec
+kingPliesSpec = describe "kingPlies (normal moves)" $ do
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \________|\
+            \__b_____|\
+            \___pkp__|\
+            \________|\
+            \___PK___|\
+            \____P_B_|\
+            \________"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = none
+            , enPassantTarget = Nothing
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm e3 f3)
+      $ matchBoard
+        "________|\
+        \________|\
+        \__b_____|\
+        \___pkp__|\
+        \________|\
+        \___P_K__|\
+        \____P_B_|\
+        \________"
+    expectFailure
+      "blocked"
+      (PlyNorm e3 d3)
+    expectFailure
+      "not in check"
+      (PlyNorm e3 e4)
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "________|\
+            \________|\
+            \__b_____|\
+            \___pkp__|\
+            \________|\
+            \___PK___|\
+            \____P_B_|\
+            \________"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = none
+            , enPassantTarget = Nothing
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "simple move"
+      (PlyNorm e5 d6)
+      $ matchBoard
+        "________|\
+        \________|\
+        \__bk____|\
+        \___p_p__|\
+        \________|\
+        \___PK___|\
+        \____P_B_|\
+        \________"
+    expectFailure
+      "blocked"
+      (PlyNorm e5 f5)
+    expectFailure
+      "not in check"
+      (PlyNorm e5 e4)

@@ -960,7 +960,12 @@ queenPliesSpec = describe "queenPlies" $ do
       (PlyNorm f2 a2)
 
 kingPliesSpec :: Spec
-kingPliesSpec = describe "kingPlies (normal moves)" $ do
+kingPliesSpec = do
+  kingNormalPliesSpec
+  castlePliesSpec
+
+kingNormalPliesSpec :: Spec
+kingNormalPliesSpec = describe "kingPlies (normal moves)" $ do
   describe "White" $ do
     let TestBoard bd =
           read
@@ -1039,3 +1044,99 @@ kingPliesSpec = describe "kingPlies (normal moves)" $ do
     expectFailure
       "not in check"
       (PlyNorm e5 e4)
+
+{-
+  TODO: cover failures.
+ -}
+castlePliesSpec :: Spec
+castlePliesSpec = describe "kingPlies (castle)" $ do
+  describe "White" $ do
+    let TestBoard bd =
+          read
+            "r___k__r|\
+            \ppp__ppp|\
+            \________|\
+            \________|\
+            \________|\
+            \________|\
+            \PPP__PPP|\
+            \R___K__R"
+        record =
+          Record
+            { placement = bd
+            , activeColor = White
+            , castling = allAllowed
+            , enPassantTarget = Nothing
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "king side castle"
+      (PlyNorm e1 g1)
+      $ matchBoard
+        "r___k__r|\
+        \ppp__ppp|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \PPP__PPP|\
+        \R____RK_"
+    expectSuccess
+      "queen side castle"
+      (PlyNorm e1 c1)
+      $ matchBoard
+        "r___k__r|\
+        \ppp__ppp|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \PPP__PPP|\
+        \__KR___R"
+  describe "Black" $ do
+    let TestBoard bd =
+          read
+            "r___k__r|\
+            \ppp__ppp|\
+            \________|\
+            \________|\
+            \________|\
+            \________|\
+            \PPP__PPP|\
+            \R___K__R"
+        record =
+          Record
+            { placement = bd
+            , activeColor = Black
+            , castling = allAllowed
+            , enPassantTarget = Nothing
+            , halfMove = 0
+            , fullMove = 1
+            }
+        TestUtils {..} = mkTestUtils record
+    expectSuccess
+      "king side castle"
+      (PlyNorm e8 g8)
+      $ matchBoard
+        "r____rk_|\
+        \ppp__ppp|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \PPP__PPP|\
+        \R___K__R"
+    expectSuccess
+      "queen side castle"
+      (PlyNorm e8 c8)
+      $ matchBoard
+        "__kr___r|\
+        \ppp__ppp|\
+        \________|\
+        \________|\
+        \________|\
+        \________|\
+        \PPP__PPP|\
+        \R___K__R"

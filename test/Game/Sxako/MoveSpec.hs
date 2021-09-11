@@ -1070,6 +1070,11 @@ kingNormalPliesSpec = describe "kingPlies (normal moves)" $ do
   "  ..."
   "<empty line>"
 
+  TODO: use yaml?
+  TODO: two test type:
+  - one to explore all moves from a given FEN
+  - another to follow along a game.
+
  -}
 castlePliesSpec :: Spec
 castlePliesSpec = describe "kingPlies (castle)" $ do

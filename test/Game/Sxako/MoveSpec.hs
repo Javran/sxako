@@ -1047,6 +1047,29 @@ kingNormalPliesSpec = describe "kingPlies (normal moves)" $ do
 
 {-
   TODO: cover failures.
+  TODO: probably time to seek coverage by checking against an engine:
+
+  - assume stockfish:
+    - "uci"
+    - "setoption name MultiPV value 500"
+    - "position ..."
+    - "go depth 1"
+    - wait for bestmove, collect multipv info.
+    + then for each move:
+    - "position ... moves ..."
+    - "d" -> parse debugging info to extract FEN.
+
+  Generate testdata from these results:
+
+  format:
+
+  "FEN {...}"
+  "moves:"
+  "  <move0>: <resulting FEN>"
+  "  <move1>: <resulting FEN>"
+  "  ..."
+  "<empty line>"
+
  -}
 castlePliesSpec :: Spec
 castlePliesSpec = describe "kingPlies (castle)" $ do

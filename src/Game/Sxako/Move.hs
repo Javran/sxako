@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -116,16 +117,19 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   pure $ Bitboard $ foldr (.|.) 0 (fmap toBit cs)
 
 {-
-  for a ply-generating function:
+  Internal type synonym.
 
-  pg <record> <coord>
+  A value of this type:
 
-  we generate all legal plies from <coord>.
+  - generates possible moves assuming the corresponding piece is on the input coord.
+  - always calls `finalize` in the end.
 
-  TODO: for now whether king is in check is not tested.
+    `finalize` function updates most of the fields of the Record and
+    remove moves that put their own king in check
+    (addressing absolute pin).
 
-  TODO: the eventual expectation is, as long as input Record is valid,
-  PlyGen should keep its output Records valid.
+  The expectation is that as long as input Record is valid,
+  PlyGen always generate only valid plies and Records.
 
   TODO: probably we can do thins in `StateT Record []` so there's less
   explicit passing around.
@@ -139,22 +143,7 @@ type PlyGen = Record -> Coord -> [(Ply, Record)]
   - it checks whether king of the active color is in check
     and reject those moves that put their king in check
     (dealing with absolute pins).
-  - it updates `activeColor`, `enPassantTarget`, `halfMove` and `fullMove`.
-  - (TODO): it also removes castling bit if:
-    + that bit is set
-    + For any ply, we can deduce that:
-
-      - moving from rook square means it's a rook move
-      - moving to rook square means it's a rook capture
-
-      In either case, the corresponding castle right is lost.
-
-    However, don't expect this to be the only function that
-    changes `castling` field, as King or Rook PlyGen might
-    do it too.
-
-  TODO: not tested yet
-  TODO: probably make it so that only finalizer updates `castling` fields.
+  - it updates `activeColor`, `castling`, `enPassantTarget`, `halfMove` and `fullMove`.
 
  -}
 finalize :: Bool -> Bool -> Ply -> Record -> [(Ply, Record)]
@@ -165,6 +154,7 @@ finalize
   r@Record
     { placement = bd
     , activeColor
+    , castling
     , enPassantTarget
     , halfMove
     , fullMove
@@ -172,6 +162,33 @@ finalize
     let oppoColor = opposite activeColor
         kings = hbAt (getHalfboard bd activeColor) King
         oppoAttacking = attackingSquares bd oppoColor
+        plyTo = pTo ply
+        plyFrom = pFrom ply
+        castling' =
+          {-
+            Note that We don't actually check whether pieces are actually
+            on the right places - this relys on input Record being consistent
+            with itself.
+           -}
+          if castling == none
+            then castling
+            else case activeColor of
+              White ->
+                if
+                    | plyTo == a8 -> castling `minusCastleRight` blackQueenSide
+                    | plyTo == h8 -> castling `minusCastleRight` blackKingSide
+                    | plyFrom == e1 -> removeCastleRight White castling
+                    | plyFrom == a1 -> castling `minusCastleRight` whiteQueenSide
+                    | plyFrom == h1 -> castling `minusCastleRight` whiteKingSide
+                    | otherwise -> castling
+              Black ->
+                if
+                    | plyTo == a1 -> castling `minusCastleRight` whiteQueenSide
+                    | plyTo == h1 -> castling `minusCastleRight` whiteKingSide
+                    | plyFrom == e8 -> removeCastleRight Black castling
+                    | plyFrom == a8 -> castling `minusCastleRight` blackQueenSide
+                    | plyFrom == h8 -> castling `minusCastleRight` blackKingSide
+                    | otherwise -> castling
     {-
       It's literally impossible in standard Chess
       to get multiple kings of the same color.
@@ -188,6 +205,7 @@ finalize
       ( ply
       , r
           { activeColor = oppoColor
+          , castling = castling'
           , enPassantTarget = if clearEnPassant then Nothing else enPassantTarget
           , halfMove = if resetHalfMove then 0 else halfMove + 1
           , fullMove = if activeColor == Black then fullMove + 1 else fullMove
@@ -381,9 +399,6 @@ bishopPlies r pFrom = do
   c' <- maybeToList (nextCoord d pFrom)
   oneDirPlies Bishop d c' r pFrom
 
-{-
-  TODO: rook moves should invalidate some castle rights - we can probably do this in the finalizer
- -}
 rookPlies :: PlyGen
 rookPlies r pFrom = do
   d <- straightDirs
@@ -447,7 +462,6 @@ castleRule c s = case (c, s) of
   where
     castleRight = getCastleRight c s
 
-{- TODO: to be tested -}
 kingPlies :: PlyGen
 kingPlies
   record@Record
@@ -457,8 +471,6 @@ kingPlies
     }
   pFrom = normalKingPlies <> castlePlies
     where
-      -- any king move, whether it's normal move or castle, loses right to castle.
-      castling' = removeCastleRight activeColor castling
       fin = finalize True False
       bd1 = setBoardAt (activeColor, King) pFrom False bd0
       normalKingPlies = do
@@ -479,7 +491,6 @@ kingPlies
                       PlyNorm {pFrom, pTo}
                       record
                         { placement = bd3
-                        , castling = castling'
                         }
           Nothing ->
             -- a simple move.
@@ -487,7 +498,6 @@ kingPlies
               PlyNorm {pFrom, pTo}
               record
                 { placement = bd2
-                , castling = castling'
                 }
       castlePlies = do
         side <- [KingSide, QueenSide]
@@ -514,4 +524,4 @@ kingPlies
                 . setBoardAt (activeColor, Rook) rookTo True
                 . setBoardAt (activeColor, King) kingTo True
                 $ bd1
-        fin (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling = castling'}
+        fin (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling}

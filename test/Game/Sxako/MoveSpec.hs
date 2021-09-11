@@ -498,7 +498,7 @@ knightPliesSpec = describe "knightPlies" $ do
             { placement = bd
             , activeColor = White
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -558,7 +558,7 @@ knightPliesSpec = describe "knightPlies" $ do
             { placement = bd
             , activeColor = Black
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -609,7 +609,7 @@ bishopPliesSpec = describe "bishopPlies" $ do
             { placement = bd
             , activeColor = White
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -727,7 +727,7 @@ bishopPliesSpec = describe "bishopPlies" $ do
             { placement = bd
             , activeColor = Black
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -778,7 +778,7 @@ rookPliesSpec = describe "rookPlies" $ do
             { placement = bd
             , activeColor = White
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -826,7 +826,7 @@ rookPliesSpec = describe "rookPlies" $ do
             { placement = bd
             , activeColor = Black
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -877,7 +877,7 @@ queenPliesSpec = describe "queenPlies" $ do
             { placement = bd
             , activeColor = White
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }
@@ -925,7 +925,7 @@ queenPliesSpec = describe "queenPlies" $ do
             { placement = bd
             , activeColor = Black
             , castling = none
-            , enPassantTarget = Just g6
+            , enPassantTarget = Nothing
             , halfMove = 0
             , fullMove = 1
             }

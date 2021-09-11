@@ -1,7 +1,13 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.Main where
+module Game.Sxako.Cli.Render
+  ( subCmdMain
+  )
+where
 
+import qualified Data.Attoparsec.ByteString.Char8 as Parser
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as M
 import Diagrams.Backend.Rasterific.CmdLine
 import Diagrams.Prelude hiding (font)
@@ -12,6 +18,8 @@ import Game.Sxako.Types
 import Graphics.SVGFonts
 import Graphics.SVGFonts.ReadFont
 import Paths_sxako
+import System.Environment
+import System.Exit
 
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p =
@@ -35,16 +43,33 @@ renderBoard font bd = vcat (fmap renderRank fenCoords) # bg white
           Nothing -> square 70
           Just p -> square 70 <> center (renderPiece font p)
 
-mainRender :: IO ()
-mainRender = do
-  let bd = placement dragonRecord
+subCmdMain :: String -> IO ()
+subCmdMain cmdHelpPrefix =
+  getArgs >>= \case
+    xs | ([fenRaw], _ : extraArgs) <- span (/= "--") xs -> do
+      record <-
+        if fenRaw == "startpos"
+          then pure initRecord
+          else case Parser.parseOnly fenP (BSC.pack fenRaw) of
+            Left msg -> do
+              putStrLn $ "Parse error: " <> msg
+              exitFailure
+            Right v -> pure v
+      pprBoard (placement record)
+      withArgs
+        extraArgs
+        (renderRecord record)
+    _ -> do
+      putStrLn $ cmdHelpPrefix <> "<FEN> -- ..args to diagrams.."
+      putStrLn "<FEN> could also be 'startpos'."
+      exitFailure
+
+renderRecord :: Record -> IO ()
+renderRecord record = do
+  let bd = placement record
   fp <- getDataFileName "data/ChessMerida.svg"
   font <- loadFont fp
   mainWith (renderBoard font bd)
-  pure ()
-
-mainCmd :: IO ()
-mainCmd = pprBoard (placement initRecord)
 
 {-
   Metadata accompanying with ChessMerida font.
@@ -75,8 +100,8 @@ meridaMeta =
     , ((Black, King), ('l', [9]))
     ]
 
-mainFindTrailIndices :: IO ()
-mainFindTrailIndices = do
+_mainFindTrailIndices :: IO ()
+_mainFindTrailIndices = do
   let pieceChars = "pnbrqkomvtwl"
   fp <- getDataFileName "data/ChessMerida.svg"
   lFont <- lin @Double
@@ -97,6 +122,3 @@ mainFindTrailIndices = do
                <> square 70 # lw 1 # bg white)
             <$> zip [0 :: Int ..] (pathTrails p)
   mainWith (vcat $ fmap pathComponents paths)
-
-main :: IO ()
-main = mainRender

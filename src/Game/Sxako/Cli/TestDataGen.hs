@@ -85,6 +85,7 @@ subCmdMain cmdHelpPrefix =
       withStockfish $ \hIn hOut ->
         forM_ tests $ \TestData {tdPosition} -> do
           hPutStrLn hIn $ "position fen " <> show tdPosition
+          putStrLn $ "Sending position: " <> show tdPosition
           hPutStrLn hIn "go depth 1"
           let collectInfo :: IO [[] String]
               collectInfo = do
@@ -95,8 +96,34 @@ subCmdMain cmdHelpPrefix =
                     | ["info", "string"] `isPrefixOf` ws -> collectInfo
                     | ["info"] `isPrefixOf` ws -> (tail ws :) <$> collectInfo
                     | otherwise -> collectInfo
-          ls <- collectInfo
-          mapM_ (print . parseInfo) ls
+
+              dbgParse :: [String] -> IO (Int, Ply)
+              dbgParse xs = case parseInfo xs of
+                Left msg -> do
+                  putStrLn $ "Parse failed for input: " <> show xs
+                  putStrLn $ "Reason: " <> msg
+                  exitFailure
+                Right m@(Last ma, Last mb) ->
+                  case (,) <$> ma <*> mb of
+                    Nothing -> do
+                      putStrLn $ "Parse failed, only collected: " <> show m
+                      exitFailure
+                    Just v -> pure v
+          sfLegalPlies <- collectInfo >>= mapM dbgParse
+          forM_ sfLegalPlies $ \(pvId, ply) -> do
+            hPutStrLn hIn $ "position fen " <> show tdPosition <> " moves "  <> show ply
+            hPutStrLn hIn "d"
+            Just endFenRaw <- fix (\ loop cur -> do
+              raw <- hGetLine hOut
+              let cur' = cur <|> do
+                                   guard $ "Fen: " `isPrefixOf` raw
+                                   Just (drop 5 raw)
+              -- very ugly way of checking end of the response, but I don't have anything better.
+              if "Checkers: " `isPrefixOf` raw
+                then pure cur'
+                else loop cur') Nothing
+            putStrLn $ "  multipv " <> show pvId <> ": " <> show ply
+            putStrLn $ "    result: " <> endFenRaw
           pure ()
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"

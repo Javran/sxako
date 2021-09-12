@@ -11,11 +11,13 @@ where
 
 import Control.Applicative
 import Control.Monad
+import Data.Aeson
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import Data.Char
 import Data.Monoid
 import Data.String
+import Data.Text.Encoding
 import qualified Data.Vector.Fixed as VF
 import Data.Word
 import Game.Sxako.Board
@@ -38,6 +40,12 @@ data Record = Record
   , fullMove :: Int
   }
   deriving (Show)
+
+instance FromJSON Record where
+  parseJSON = withText "FEN" $ \t ->
+    case parseOnly fenP (encodeUtf8 t) of
+      Left msg -> fail msg
+      Right r -> pure r
 
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

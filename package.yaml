@@ -23,6 +23,9 @@ dependencies:
 - colour
 - containers
 - typed-process
+- aeson
+- yaml
+- text
 
 data-files: 
 - data/ChessMerida.svg

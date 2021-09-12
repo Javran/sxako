@@ -22,6 +22,7 @@ dependencies:
 - fixed-vector
 - colour
 - containers
+- typed-process
 
 data-files: 
 - data/ChessMerida.svg

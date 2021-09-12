@@ -7,6 +7,7 @@ where
 
 import Control.Monad
 import qualified Game.Sxako.Cli.Render as Render
+import qualified Game.Sxako.Cli.Stockfish as Stockfish
 import System.Environment
 import System.Exit
 
@@ -23,4 +24,5 @@ main =
   where
     handlers =
       [ ("render", Render.subCmdMain)
+      , ("stockfish", Stockfish.subCmdMain)
       ]

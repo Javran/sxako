@@ -123,7 +123,7 @@ subCmdMain cmdHelpPrefix =
                 then pure cur'
                 else loop cur') Nothing
             putStrLn $ "  multipv " <> show pvId <> ": " <> show ply
-            putStrLn $ "    result: " <> endFenRaw
+            putStrLn $ "    result: " <> show (read @Record endFenRaw)
           pure ()
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"

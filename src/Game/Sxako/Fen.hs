@@ -71,6 +71,11 @@ encodeFen
 instance Show Record where
   show = encodeFen
 
+instance Read Record where
+  readsPrec _ raw = case parseOnly ((,) <$> fenP <*> takeByteString) (BSC.pack raw) of
+    Left msg -> fail msg
+    Right (r, left) -> [(r, BSC.unpack left)]
+
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 rawDragonBoard = "r1bqkbnr/pp1ppp1p/2n3p1/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 0 5"

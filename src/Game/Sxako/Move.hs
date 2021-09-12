@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
@@ -19,6 +20,7 @@ import Game.Sxako.Castling
 import Game.Sxako.Coord
 import Game.Sxako.Fen
 import Game.Sxako.Types
+import Text.ParserCombinators.ReadP
 
 {-
   Move from one coord to another.
@@ -34,7 +36,25 @@ data Ply
       , pTo :: Coord
       , pPiece :: PieceType
       }
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
+
+instance Show Ply where
+  show p =
+    show (pFrom p) <> show (pTo p) <> case p of
+      PlyNorm {} -> ""
+      PlyPromo {pPiece} -> [pieceToChar (Black, pPiece)]
+
+instance Read Ply where
+  readsPrec _ = readP_to_S $ do
+    let getCoord = readS_to_P @Coord reads
+    pFrom <- getCoord
+    pTo <- getCoord
+    look >>= \case
+      ch : _
+        | ch `elem` "nbrq"
+          , Just (_, pPiece) <- charToPiece ch ->
+          PlyPromo {pFrom, pTo, pPiece} <$ get
+      _ -> pure PlyNorm {pFrom, pTo}
 
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do

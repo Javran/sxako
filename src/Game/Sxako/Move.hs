@@ -335,6 +335,15 @@ pawnPlies
           guard isHomeRank
           Just pNext2 <- pure (nextCoord advanceDir pNext)
           guard $ not (testBoard bothOccupied pNext2)
+          let couldCaptureSq = do
+                Just cSq <-
+                  withRankAndFile @Int
+                    pNext2
+                    (\rInd fInd ->
+                       fromRankAndFile rInd <$> [fInd -1, fInd + 1])
+                case at bd1 cSq of
+                  Just (c, Pawn) | c == opposite activeColor -> pure cSq
+                  _ -> []
           finalize
             EPKeep
             HMReset
@@ -344,7 +353,9 @@ pawnPlies
                   setBoardAt (activeColor, Pawn) pNext2 True bd1
               , enPassantTarget =
                   -- google en passant
-                  Just pNext
+                  if null couldCaptureSq
+                    then Nothing
+                    else Just pNext
               }
       captures = do
         captureDir <- captureDirs

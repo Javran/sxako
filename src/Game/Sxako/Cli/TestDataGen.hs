@@ -140,6 +140,7 @@ subCmdMain cmdHelpPrefix =
             putStrLn $ "    sf result: " <> show sfRecord
             putStrLn $ "    my result: " <> show (myImplLegalPlies M.! ply)
             pure (ply, sfRecord)
+          print (M.fromList sfPairs == legalPlies tdPosition)
           pure td {tdPayload = LegalPlies (Just . M.fromList $ sfPairs )}
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"

@@ -267,7 +267,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
             \__P_P___|\
             \________|\
             \____p_pP|\
-            \___p____|\
+            \__pp____|\
             \__p_____|\
             \_PPPP___|\
             \____K___"
@@ -289,7 +289,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_P___|\
         \________|\
         \____p_pP|\
-        \___p____|\
+        \__pp____|\
         \_Pp_____|\
         \__PPP___|\
         \____K___"
@@ -302,7 +302,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
           \__P_P___|\
           \________|\
           \____p_pP|\
-          \_P_p____|\
+          \_Ppp____|\
           \__p_____|\
           \__PPP___|\
           \____K___"
@@ -322,7 +322,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_P___|\
         \________|\
         \____p_pP|\
-        \___p____|\
+        \__pp____|\
         \__pP____|\
         \_PP_P___|\
         \____K___"
@@ -337,7 +337,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_P___|\
         \________|\
         \____p_pP|\
-        \___p____|\
+        \__pp____|\
         \__P_____|\
         \_PP_P___|\
         \____K___"
@@ -349,7 +349,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_P___|\
         \_______P|\
         \____p_p_|\
-        \___p____|\
+        \__pp____|\
         \__p_____|\
         \_PPPP___|\
         \____K___"
@@ -364,7 +364,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \____P___|\
         \________|\
         \____p_pP|\
-        \___p____|\
+        \__pp____|\
         \__p_____|\
         \_PPPP___|\
         \____K___"
@@ -376,7 +376,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_____|\
         \________|\
         \____p_pP|\
-        \___p____|\
+        \__pp____|\
         \__p_____|\
         \_PPPP___|\
         \____K___"
@@ -388,7 +388,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         \__P_P___|\
         \______P_|\
         \____p___|\
-        \___p____|\
+        \__pp____|\
         \__p_____|\
         \_PPPP___|\
         \____K___"
@@ -398,7 +398,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
             "____k___|\
             \_____p__|\
             \__p_____|\
-            \___P____|\
+            \___P__P_|\
             \pP______|\
             \________|\
             \p_______|\
@@ -420,7 +420,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         "____k___|\
         \________|\
         \__p__p__|\
-        \___P____|\
+        \___P__P_|\
         \pP______|\
         \________|\
         \p_______|\
@@ -433,7 +433,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
           "____k___|\
           \________|\
           \__p_____|\
-          \___P_p__|\
+          \___P_pP_|\
           \pP______|\
           \________|\
           \p_______|\
@@ -447,7 +447,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         "____k___|\
         \_____p__|\
         \________|\
-        \___p____|\
+        \___p__P_|\
         \pP______|\
         \________|\
         \p_______|\
@@ -462,7 +462,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         "____k___|\
         \_____p__|\
         \__p_____|\
-        \___P____|\
+        \___P__P_|\
         \pP______|\
         \________|\
         \________|\
@@ -474,7 +474,7 @@ pawnPliesSpec = describe "pawnPlies" $ do
         "____k___|\
         \_____p__|\
         \__p_____|\
-        \___P____|\
+        \___P__P_|\
         \________|\
         \_p______|\
         \p_______|\

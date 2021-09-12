@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -39,13 +40,36 @@ data Record = Record
   , halfMove :: Int
   , fullMove :: Int
   }
-  deriving (Show)
 
 instance FromJSON Record where
   parseJSON = withText "FEN" $ \t ->
     case parseOnly fenP (encodeUtf8 t) of
       Left msg -> fail msg
       Right r -> pure r
+
+encodeFen :: Record -> String
+encodeFen
+  Record
+    { placement
+    , activeColor
+    , castling
+    , enPassantTarget
+    , halfMove
+    , fullMove
+    } =
+    unwords
+      [ show placement
+      , case activeColor of
+          White -> "w"
+          Black -> "b"
+      , show castling
+      , maybe "-" show enPassantTarget
+      , show halfMove
+      , show fullMove
+      ]
+
+instance Show Record where
+  show = encodeFen
 
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

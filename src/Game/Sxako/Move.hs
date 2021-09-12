@@ -11,9 +11,11 @@ module Game.Sxako.Move
 where
 
 import Control.Monad
+import Data.Aeson
 import Data.Bits
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import qualified Data.Text as T
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
@@ -55,6 +57,11 @@ instance Read Ply where
           , Just (_, pPiece) <- charToPiece ch ->
           PlyPromo {pFrom, pTo, pPiece} <$ get
       _ -> pure PlyNorm {pFrom, pTo}
+
+instance FromJSON Ply where
+  parseJSON = withText "Ply" $ \t -> do
+    [(p, "")] <- pure $ reads (T.unpack t)
+    pure p
 
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do

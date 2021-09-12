@@ -164,6 +164,10 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
  -}
 type PlyGen = Record -> Coord -> [(Ply, Record)]
 
+data EnPassantReset = EPKeep | EPClear
+
+data HalfMoveReset = HMIncr | HMReset
+
 {-
   All PlyGen must be finalized with this function.
 
@@ -172,11 +176,14 @@ type PlyGen = Record -> Coord -> [(Ply, Record)]
     (dealing with absolute pins).
   - it updates `activeColor`, `castling`, `enPassantTarget`, `halfMove` and `fullMove`.
 
+  TODO: it appears that stockfish does not add en passant target if the capture isn't possible,
+  we might consider processing enPassantTarget in finalizer as well.
+
  -}
-finalize :: Bool -> Bool -> Ply -> Record -> [(Ply, Record)]
+finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> [(Ply, Record)]
 finalize
-  clearEnPassant
-  resetHalfMove
+  epReset
+  hmReset
   ply
   r@Record
     { placement = bd
@@ -233,8 +240,14 @@ finalize
       , r
           { activeColor = oppoColor
           , castling = castling'
-          , enPassantTarget = if clearEnPassant then Nothing else enPassantTarget
-          , halfMove = if resetHalfMove then 0 else halfMove + 1
+          , enPassantTarget =
+              case epReset of
+                EPKeep -> enPassantTarget
+                EPClear -> Nothing
+          , halfMove =
+              case hmReset of
+                HMIncr -> halfMove + 1
+                HMReset -> 0
           , fullMove = if activeColor == Black then fullMove + 1 else fullMove
           }
       )
@@ -297,8 +310,8 @@ pawnPlies
           then do
             pPiece <- promoTargets
             finalize
-              True
-              True
+              EPClear
+              HMReset
               PlyPromo {pFrom, pTo = pNext, pPiece}
               record
                 { placement =
@@ -306,8 +319,8 @@ pawnPlies
                 }
           else
             finalize
-              True
-              True
+              EPClear
+              HMReset
               PlyNorm {pFrom, pTo = pNext}
               record
                 { placement =
@@ -323,8 +336,8 @@ pawnPlies
           Just pNext2 <- pure (nextCoord advanceDir pNext)
           guard $ not (testBoard bothOccupied pNext2)
           finalize
-            False
-            True
+            EPKeep
+            HMReset
             PlyNorm {pFrom, pTo = pNext2}
             record
               { placement =
@@ -343,8 +356,8 @@ pawnPlies
         -- handle promotion first then remove captured opponent piece.
         (ply, record'@Record {placement = bd2}) <- moveToMightPromo pNext
         finalize
-          True
-          True
+          EPClear
+          HMReset
           ply
           record'
             { placement =
@@ -388,10 +401,10 @@ knightPlies
     guard $ not (testBoard occupied pTo)
     let bd2 = setBoardAt (activeColor, Knight) pTo True bd1
         (bd3, hmReset) = case at bd0 pTo of
-          Nothing -> (bd2, False)
-          Just p -> (setBoardAt p pTo False bd2, True)
+          Nothing -> (bd2, HMIncr)
+          Just p -> (setBoardAt p pTo False bd2, HMReset)
     finalize
-      True
+      EPClear
       hmReset
       PlyNorm {pFrom, pTo}
       record {placement = bd3}
@@ -409,7 +422,7 @@ oneDirPlies
   record@Record {placement = bd0, activeColor}
   pFrom = do
     let bd1 = setBoardAt (activeColor, pt) pFrom False bd0
-        fin = finalize True
+        fin = finalize EPClear
     case at bd1 curCoord of
       Just (targetColor, targetPt) ->
         if targetColor == activeColor
@@ -417,10 +430,10 @@ oneDirPlies
           else do
             let bd2 = setBoardAt (opposite activeColor, targetPt) curCoord False bd1
                 bd3 = setBoardAt (activeColor, pt) curCoord True bd2
-            fin True PlyNorm {pFrom, pTo = curCoord} record {placement = bd3}
+            fin HMReset PlyNorm {pFrom, pTo = curCoord} record {placement = bd3}
       Nothing -> do
         let bd2 = setBoardAt (activeColor, pt) curCoord True bd1
-        p <- fin False PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
+        p <- fin HMIncr PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
         [p]
           <> case nextCoord dir curCoord of
             Just c' -> oneDirPlies pt dir c' record pFrom
@@ -504,7 +517,7 @@ kingPlies
     }
   pFrom = normalKingPlies <> castlePlies
     where
-      fin = finalize True
+      fin = finalize EPClear
       bd1 = setBoardAt (activeColor, King) pFrom False bd0
       normalKingPlies = do
         {-
@@ -521,7 +534,7 @@ kingPlies
 
                 let bd3 = setBoardAt (opposite activeColor, targetPt) pTo False bd2
                  in fin
-                      True
+                      HMReset
                       PlyNorm {pFrom, pTo}
                       record
                         { placement = bd3
@@ -529,7 +542,7 @@ kingPlies
           Nothing ->
             -- a simple move.
             fin
-              False
+              HMIncr
               PlyNorm {pFrom, pTo}
               record
                 { placement = bd2
@@ -559,4 +572,4 @@ kingPlies
                 . setBoardAt (activeColor, Rook) rookTo True
                 . setBoardAt (activeColor, King) kingTo True
                 $ bd1
-        fin False (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling}
+        fin HMIncr (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling}

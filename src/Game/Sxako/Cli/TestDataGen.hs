@@ -21,6 +21,14 @@ import System.Exit
 import System.IO
 import System.Process.Typed
 
+{-
+  TODO: "follow" mode is not supported for now, as it might require:
+  - pgn parsing
+  - converting algebratic notation into the long form that Ply can recognize
+    (this is non-trivial as whether a ply is valid and unambiguous depends
+    on the current state of the board).
+ -}
+
 data TestPayload
   = -- | all legal moves and their resulting positions should match.
     LegalPlies (Maybe (M.Map Ply Record))

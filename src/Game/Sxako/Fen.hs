@@ -39,7 +39,7 @@ data Record = Record
   , enPassantTarget :: Maybe Coord
   , halfMove :: Int
   , fullMove :: Int
-  }
+  } deriving (Eq)
 
 instance FromJSON Record where
   parseJSON = withText "FEN" $ \t ->

@@ -91,7 +91,7 @@ subCmdMain cmdHelpPrefix =
     [inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \hIn hOut ->
-        forM_ tests $ \TestData {tdPosition} -> do
+        forM_ tests $ \td@TestData {tdPosition} -> do
           hPutStrLn hIn $ "position fen " <> show tdPosition
           putStrLn $ "Sending position: " <> show tdPosition
           hPutStrLn hIn "go depth 1"
@@ -117,22 +117,30 @@ subCmdMain cmdHelpPrefix =
                       putStrLn $ "Parse failed, only collected: " <> show m
                       exitFailure
                     Just v -> pure v
+              myImplLegalPlies = legalPlies tdPosition
           sfLegalPlies <- collectInfo >>= mapM dbgParse
-          forM_ sfLegalPlies $ \(pvId, ply) -> do
-            hPutStrLn hIn $ "position fen " <> show tdPosition <> " moves "  <> show ply
+          sfPairs <- forM sfLegalPlies $ \(pvId, ply) -> do
+            hPutStrLn hIn $ "position fen " <> show tdPosition <> " moves " <> show ply
             hPutStrLn hIn "d"
-            Just endFenRaw <- fix (\ loop cur -> do
-              raw <- hGetLine hOut
-              let cur' = cur <|> do
-                                   guard $ "Fen: " `isPrefixOf` raw
-                                   Just (drop 5 raw)
-              -- very ugly way of checking end of the response, but I don't have anything better.
-              if "Checkers: " `isPrefixOf` raw
-                then pure cur'
-                else loop cur') Nothing
+            Just endFenRaw <-
+              fix
+                (\loop cur -> do
+                   raw <- hGetLine hOut
+                   let cur' =
+                         cur <|> do
+                           guard $ "Fen: " `isPrefixOf` raw
+                           Just (drop 5 raw)
+                   -- very ugly way of checking end of the response, but I don't have anything better.
+                   if "Checkers: " `isPrefixOf` raw
+                     then pure cur'
+                     else loop cur')
+                Nothing
             putStrLn $ "  multipv " <> show pvId <> ": " <> show ply
-            putStrLn $ "    result: " <> show (read @Record endFenRaw)
-          pure ()
+            let sfRecord = read @Record endFenRaw
+            putStrLn $ "    sf result: " <> show sfRecord
+            putStrLn $ "    my result: " <> show (myImplLegalPlies M.! ply)
+            pure (ply, sfRecord)
+          pure td {tdPayload = LegalPlies (Just . M.fromList $ sfPairs )}
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"
       exitFailure

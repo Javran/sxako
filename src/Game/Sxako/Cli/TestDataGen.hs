@@ -81,64 +81,67 @@ parseInfo = \case
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
-    ["from-lichess", inputFp] -> do
+    ["from-lichess", _inputFp] -> do
       pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \hIn hOut ->
         forM_ tests $ \td@TestData {tdPosition} -> do
-          hPutStrLn hIn $ "position fen " <> show tdPosition
-          putStrLn $ "Sending position: " <> show tdPosition
-          hPutStrLn hIn "go depth 1"
-          let collectInfo :: IO [[] String]
-              collectInfo = do
-                raw <- hGetLine hOut
-                let ws = words raw
-                if
-                    | "bestmove" `isPrefixOf` raw -> pure []
-                    | ["info", "string"] `isPrefixOf` ws -> collectInfo
-                    | ["info"] `isPrefixOf` ws -> (tail ws :) <$> collectInfo
-                    | otherwise -> collectInfo
-
-              dbgParse :: [String] -> IO (Int, Ply)
-              dbgParse xs = case parseInfo xs of
-                Left msg -> do
-                  putStrLn $ "Parse failed for input: " <> show xs
-                  putStrLn $ "Reason: " <> msg
-                  exitFailure
-                Right m@(Last ma, Last mb) ->
-                  case (,) <$> ma <*> mb of
-                    Nothing -> do
-                      putStrLn $ "Parse failed, only collected: " <> show m
-                      exitFailure
-                    Just v -> pure v
-              myImplLegalPlies = legalPlies tdPosition
-          sfLegalPlies <- collectInfo >>= mapM dbgParse
-          sfPairs <- forM sfLegalPlies $ \(pvId, ply) -> do
-            hPutStrLn hIn $ "position fen " <> show tdPosition <> " moves " <> show ply
-            hPutStrLn hIn "d"
-            Just endFenRaw <-
-              fix
-                (\loop cur -> do
-                   raw <- hGetLine hOut
-                   let cur' =
-                         cur <|> do
-                           guard $ "Fen: " `isPrefixOf` raw
-                           Just (drop 5 raw)
-                   -- very ugly way of checking end of the response, but I don't have anything better.
-                   if "Checkers: " `isPrefixOf` raw
-                     then pure cur'
-                     else loop cur')
-                Nothing
-            putStrLn $ "  multipv " <> show pvId <> ": " <> show ply
-            let sfRecord = read @Record endFenRaw
-            putStrLn $ "    sf result: " <> show sfRecord
-            putStrLn $ "    my result: " <> show (myImplLegalPlies M.! ply)
-            pure (ply, sfRecord)
-          pure td {tdLegalPlies = Just . M.fromList $ sfPairs}
+          lps <- sfGetLegalPlies hIn hOut tdPosition
+          pure td { tdLegalPlies = Just lps }
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"
       exitFailure
+
+sfGetLegalPlies :: Handle -> Handle -> Record -> IO (M.Map Ply Record)
+sfGetLegalPlies hIn hOut pos = do
+  hPutStrLn hIn $ "position fen " <> show pos
+  putStrLn $ "Sending position: " <> show pos
+  hPutStrLn hIn "go depth 1"
+  let collectInfo :: IO [[] String]
+      collectInfo = do
+        raw <- hGetLine hOut
+        let ws = words raw
+        if
+            | "bestmove" `isPrefixOf` raw -> pure []
+            | ["info", "string"] `isPrefixOf` ws -> collectInfo
+            | ["info"] `isPrefixOf` ws -> (tail ws :) <$> collectInfo
+            | otherwise -> collectInfo
+
+      dbgParse :: [String] -> IO (Int, Ply)
+      dbgParse xs = case parseInfo xs of
+        Left msg -> do
+          putStrLn $ "Parse failed for input: " <> show xs
+          putStrLn $ "Reason: " <> msg
+          exitFailure
+        Right m@(Last ma, Last mb) ->
+          case (,) <$> ma <*> mb of
+            Nothing -> do
+              putStrLn $ "Parse failed, only collected: " <> show m
+              exitFailure
+            Just v -> pure v
+  sfLegalPlies <- collectInfo >>= mapM dbgParse
+  sfPairs <- forM sfLegalPlies $ \(pvId, ply) -> do
+    hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show ply
+    hPutStrLn hIn "d"
+    Just endFenRaw <-
+      fix
+        (\loop cur -> do
+           raw <- hGetLine hOut
+           let cur' =
+                 cur <|> do
+                   guard $ "Fen: " `isPrefixOf` raw
+                   Just (drop 5 raw)
+           -- very ugly way of checking end of the response, but I don't have anything better.
+           if "Checkers: " `isPrefixOf` raw
+             then pure cur'
+             else loop cur')
+        Nothing
+    putStrLn $ "  multipv " <> show pvId <> ": " <> show ply
+    let sfRecord = read @Record endFenRaw
+    putStrLn $ "    sf result: " <> show sfRecord
+    pure (ply, sfRecord)
+  pure . M.fromList $ sfPairs
 
 withStockfish :: (Handle -> Handle -> IO r) -> IO r
 withStockfish f = do

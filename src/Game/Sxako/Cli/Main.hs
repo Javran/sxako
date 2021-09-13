@@ -26,5 +26,5 @@ main =
     handlers =
       [ ("render", Render.subCmdMain)
       , ("stockfish", Stockfish.subCmdMain)
-      , ("testdatagen", TestDataGen.subCmdMain)
+      , ("testdata-gen", TestDataGen.subCmdMain)
       ]

@@ -22,24 +22,22 @@ import System.IO
 import System.Process.Typed
 
 {-
-  TODO: "follow" mode is not supported for now, as it might require:
-  - pgn parsing
-  - converting algebratic notation into the long form that Ply can recognize
-    (this is non-trivial as whether a ply is valid and unambiguous depends
-    on the current state of the board).
+  Let's do all testdata in one single format:
+
+  - tag: <any string>
+  - position: <FEN string>
+  - legal-plies (optional): when present, an object from long notation plies to new FEN string
+
+  If we want to "follw some game", all we need is a sequence of plies
+  and we can split then into such plie, applying one more ply at a time.
+
+  TODO: since we are importing from Lichess data, might as well consume their CSV format.
+
  -}
-
-data TestPayload
-  = -- | all legal moves and their resulting positions should match.
-    LegalPlies (Maybe (M.Map Ply Record))
-  | -- | follow along a game and expect resulting positions to match
-    Follow (Maybe [(Ply, Record)])
-  deriving (Show)
-
 data TestData = TestData
   { tdTag :: T.Text
   , tdPosition :: Record
-  , tdPayload :: TestPayload
+  , tdLegalPlies :: Maybe (M.Map Ply Record)
   }
   deriving (Show)
 
@@ -47,13 +45,8 @@ instance FromJSON TestData where
   parseJSON = withObject "TestData" $ \o -> do
     tdTag <- o .: "tag"
     tdPosition <- o .: "position"
-    mode <- o .: "mode"
-    tdPayload <-
-      if
-          | mode == "legal-plies" -> pure (LegalPlies Nothing)
-          | mode == "follow" -> pure (Follow Nothing)
-          | otherwise -> fail $ "Unknown mode: " <> mode
-    pure $ TestData {tdTag, tdPosition, tdPayload}
+    tdLegalPlies <- o .:? "legal-plies"
+    pure $ TestData {tdTag, tdPosition, tdLegalPlies}
 
 type PartialInfo = (Last Int, Last Ply)
 
@@ -88,7 +81,9 @@ parseInfo = \case
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
-    [inputFp] -> do
+    ["from-lichess", inputFp] -> do
+      pure ()
+    ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \hIn hOut ->
         forM_ tests $ \td@TestData {tdPosition} -> do
@@ -140,8 +135,7 @@ subCmdMain cmdHelpPrefix =
             putStrLn $ "    sf result: " <> show sfRecord
             putStrLn $ "    my result: " <> show (myImplLegalPlies M.! ply)
             pure (ply, sfRecord)
-          print (M.fromList sfPairs == legalPlies tdPosition)
-          pure td {tdPayload = LegalPlies (Just . M.fromList $ sfPairs )}
+          pure td {tdLegalPlies = Just . M.fromList $ sfPairs}
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"
       exitFailure

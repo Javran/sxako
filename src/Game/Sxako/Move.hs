@@ -63,6 +63,8 @@ instance FromJSON Ply where
     [(p, "")] <- pure $ reads (T.unpack t)
     pure p
 
+instance FromJSONKey Ply
+
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
   coord <- universe

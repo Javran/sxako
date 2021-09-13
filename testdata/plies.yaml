@@ -1,30 +1,20 @@
 - tag: Lichess V12r8
   position: Q7/5k2/2p1p3/K1BpPnP1/8/1P6/3q4/8 w - - 2 49
-  mode: legal-plies
 - tag: WdIHA
   position: 8/1p4k1/4p2p/3p2p1/3P2P1/1PR2P1n/5r2/4K3 b - - 3 42
-  mode: legal-plies
 - tag: Yg20f
   position: r1r3k1/5pbp/b1q3p1/3pp3/3B4/P1P2P2/P1BN1QPP/2KRR3 w - - 0 22
-  mode: legal-plies
 - tag: Lichess J5oxh
   position: 1r5k/7p/p3p2R/3pP3/2p2P2/q1P1P3/P1Q1K2R/1r6 b - - 4 31
-  mode: legal-plies
 - tag: Lichess w62O7
   position: r2qr1k1/ppp3p1/3p2pp/b7/3PP1b1/P3BN2/1PB2P2/R2Q1RK1 w - - 0 19
-  mode: legal-plies
 - tag: Lichess 8m3Ec
   position: 3r2k1/p3ppbp/2P3p1/8/2p2N2/5B1b/Pr2PP1P/R2R3K b - - 0 23
-  mode: legal-plies
 - tag: Lichess FUdzn
   position: r7/pp1nkp2/2p1pp2/8/3P2p1/3N2q1/PPPBBRP1/R2Q2Kr w - - 4 19
-  mode: legal-plies
 - tag: Lichess fJ3RR
   position: 5rk1/pp3ppp/8/3QBq2/1P2N3/P3PP2/2r4P/R5K1 b - - 0 22
-  mode: legal-plies
 - tag: Lichess IaFEb
   position: 1k6/pp5p/5p2/4p3/1Prq4/2Rp2P1/1P1Q1P1P/6K1 b - - 1 29
-  mode: legal-plies
 - tag: Lichess 38vyn
   position: 4r1k1/ppp2p1p/2n5/3B2p1/3P1B2/2P3Pq/PP1Q3n/RN4K1 w - - 0 18
-  mode: legal-plies

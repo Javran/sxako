@@ -1,15 +1,25 @@
-# (WIP) A standard Chess implementation
+# A standard Chess implementation
 
 This is a toy project to implement standard Chess for fun.
 
-For starter, let's just take the concept of [bitboard](https://en.wikipedia.org/wiki/Bitboard#Standard)
-and try to have an implementation of our own without relying on known designs.
+The project begins with just the concept of [bitboard](https://en.wikipedia.org/wiki/Bitboard#Standard),
+and gradually we'll explore known designs, learn and adapt them into this library.
 
-## Chess Font
+Project status: implementation is complete, tests are pending.
+
+Potential future plans:
+
+- Support UCI protocol therefore communication with Chess engines.
+- Support PGN files.
+- Solve well-known endgames with "textbook techniques" (in contrast to brute-forcing a shortest mating / drawing line)
+
+## Third-party data
+
+### Chess Font
 
 Font source: [Chess Mérida](http://www.enpassant.dk/chess/fonteng.htm),
 converted to SVG Font with fontforge.
 
-## Test data
+### Test data
 
 Some test data are randomly picked from [lichess.org open database](https://database.lichess.org/)

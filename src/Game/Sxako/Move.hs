@@ -81,6 +81,21 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
     _ -> []
 
 {-
+  TODO: implementation is not correct.
+
+  For now double pawn advance and plies that go in only one direction
+  is not implemented correctly:
+
+  The logic of both assume advancing n+1 steps is possibl
+  when advancing n steps is possible.
+  This is not true however: if a long ranged piece have to
+  go to some specific squares to cover a check (or a pawn
+  has to double advance to cover a check), those intermediate
+  squares won't be available.
+
+ -}
+
+{-
   Auxilary function to figure out squares being attacked.
 
   - It doesn't matter that much whether an occupied square should be

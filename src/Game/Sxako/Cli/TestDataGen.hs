@@ -21,6 +21,7 @@ import System.Environment
 import System.Exit
 import System.IO
 import System.Process.Typed
+import Text.ParserCombinators.ReadP
 
 {-
   Let's do all testdata in one single format:
@@ -92,13 +93,19 @@ subCmdMain cmdHelpPrefix =
               putStrLn $ "Expected 9 elements but " <> show actualLen <> " were found."
               exitFailure
             let pzId : fenRaw : movesRaw : _ = xs
-            case reads @Record fenRaw of
-              [(record, "")] -> do
-                putStrLn $ "PuzzleId: " <> pzId
-                putStrLn $ "FEN: " <> show record
-                putStrLn $ "Moves: " <> show (words movesRaw)
+                parsePlies ms = case readP_to_S (parser <* eof) ms of
+                  [(v, "")] -> pure v
+                  _ -> Nothing
+                  where
+                    parser = (readS_to_P @Ply reads) `sepBy1` char ' '
+            case (reads @Record fenRaw, parsePlies movesRaw) of
+              ([(record, "")], Just ms) ->
+                pure (pzId, record, ms)
               _ -> do
-                putStrLn $ "Failed to parse FEN: " <> fenRaw
+                putStrLn $ "Failed to parse FEN or moves."
+                putStrLn $ "Raw FEN: " <> fenRaw
+                putStrLn $ "Raw moves: " <> movesRaw
+                exitFailure
 
       {-
         TODO: read from CSV and generate YAML files:
@@ -109,6 +116,28 @@ subCmdMain cmdHelpPrefix =
         - ...
        -}
       puzzles <- mapM parseLine rawLines
+      let replayMoves = foldM go
+            where
+              go record m = case legalPlies record M.!? m of
+                Just r -> pure r
+                Nothing -> do
+                  putStrLn "Verification failed:"
+                  putStrLn $ "FEN: " <> show record
+                  putStrLn $ "Move " <> show m <> " is not available."
+                  exitFailure
+
+      forM_ puzzles $ \(pzId, record, ms) -> do
+        let recordFinalM = foldM go record ms
+              where
+                go recordCur m = do
+                  r <- legalPlies recordCur M.!? m
+                  pure r
+        r' <- replayMoves record ms
+        putStrLn $ "Puzzle: " <> pzId
+        putStrLn $ "  FEN: " <> show record
+        putStrLn $ "  Moves: " <> show ms
+        putStrLn $ "  After: " <> show recordFinalM
+
       pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp

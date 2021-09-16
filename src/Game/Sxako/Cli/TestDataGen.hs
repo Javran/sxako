@@ -10,6 +10,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Function
 import Data.List
+import Data.List.Split
 import qualified Data.Map.Strict as M
 import Data.Monoid
 import qualified Data.Text as T
@@ -81,14 +82,40 @@ parseInfo = \case
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
-    ["from-lichess", _inputFp] -> do
+    ["from-lichess", inputFp] -> do
+      rawLines <- lines <$> readFile inputFp
+      let parseLine raw = do
+            let xs = splitOn "," raw
+                actualLen = length xs
+            unless (actualLen == 9) $ do
+              putStrLn $ "Cannot parse:" <> raw
+              putStrLn $ "Expected 9 elements but " <> show actualLen <> " were found."
+              exitFailure
+            let pzId : fenRaw : movesRaw : _ = xs
+            case reads @Record fenRaw of
+              [(record, "")] -> do
+                putStrLn $ "PuzzleId: " <> pzId
+                putStrLn $ "FEN: " <> show record
+                putStrLn $ "Moves: " <> show (words movesRaw)
+              _ -> do
+                putStrLn $ "Failed to parse FEN: " <> fenRaw
+
+      {-
+        TODO: read from CSV and generate YAML files:
+
+        - tag: Lichess Puzzle {id}, {0}/{n}: init
+        - tag: Lichess Puzzle {id}, {1}/{n}: {ply 1}
+        - tag: Lichess Puzzle {id}, {2}/{n}: {ply 2}
+        - ...
+       -}
+      puzzles <- mapM parseLine rawLines
       pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \hIn hOut ->
         forM_ tests $ \td@TestData {tdPosition} -> do
           lps <- sfGetLegalPlies hIn hOut tdPosition
-          pure td { tdLegalPlies = Just lps }
+          pure td {tdLegalPlies = Just lps}
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<testdata>"
       exitFailure

@@ -7,7 +7,6 @@ where
 
 import Control.Monad
 import qualified Game.Sxako.Cli.Render as Render
-import qualified Game.Sxako.Cli.Stockfish as Stockfish
 import qualified Game.Sxako.Cli.TestDataGen as TestDataGen
 import System.Environment
 import System.Exit
@@ -25,6 +24,5 @@ main =
   where
     handlers =
       [ ("render", Render.subCmdMain)
-      , ("stockfish", Stockfish.subCmdMain)
       , ("testdata-gen", TestDataGen.subCmdMain)
       ]

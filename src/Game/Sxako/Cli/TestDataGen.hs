@@ -119,9 +119,7 @@ subCmdMain cmdHelpPrefix =
       let replayMoves = foldM go
             where
               go record m = case legalPlies record M.!? m of
-                Just r -> do
-                  putStrLn $ "> Ply: " <> show m
-                  putStrLn $ "> FEN: " <> show r
+                Just r ->
                   pure r
                 Nothing -> do
                   putStrLn "Verification failed:"

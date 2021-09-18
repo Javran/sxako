@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, TypeApplications #-}
 
 module Game.Sxako.MoveSpec where
 
@@ -21,6 +21,7 @@ spec = do
   rookPliesSpec
   queenPliesSpec
   kingPliesSpec
+  examplesSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -1168,3 +1169,12 @@ castlePliesSpec = describe "kingPlies (castle)" $ do
         \________|\
         \PPP__PPP|\
         \R___K__R"
+
+examplesSpec :: Spec
+examplesSpec =
+  describe "Examples" $
+    specify "example #0" $ do
+      let r = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP1p3/5RPP/6K1 b - - 0 26"
+          rAfter = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
+          mbd' = legalPlies r M.!? read "e3f2"
+      mbd' `shouldBe` Just rAfter

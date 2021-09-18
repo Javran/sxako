@@ -207,7 +207,7 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
   we might consider processing enPassantTarget in finalizer as well.
 
  -}
-finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> [(Ply, Record)]
+finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)
 finalize
   epReset
   hmReset
@@ -218,7 +218,7 @@ finalize
     , enPassantTarget
     , halfMove
     , fullMove
-    } = do
+    } =
     let oppoColor = opposite activeColor
         plyTo = pTo ply
         plyFrom = pFrom ply
@@ -247,22 +247,21 @@ finalize
                     | plyFrom == a8 -> castling `minusCastleRight` blackQueenSide
                     | plyFrom == h8 -> castling `minusCastleRight` blackKingSide
                     | otherwise -> castling
-    pure
-      ( ply
-      , r
-          { activeColor = oppoColor
-          , castling = castling'
-          , enPassantTarget =
-              case epReset of
-                EPKeep -> enPassantTarget
-                EPClear -> Nothing
-          , halfMove =
-              case hmReset of
-                HMIncr -> halfMove + 1
-                HMReset -> 0
-          , fullMove = if activeColor == Black then fullMove + 1 else fullMove
-          }
-      )
+     in ( ply
+        , r
+            { activeColor = oppoColor
+            , castling = castling'
+            , enPassantTarget =
+                case epReset of
+                  EPKeep -> enPassantTarget
+                  EPClear -> Nothing
+            , halfMove =
+                case hmReset of
+                  HMIncr -> halfMove + 1
+                  HMReset -> 0
+            , fullMove = if activeColor == Black then fullMove + 1 else fullMove
+            }
+        )
 
 {-
   Pawn moves:
@@ -317,31 +316,33 @@ pawnPlies
               , wOccupied
               )
       -- move pawn to target also handle potential promotion.
-      moveToMightPromo pNext =
+      moveToMightPromo pNext curBd =
         if isNextPromo
           then do
             pPiece <- promoTargets
-            finalize
-              EPClear
-              HMReset
-              PlyPromo {pFrom, pTo = pNext, pPiece}
-              record
-                { placement =
-                    setBoardAt (activeColor, pPiece) pNext True bd1
-                }
+            pure $
+              finalize
+                EPClear
+                HMReset
+                PlyPromo {pFrom, pTo = pNext, pPiece}
+                record
+                  { placement =
+                      setBoardAt (activeColor, pPiece) pNext True curBd
+                  }
           else
-            finalize
-              EPClear
-              HMReset
-              PlyNorm {pFrom, pTo = pNext}
-              record
-                { placement =
-                    setBoardAt (activeColor, Pawn) pNext True bd1
-                }
+            pure $
+              finalize
+                EPClear
+                HMReset
+                PlyNorm {pFrom, pTo = pNext}
+                record
+                  { placement =
+                      setBoardAt (activeColor, Pawn) pNext True curBd
+                  }
       advances = do
         Just pNext <- pure (nextCoord advanceDir pFrom)
         guard $ not (testBoard bothOccupied pNext)
-        let pNextPlies = moveToMightPromo pNext
+        let pNextPlies = moveToMightPromo pNext bd1
         pNextPlies <> do
           -- double advance.
           guard isHomeRank
@@ -356,19 +357,20 @@ pawnPlies
                 case at bd1 cSq of
                   Just (c, Pawn) | c == opposite activeColor -> pure cSq
                   _ -> []
-          finalize
-            EPKeep
-            HMReset
-            PlyNorm {pFrom, pTo = pNext2}
-            record
-              { placement =
-                  setBoardAt (activeColor, Pawn) pNext2 True bd1
-              , enPassantTarget =
-                  -- google en passant
-                  if null couldCaptureSq
-                    then Nothing
-                    else Just pNext
-              }
+          pure $
+            finalize
+              EPKeep
+              HMReset
+              PlyNorm {pFrom, pTo = pNext2}
+              record
+                { placement =
+                    setBoardAt (activeColor, Pawn) pNext2 True bd1
+                , enPassantTarget =
+                    -- google en passant
+                    if null couldCaptureSq
+                      then Nothing
+                      else Just pNext
+                }
       captures = do
         captureDir <- captureDirs
         Just pNext <- pure (nextCoord captureDir pFrom)
@@ -377,30 +379,25 @@ pawnPlies
             oppoColor = opposite activeColor
         guard $ testBoard opponentOccupied pNext || isEnPassant
         -- handle promotion first then remove captured opponent piece.
-        (ply, record'@Record {placement = bd2}) <- moveToMightPromo pNext
-        finalize
-          EPClear
-          HMReset
-          ply
-          record'
-            { placement =
-                if isEnPassant
-                  then -- holy hell
+        let bd2 =
+              if isEnPassant
+                then -- holy hell
 
-                    let Just epCaptureSq =
-                          withRankAndFile @Int
-                            pNext
-                            (\rInd fInd ->
-                               fromRankAndFile
-                                 (case oppoColor of
-                                    White -> rInd + 1
-                                    Black -> rInd -1)
-                                 fInd)
-                     in setBoardAt (oppoColor, Pawn) epCaptureSq False bd2
-                  else
-                    let Just p = targetSq
-                     in setBoardAt p pNext False bd2
-            }
+                  let Just epCaptureSq =
+                        withRankAndFile @Int
+                          pNext
+                          (\rInd fInd ->
+                             fromRankAndFile
+                               (case oppoColor of
+                                  White -> rInd + 1
+                                  Black -> rInd -1)
+                               fInd)
+                   in setBoardAt (oppoColor, Pawn) epCaptureSq False bd1
+                else
+                  let Just p = targetSq
+                   in setBoardAt p pNext False bd1
+
+        moveToMightPromo pNext bd2
 
 knightPlies :: PlyGen
 knightPlies
@@ -426,11 +423,12 @@ knightPlies
         (bd3, hmReset) = case at bd0 pTo of
           Nothing -> (bd2, HMIncr)
           Just p -> (setBoardAt p pTo False bd2, HMReset)
-    finalize
-      EPClear
-      hmReset
-      PlyNorm {pFrom, pTo}
-      record {placement = bd3}
+    pure $
+      finalize
+        EPClear
+        hmReset
+        PlyNorm {pFrom, pTo}
+        record {placement = bd3}
 
 {-
   Goes in one direction when the square is empty.
@@ -453,10 +451,10 @@ oneDirPlies
           else do
             let bd2 = setBoardAt (opposite activeColor, targetPt) curCoord False bd1
                 bd3 = setBoardAt (activeColor, pt) curCoord True bd2
-            fin HMReset PlyNorm {pFrom, pTo = curCoord} record {placement = bd3}
+            pure $ fin HMReset PlyNorm {pFrom, pTo = curCoord} record {placement = bd3}
       Nothing -> do
         let bd2 = setBoardAt (activeColor, pt) curCoord True bd1
-        p <- fin HMIncr PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
+            p = fin HMIncr PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
         {- TODO: probably bug here resulting in color not flipping? -}
         [p]
           <> case nextCoord dir curCoord of
@@ -557,20 +555,22 @@ kingPlies
               else -- capture.
 
                 let bd3 = setBoardAt (opposite activeColor, targetPt) pTo False bd2
-                 in fin
-                      HMReset
-                      PlyNorm {pFrom, pTo}
-                      record
-                        { placement = bd3
-                        }
+                 in pure $
+                      fin
+                        HMReset
+                        PlyNorm {pFrom, pTo}
+                        record
+                          { placement = bd3
+                          }
           Nothing ->
             -- a simple move.
-            fin
-              HMIncr
-              PlyNorm {pFrom, pTo}
-              record
-                { placement = bd2
-                }
+            pure $
+              fin
+                HMIncr
+                PlyNorm {pFrom, pTo}
+                record
+                  { placement = bd2
+                  }
       castlePlies = do
         side <- [KingSide, QueenSide]
         let (wOccupied, bOccupied) = infoOccupied bd1
@@ -596,4 +596,4 @@ kingPlies
                 . setBoardAt (activeColor, Rook) rookTo True
                 . setBoardAt (activeColor, King) kingTo True
                 $ bd1
-        fin HMIncr (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling}
+        pure $ fin HMIncr (PlyNorm {pFrom, pTo = kingTo}) record {placement = bd2, castling}

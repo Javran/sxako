@@ -18,6 +18,26 @@ import System.Exit
 import Text.ParserCombinators.ReadP
 
 {-
+  Note on generating testdata:
+
+  (TODO: not implemented yet)
+  We are making test cases with Lichess puzzles as input:
+
+  For each puzzle, we follow along the move list and snapshot all legal moves
+  as we proceed and those snapshots are recorded as testdata.
+
+  It is worth noting that we are actually generating testdata
+  while verifying it against our own implementation.
+  This is because UCI protocol does not have a good way of reporting illegal moves,
+  so we have to be careful with each step to ensure that both UCI engine
+  and our implementation are fed with the same input FEN.
+
+  The fact that testdata generation does the actual test is a bit unfortunate,
+  but I can't think of any simple and better way at the moment.
+
+ -}
+
+{-
   Let's do all testdata in one single format:
 
   - tag: <any string>

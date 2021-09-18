@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -6,6 +7,7 @@
  -}
 module Game.Sxako.Coord
   ( Coord
+  , toWord8
   , unsafeFromRankAndFile
   , fromRankAndFile
   , withRankAndFile
@@ -36,12 +38,13 @@ where
 import Control.Monad
 import Data.Bits
 import Data.Char
+import Data.Hashable
 import Data.List
 import Data.List.Split
 import Data.Word
 import Game.Sxako.Bitboard
-import Text.ParserCombinators.ReadP
 import Game.Sxako.Types
+import Text.ParserCombinators.ReadP
 
 {-
   INVARIANT: Word8 but only takes the value 0~63 (inclusive).
@@ -49,7 +52,11 @@ import Game.Sxako.Types
   - low bits (0~2) represents file
   - high bits (3~5) represents rank
  -}
-newtype Coord = Coord Word8 deriving (Eq, Ord)
+newtype Coord = Coord Word8
+  deriving (Eq, Ord, Hashable) via Word8
+
+toWord8 :: Coord -> Word8
+toWord8 (Coord c) = c
 
 {-
   Direction for Coords to move to next.

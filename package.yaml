@@ -26,6 +26,7 @@ dependencies:
 - aeson
 - yaml
 - text
+- hashable
 
 data-files: 
 - data/ChessMerida.svg

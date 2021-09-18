@@ -13,13 +13,15 @@ where
 import Control.Monad
 import Data.Aeson
 import Data.Bits
+import Data.Hashable
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
+import Data.Word
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
-import Game.Sxako.Coord
+import Game.Sxako.Coord as Coord
 import Game.Sxako.Fen
 import Game.Sxako.Types
 import Text.ParserCombinators.ReadP
@@ -39,6 +41,22 @@ data Ply
       , pPiece :: PieceType
       }
   deriving (Eq, Ord)
+
+{-
+  Encode a Ply for hashing
+ -}
+encodePlyForHash :: Ply -> Word32
+encodePlyForHash p = hFrom .|. shiftL hTo 8 .|. shiftL hTy 16
+  where
+    hFrom = fromIntegral $ Coord.toWord8 (pFrom p)
+    hTo = fromIntegral $ Coord.toWord8 (pTo p)
+    hTy = case p of
+      PlyNorm {} -> 0xFF
+      PlyPromo {pPiece} -> fromIntegral (fromEnum pPiece)
+
+instance Hashable Ply where
+  hash = hash @Word32 . encodePlyForHash
+  hashWithSalt s v = hashWithSalt @Word32 s (encodePlyForHash v)
 
 instance Show Ply where
   show p =

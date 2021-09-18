@@ -206,6 +206,8 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
   TODO: it appears that stockfish does not add en passant target if the capture isn't possible,
   we might consider processing enPassantTarget in finalizer as well.
 
+  TODO: would `Mono Record` be more concise than providing option as ADT values?
+
  -}
 finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)
 finalize
@@ -378,7 +380,6 @@ pawnPlies
             targetSq = at bd1 pNext
             oppoColor = opposite activeColor
         guard $ testBoard opponentOccupied pNext || isEnPassant
-        -- handle promotion first then remove captured opponent piece.
         let bd2 =
               if isEnPassant
                 then -- holy hell
@@ -455,7 +456,6 @@ oneDirPlies
       Nothing -> do
         let bd2 = setBoardAt (activeColor, pt) curCoord True bd1
             p = fin HMIncr PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
-        {- TODO: probably bug here resulting in color not flipping? -}
         [p]
           <> case nextCoord dir curCoord of
             Just c' -> oneDirPlies pt dir c' record pFrom

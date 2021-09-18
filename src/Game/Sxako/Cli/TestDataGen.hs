@@ -102,7 +102,7 @@ subCmdMain cmdHelpPrefix =
       puzzles <- mapM parseLine rawLines
       let replayMoves = foldM go
             where
-              go record m = case legalPlies record M.!? m of
+              go record m = case legalPliesMap record M.!? m of
                 Just r ->
                   pure r
                 Nothing -> do
@@ -115,7 +115,7 @@ subCmdMain cmdHelpPrefix =
         let recordFinalM = foldM go record ms
               where
                 go recordCur m = do
-                  r <- legalPlies recordCur M.!? m
+                  r <- legalPliesMap recordCur M.!? m
                   pure r
         putStrLn $ "Puzzle: " <> pzId
         putStrLn $ "  FEN: " <> show record

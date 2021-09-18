@@ -1,4 +1,5 @@
-{-# LANGUAGE RecordWildCards, TypeApplications #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.MoveSpec where
 
@@ -247,7 +248,7 @@ data TestUtils = TestUtils
 mkTestUtils :: Record -> TestUtils
 mkTestUtils record = TestUtils {..}
   where
-    plyTable = legalPlies record
+    plyTable = legalPliesMap record
     expectSuccess tag ply withRecord =
       specify tag $
         case plyTable M.!? ply of
@@ -1176,5 +1177,5 @@ examplesSpec =
     specify "example #0" $ do
       let r = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP1p3/5RPP/6K1 b - - 0 26"
           rAfter = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
-          mbd' = legalPlies r M.!? read "e3f2"
+          mbd' = legalPliesMap r M.!? read "e3f2"
       mbd' `shouldBe` Just rAfter

@@ -7,6 +7,7 @@ module Game.Sxako.Move
   ( Ply (..)
   , attackingSquares
   , legalPlies
+  , legalPliesMap
   )
 where
 
@@ -51,7 +52,7 @@ encodePlyForHash p = hFrom .|. shiftL hTo 8 .|. shiftL hTy 16
     hFrom = fromIntegral $ Coord.toWord8 (pFrom p)
     hTo = fromIntegral $ Coord.toWord8 (pTo p)
     hTy = case p of
-      PlyNorm {} -> 0xFF
+      PlyNorm {} -> maxBound
       PlyPromo {pPiece} -> fromIntegral (fromEnum pPiece)
 
 instance Hashable Ply where
@@ -83,8 +84,8 @@ instance FromJSON Ply where
 
 instance FromJSONKey Ply
 
-legalPlies :: Record -> M.Map Ply Record
-legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
+legalPlies :: Record -> [(Ply, Record)]
+legalPlies r@Record {placement = bd, activeColor} = do
   coord <- universe
   result@(_, Record {placement = bd'}) <- case at bd coord of
     Just (color, pt)
@@ -99,6 +100,9 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
     _ -> []
   guard $ hasSafeKings activeColor bd'
   pure result
+
+legalPliesMap :: Record -> M.Map Ply Record
+legalPliesMap = M.fromList . legalPlies
 
 {-
   Auxilary function to figure out squares being attacked.

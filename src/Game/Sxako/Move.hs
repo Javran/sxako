@@ -186,6 +186,24 @@ data EnPassantReset = EPKeep | EPClear
 data HalfMoveReset = HMIncr | HMReset
 
 {-
+  It's literally impossible in standard Chess
+  to get multiple kings of the same color.
+  but the data representation allows it,
+  so we choose to deal with this situation anyway.
+  Here let's just say we are fine as long as:
+
+  - we don't have kings at all (might happen in tests)
+  - not all kings are in check.
+
+ -}
+hasSafeKings :: Color -> Board -> Bool
+hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
+  where
+    oppoColor = opposite c
+    kings = hbAt (getHalfboard bd c) King
+    oppoAttacking = attackingSquares bd oppoColor
+
+{-
   All PlyGen must be finalized with this function.
 
   - it checks whether king of the active color is in check
@@ -211,8 +229,6 @@ finalize
     , fullMove
     } = do
     let oppoColor = opposite activeColor
-        kings = hbAt (getHalfboard bd activeColor) King
-        oppoAttacking = attackingSquares bd oppoColor
         plyTo = pTo ply
         plyFrom = pFrom ply
         castling' =
@@ -240,18 +256,7 @@ finalize
                     | plyFrom == a8 -> castling `minusCastleRight` blackQueenSide
                     | plyFrom == h8 -> castling `minusCastleRight` blackKingSide
                     | otherwise -> castling
-    {-
-      It's literally impossible in standard Chess
-      to get multiple kings of the same color.
-      but the data representation allows it,
-      so we choose to deal with this situation anyway.
-      Here let's just say we are fine as long as:
-
-      - we don't have kings at all (might happen in tests)
-      - not all kings are in check.
-
-     -}
-    guard $ kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
+    guard $ hasSafeKings activeColor bd
     pure
       ( ply
       , r

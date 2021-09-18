@@ -68,7 +68,7 @@ instance FromJSONKey Ply
 legalPlies :: Record -> M.Map Ply Record
 legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
   coord <- universe
-  case at bd coord of
+  result@(_, Record {placement = bd'}) <- case at bd coord of
     Just (color, pt)
       | color == activeColor ->
         case pt of
@@ -79,21 +79,8 @@ legalPlies r@Record {placement = bd, activeColor} = M.fromList $ do
           Queen -> queenPlies r coord
           King -> kingPlies r coord
     _ -> []
-
-{-
-  TODO: implementation is not correct.
-
-  For now double pawn advance and plies that go in only one direction
-  is not implemented correctly:
-
-  The logic of both assume advancing n+1 steps is possibl
-  when advancing n steps is possible.
-  This is not true however: if a long ranged piece have to
-  go to some specific squares to cover a check (or a pawn
-  has to double advance to cover a check), those intermediate
-  squares won't be available.
-
- -}
+  guard $ hasSafeKings activeColor bd'
+  pure result
 
 {-
   Auxilary function to figure out squares being attacked.
@@ -168,14 +155,19 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   - generates possible moves assuming the corresponding piece is on the input coord.
   - always calls `finalize` in the end.
 
-    `finalize` function updates most of the fields of the Record and
-    remove moves that put their own king in check
-    (addressing absolute pin).
+  Note that it is intentional that we don't verify whether a ply would put one's king in check.
+  This is because if we do so, we are making the assumption that
+  advancing n+1 steps is possible when advancing n steps is possible.
+  This is not true however: if a long ranged piece have to
+  go to some specific squares to cover a check (or a pawn
+  has to double advance to cover a check), those intermediate
+  squares won't be available.
 
-  The expectation is that as long as input Record is valid,
-  PlyGen always generate only valid plies and Records.
+  To implement this correctly, we have two passes of filtering:
+  one to verify that the move is possible ignoring king safety (with list monad)
+  and another to rule out those that puts ones king in check.
 
-  TODO: probably we can do thins in `StateT Record []` so there's less
+  TODO: probably we can do this in `StateT Record []` so there's less
   explicit passing around.
 
  -}
@@ -204,12 +196,12 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
     oppoAttacking = attackingSquares bd oppoColor
 
 {-
-  All PlyGen must be finalized with this function.
-
-  - it checks whether king of the active color is in check
-    and reject those moves that put their king in check
-    (dealing with absolute pins).
-  - it updates `activeColor`, `castling`, `enPassantTarget`, `halfMove` and `fullMove`.
+  All PlyGen must be finalized with this function, it updates:
+  - activeColor
+  - castling
+  - enPassantTarget
+  - halfMove
+  - fullMove
 
   TODO: it appears that stockfish does not add en passant target if the capture isn't possible,
   we might consider processing enPassantTarget in finalizer as well.
@@ -221,8 +213,7 @@ finalize
   hmReset
   ply
   r@Record
-    { placement = bd
-    , activeColor
+    { activeColor
     , castling
     , enPassantTarget
     , halfMove
@@ -256,7 +247,6 @@ finalize
                     | plyFrom == a8 -> castling `minusCastleRight` blackQueenSide
                     | plyFrom == h8 -> castling `minusCastleRight` blackKingSide
                     | otherwise -> castling
-    guard $ hasSafeKings activeColor bd
     pure
       ( ply
       , r
@@ -467,6 +457,7 @@ oneDirPlies
       Nothing -> do
         let bd2 = setBoardAt (activeColor, pt) curCoord True bd1
         p <- fin HMIncr PlyNorm {pFrom, pTo = curCoord} record {placement = bd2}
+        {- TODO: probably bug here resulting in color not flipping? -}
         [p]
           <> case nextCoord dir curCoord of
             Just c' -> oneDirPlies pt dir c' record pFrom

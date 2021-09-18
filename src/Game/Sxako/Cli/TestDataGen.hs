@@ -119,7 +119,10 @@ subCmdMain cmdHelpPrefix =
       let replayMoves = foldM go
             where
               go record m = case legalPlies record M.!? m of
-                Just r -> pure r
+                Just r -> do
+                  putStrLn $ "> Ply: " <> show m
+                  putStrLn $ "> FEN: " <> show r
+                  pure r
                 Nothing -> do
                   putStrLn "Verification failed:"
                   putStrLn $ "FEN: " <> show record
@@ -132,12 +135,12 @@ subCmdMain cmdHelpPrefix =
                 go recordCur m = do
                   r <- legalPlies recordCur M.!? m
                   pure r
-        r' <- replayMoves record ms
         putStrLn $ "Puzzle: " <> pzId
         putStrLn $ "  FEN: " <> show record
         putStrLn $ "  Moves: " <> show ms
         putStrLn $ "  After: " <> show recordFinalM
-
+        r' <- replayMoves record ms
+        pure ()
       pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp

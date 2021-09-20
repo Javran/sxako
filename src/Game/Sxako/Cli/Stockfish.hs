@@ -9,6 +9,7 @@ module Game.Sxako.Cli.Stockfish
   , stopStockfish
   , withStockfish
   , getAllLegalPlies
+  , getNextPosition
   )
 where
 
@@ -111,11 +112,10 @@ parseInfo = \case
     (r, ys) <- consumePartialInfo xs
     (r <>) <$> parseInfo ys
 
-getNextPosition :: SfProcess -> Record -> Ply -> IO Record
-getNextPosition (SfProcess p) pos p = do
+getCurrentPosition :: SfProcess -> IO Record
+getCurrentPosition (SfProcess p) = do
   let hIn = getStdin p
       hOut = getStdout p
-  hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show p
   hPutStrLn hIn "d"
   Just endFenRaw <-
     fix
@@ -133,8 +133,15 @@ getNextPosition (SfProcess p) pos p = do
   let sfRecord = read @Record endFenRaw
   pure sfRecord
 
+getNextPosition :: SfProcess -> Record -> Ply -> IO Record
+getNextPosition sf@(SfProcess p) pos ply = do
+  let hIn = getStdin p
+  hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show ply
+  hPutStrLn hIn "d"
+  getCurrentPosition sf
+
 getAllLegalPlies :: SfProcess -> Record -> IO (M.Map Ply Record)
-getAllLegalPlies (SfProcess p) pos = do
+getAllLegalPlies sf@(SfProcess p) pos = do
   let hIn = getStdin p
       hOut = getStdout p
   hPutStrLn hIn $ "position fen " <> show pos
@@ -146,6 +153,9 @@ getAllLegalPlies (SfProcess p) pos = do
         if
             | "bestmove" `isPrefixOf` raw -> pure []
             | ["info", "string"] `isPrefixOf` ws -> collectInfo
+            | ["info", "depth", "0", "score", "mate", "0"] == ws ->
+              -- TODO: quick and dirty hack, might need to do something better than this.
+              collectInfo
             | ["info"] `isPrefixOf` ws -> (tail ws :) <$> collectInfo
             | otherwise -> collectInfo
 
@@ -159,25 +169,11 @@ getAllLegalPlies (SfProcess p) pos = do
           case (,) <$> ma <*> mb of
             Nothing -> do
               putStrLn $ "Parse failed, only collected: " <> show m
+              putStrLn $ "Input was: " <> show xs
               exitFailure
             Just v -> pure v
   sfLegalPlies <- collectInfo >>= mapM dbgParse
   sfPairs <- forM sfLegalPlies $ \(_pvId, ply) -> do
-    hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show ply
-    hPutStrLn hIn "d"
-    Just endFenRaw <-
-      fix
-        (\loop cur -> do
-           raw <- hGetLine hOut
-           let cur' =
-                 cur <|> do
-                   guard $ "Fen: " `isPrefixOf` raw
-                   Just (drop 5 raw)
-           -- very ugly way of checking end of the response, but I don't have anything better.
-           if "Checkers: " `isPrefixOf` raw
-             then pure cur'
-             else loop cur')
-        Nothing
-    let sfRecord = read @Record endFenRaw
+    sfRecord <- getNextPosition sf pos ply
     pure (ply, sfRecord)
   pure . M.fromList $ sfPairs

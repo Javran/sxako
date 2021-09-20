@@ -64,6 +64,14 @@ instance FromJSON TestData where
     tdLegalPlies <- o .:? "legal-plies"
     pure $ TestData {tdTag, tdPosition, tdLegalPlies}
 
+type LegalMoves = [(Ply, Record)]
+
+{-
+  Turn a puzzle into a sequence of snapshots.
+ -}
+snapshotPuzzle :: SfProcess -> Record -> [Ply] -> [(Record, LegalMoves)]
+snapshotPuzzle sf r ps = error "TODO"
+
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
@@ -100,29 +108,32 @@ subCmdMain cmdHelpPrefix =
         - ...
        -}
       puzzles <- mapM parseLine rawLines
-      let replayMoves = foldM go
+      let replayMoves :: SfProcess -> Record -> [Ply] -> IO Record
+          replayMoves sf = foldM go
             where
+              go :: Record -> Ply -> IO Record
               go record m = case legalPliesMap record M.!? m of
-                Just r ->
+                Just r -> do
+                  _lps  <- getAllLegalPlies sf r
                   pure r
                 Nothing -> do
                   putStrLn "Verification failed:"
                   putStrLn $ "FEN: " <> show record
                   putStrLn $ "Move " <> show m <> " is not available."
                   exitFailure
-
-      forM_ puzzles $ \(pzId, record, ms) -> do
-        let recordFinalM = foldM go record ms
-              where
-                go recordCur m = do
-                  r <- legalPliesMap recordCur M.!? m
-                  pure r
-        putStrLn $ "Puzzle: " <> pzId
-        putStrLn $ "  FEN: " <> show record
-        putStrLn $ "  Moves: " <> show ms
-        putStrLn $ "  After: " <> show recordFinalM
-        _r' <- replayMoves record ms
-        pure ()
+      withStockfish $ \sf ->
+       forM_ puzzles $ \(pzId, record, ms) -> do
+         let recordFinalM = foldM go record ms
+               where
+                 go recordCur m = do
+                   r <- legalPliesMap recordCur M.!? m
+                   pure r
+         putStrLn $ "Puzzle: " <> pzId
+         putStrLn $ "  FEN: " <> show record
+         putStrLn $ "  Moves: " <> show ms
+         putStrLn $ "  After: " <> show recordFinalM
+         _r' <- replayMoves sf record ms
+         pure ()
       pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp

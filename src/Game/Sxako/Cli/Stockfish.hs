@@ -111,6 +111,28 @@ parseInfo = \case
     (r, ys) <- consumePartialInfo xs
     (r <>) <$> parseInfo ys
 
+getNextPosition :: SfProcess -> Record -> Ply -> IO Record
+getNextPosition (SfProcess p) pos p = do
+  let hIn = getStdin p
+      hOut = getStdout p
+  hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show p
+  hPutStrLn hIn "d"
+  Just endFenRaw <-
+    fix
+      (\loop cur -> do
+         raw <- hGetLine hOut
+         let cur' =
+               cur <|> do
+                 guard $ "Fen: " `isPrefixOf` raw
+                 Just (drop 5 raw)
+         -- very ugly way of checking end of the response, but I don't have anything better.
+         if "Checkers: " `isPrefixOf` raw
+           then pure cur'
+           else loop cur')
+      Nothing
+  let sfRecord = read @Record endFenRaw
+  pure sfRecord
+
 getAllLegalPlies :: SfProcess -> Record -> IO (M.Map Ply Record)
 getAllLegalPlies (SfProcess p) pos = do
   let hIn = getStdin p

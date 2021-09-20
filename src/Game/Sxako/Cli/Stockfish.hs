@@ -137,7 +137,6 @@ getNextPosition :: SfProcess -> Record -> Ply -> IO Record
 getNextPosition sf@(SfProcess p) pos ply = do
   let hIn = getStdin p
   hPutStrLn hIn $ "position fen " <> show pos <> " moves " <> show ply
-  hPutStrLn hIn "d"
   getCurrentPosition sf
 
 getAllLegalPlies :: SfProcess -> Record -> IO (M.Map Ply Record)

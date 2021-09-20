@@ -64,13 +64,34 @@ instance FromJSON TestData where
     tdLegalPlies <- o .:? "legal-plies"
     pure $ TestData {tdTag, tdPosition, tdLegalPlies}
 
-type LegalMoves = [(Ply, Record)]
+type LegalMoves = M.Map Ply Record
 
 {-
   Turn a puzzle into a sequence of snapshots.
  -}
-snapshotPuzzle :: SfProcess -> Record -> [Ply] -> [(Record, LegalMoves)]
-snapshotPuzzle sf r ps = error "TODO"
+snapshotPuzzle :: SfProcess -> Record -> [Ply] -> IO [(Record, LegalMoves)]
+snapshotPuzzle sf r ps = do
+  lps <- getAllLegalPlies sf r
+  ((r, lps) :) <$> case ps of
+    [] -> pure []
+    ply : xs -> do
+      let myNextPos = legalPliesMap r M.!? ply
+          sfNextPos = lps M.!? ply
+      nextPos <- case sfNextPos of
+        Nothing -> do
+          putStrLn $ "Illegal ply (stockfish): " <> show (r, ply)
+          exitFailure
+        Just np -> do
+          unless (myNextPos == sfNextPos) $ do
+            putStrLn "stockfish and sxako do not agree on next position."
+            putStrLn $ "State: " <> show (r, ply)
+            putStrLn "stockfish:"
+            print sfNextPos
+            putStrLn "sxako:"
+            print myNextPos
+            exitFailure
+          pure np
+      snapshotPuzzle sf nextPos xs
 
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
@@ -108,33 +129,20 @@ subCmdMain cmdHelpPrefix =
         - ...
        -}
       puzzles <- mapM parseLine rawLines
-      let replayMoves :: SfProcess -> Record -> [Ply] -> IO Record
-          replayMoves sf = foldM go
-            where
-              go :: Record -> Ply -> IO Record
-              go record m = case legalPliesMap record M.!? m of
-                Just r -> do
-                  _lps  <- getAllLegalPlies sf r
-                  pure r
-                Nothing -> do
-                  putStrLn "Verification failed:"
-                  putStrLn $ "FEN: " <> show record
-                  putStrLn $ "Move " <> show m <> " is not available."
-                  exitFailure
       withStockfish $ \sf ->
-       forM_ puzzles $ \(pzId, record, ms) -> do
-         let recordFinalM = foldM go record ms
-               where
-                 go recordCur m = do
-                   r <- legalPliesMap recordCur M.!? m
-                   pure r
-         putStrLn $ "Puzzle: " <> pzId
-         putStrLn $ "  FEN: " <> show record
-         putStrLn $ "  Moves: " <> show ms
-         putStrLn $ "  After: " <> show recordFinalM
-         _r' <- replayMoves sf record ms
-         pure ()
-      pure ()
+        forM_ puzzles $ \(pzId, record, ms) -> do
+          let recordFinalM = foldM go record ms
+                where
+                  go recordCur m = do
+                    r <- legalPliesMap recordCur M.!? m
+                    pure r
+          putStrLn $ "Lichess Puzzle #" <> pzId
+          let l = length ms
+              tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1..] ms
+          rs <- snapshotPuzzle sf record ms
+          forM_ (zip tags rs) $ \(tag, result@(pos,lps)) -> do
+            putStrLn $ "  " <> tag
+            putStrLn $ "    pos: " <> show pos <> ", pv count:"  <> show (M.size lps)
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \sf ->

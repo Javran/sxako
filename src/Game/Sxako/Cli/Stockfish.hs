@@ -4,20 +4,28 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.Cli.Stockfish
-  ( SfHandle
+  ( SfProcess
+  , startStockfish
+  , stopStockfish
   , withStockfish
   , getAllLegalPlies
   )
 where
 
 {-
-  Communication with stockfish through UCI protocl.
+  Communication with stockfish through UCI protocol and stockfish-specific commands.
 
   Reference: http://wbec-ridderkerk.nl/html/UCIProtocol.html
+
+  Note that here we are using stockfish just to see all legal moves given a FEN string.
+  So this module sets up MultiPV to its maximum value and assume we always
+  go with depth=1 all the time.
 
  -}
 import Control.Applicative
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Resource
 import Data.Function
 import Data.List
 import qualified Data.Map.Strict as M
@@ -28,41 +36,50 @@ import System.Exit
 import System.IO
 import System.Process.Typed
 
-data SfHandle = SfHandle Handle Handle
+newtype SfProcess = SfProcess (Process Handle Handle ())
 
-withStockfish :: (SfHandle -> IO r) -> IO r
-withStockfish f = do
+startStockfish :: IO SfProcess
+startStockfish = do
   let pc =
         setStdout createPipe
           . setStdin createPipe
           $ proc "stockfish" []
-  withProcessWait pc $ \p -> do
-    let hIn = getStdin p
-        hOut = getStdout p
-        collectOptions :: Maybe Int -> IO (Maybe Int)
-        collectOptions m = do
-          -- get UCI options, for now we are only interested in max of MultiPV.
-          raw <- hGetLine hOut
-          if
-              | raw == "uciok" -> pure m
-              | "option name MultiPV" `isPrefixOf` raw ->
-                collectOptions
-                  (m <|> (Just . read . last . words $ raw))
-              | otherwise -> collectOptions m
+  p <- startProcess pc
+  let hIn = getStdin p
+      hOut = getStdout p
+      collectOptions :: Maybe Int -> IO (Maybe Int)
+      collectOptions m = do
+        -- get UCI options, for now we are only interested in max of MultiPV.
+        raw <- hGetLine hOut
+        if
+            | raw == "uciok" -> pure m
+            | "option name MultiPV" `isPrefixOf` raw ->
+              collectOptions
+                (m <|> (Just . read . last . words $ raw))
+            | otherwise -> collectOptions m
 
-    hSetBuffering hIn LineBuffering
-    _welcomeMsg <- hGetLine hOut
-    hPutStrLn hIn "uci"
-    Just c <- collectOptions Nothing
-    hPutStrLn hIn $ "setoption name MultiPV value " <> show c
-    hPutStrLn hIn "isready"
-    do
-      raw <- hGetLine hOut
-      guard $ raw == "readyok"
-      putStrLn "Stockfish is ready."
-    result <- f (SfHandle hIn hOut)
-    hPutStrLn hIn "quit"
-    pure result
+  hSetBuffering hIn LineBuffering
+  _welcomeMsg <- hGetLine hOut
+  hPutStrLn hIn "uci"
+  Just c <- collectOptions Nothing
+  hPutStrLn hIn $ "setoption name MultiPV value " <> show c
+  hPutStrLn hIn "isready"
+  do
+    raw <- hGetLine hOut
+    guard $ raw == "readyok"
+  pure $ SfProcess p
+
+stopStockfish :: SfProcess -> IO ExitCode
+stopStockfish (SfProcess p) = do
+  let hIn = getStdin p
+  hPutStrLn hIn "quit"
+  waitExitCode p
+
+withStockfish :: (SfProcess -> IO r) -> IO r
+withStockfish f = runResourceT $ do
+  (k, sf) <- allocate startStockfish (void . stopStockfish)
+  r <- liftIO $ f sf
+  r <$ release k
 
 type PartialInfo = (Last Int, Last Ply)
 
@@ -94,8 +111,10 @@ parseInfo = \case
     (r, ys) <- consumePartialInfo xs
     (r <>) <$> parseInfo ys
 
-getAllLegalPlies :: SfHandle -> Record -> IO (M.Map Ply Record)
-getAllLegalPlies (SfHandle hIn hOut) pos = do
+getAllLegalPlies :: SfProcess -> Record -> IO (M.Map Ply Record)
+getAllLegalPlies (SfProcess p) pos = do
+  let hIn = getStdin p
+      hOut = getStdout p
   hPutStrLn hIn $ "position fen " <> show pos
   hPutStrLn hIn "go depth 1"
   let collectInfo :: IO [[] String]

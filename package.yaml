@@ -27,6 +27,7 @@ dependencies:
 - yaml
 - text
 - hashable
+- resourcet
 
 data-files: 
 - data/ChessMerida.svg

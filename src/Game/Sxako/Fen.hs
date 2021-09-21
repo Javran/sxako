@@ -18,6 +18,7 @@ import qualified Data.ByteString.Char8 as BSC
 import Data.Char
 import Data.Monoid
 import Data.String
+import qualified Data.Text as T
 import Data.Text.Encoding
 import qualified Data.Vector.Fixed as VF
 import Data.Word
@@ -39,13 +40,17 @@ data Record = Record
   , enPassantTarget :: Maybe Coord
   , halfMove :: Int
   , fullMove :: Int
-  } deriving (Eq)
+  }
+  deriving (Eq)
 
 instance FromJSON Record where
   parseJSON = withText "FEN" $ \t ->
     case parseOnly fenP (encodeUtf8 t) of
       Left msg -> fail msg
       Right r -> pure r
+
+instance ToJSON Record where
+  toJSON r = String (T.pack $ show r)
 
 encodeFen :: Record -> String
 encodeFen

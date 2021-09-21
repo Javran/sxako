@@ -84,6 +84,11 @@ instance FromJSON Ply where
 
 instance FromJSONKey Ply
 
+instance ToJSON Ply where
+  toJSON p = String (T.pack $ show p)
+
+instance ToJSONKey Ply
+
 legalPlies :: Record -> [(Ply, Record)]
 legalPlies r@Record {placement = bd, activeColor} = do
   coord <- universe

@@ -13,6 +13,7 @@ import Data.Yaml
 import Game.Sxako.Cli.Stockfish
 import Game.Sxako.Fen
 import Game.Sxako.Move
+import Data.Aeson
 import System.Environment
 import System.Exit
 import Text.ParserCombinators.ReadP
@@ -63,6 +64,19 @@ instance FromJSON TestData where
     tdPosition <- o .: "position"
     tdLegalPlies <- o .:? "legal-plies"
     pure $ TestData {tdTag, tdPosition, tdLegalPlies}
+
+instance ToJSON TestData where
+  toJSON TestData {tdTag, tdPosition, tdLegalPlies} =
+    object
+      [ "tag" .= tdTag
+      , "position" .= tdPosition
+      , "legal-plies" .= tdLegalPlies
+      ]
+  toEncoding TestData {tdTag, tdPosition, tdLegalPlies} =
+    pairs
+      ("tag" .= tdTag
+         <> "position" .= tdPosition
+         <> "legal-plies" .= tdLegalPlies)
 
 type LegalMoves = M.Map Ply Record
 

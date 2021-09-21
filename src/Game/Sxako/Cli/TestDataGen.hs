@@ -9,13 +9,14 @@ import Control.Monad
 import Data.Aeson
 import Data.List.Split
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import qualified Data.Text as T
+import Data.Text.Encoding
 import Data.Yaml
 import Game.Sxako.Cli.Stockfish
 import Game.Sxako.Fen
 import Game.Sxako.Move
 import System.Environment
-import Data.Text.Encoding
 import System.Exit
 import Text.ParserCombinators.ReadP
 
@@ -145,18 +146,24 @@ subCmdMain cmdHelpPrefix =
           puzzles <- mapM parseLine rawLines
           tds <-
             concat
-              <$> withStockfish (\sf ->
-                     forM puzzles $ \(pzId, record, ms) -> do
-                       let prefix = "Lichess Puzzle #" <> pzId <> ", "
-                       putStrLn $ "Lichess Puzzle #" <> pzId
-                       let l = length ms
-                           tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
-                       rs <- snapshotPuzzle sf record ms
-                       forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
-                         let tdTag = T.pack $ prefix <> tag
-                         pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps})
-          putStrLn (T.unpack (decodeUtf8 (Data.Yaml.encode tds)))
-          pure ()
+              <$> withStockfish
+                (\sf ->
+                   forM puzzles $ \(pzId, record, ms) -> do
+                     let prefix = "Lichess Puzzle #" <> pzId <> ", "
+                         l = length ms
+                         tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
+                     rs <- snapshotPuzzle sf record ms
+                     forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
+                       let tdTag = T.pack $ prefix <> tag
+                       pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps})
+          case listToMaybe mOutputFp of
+            Just outputFp -> do
+              Data.Yaml.encodeFile outputFp tds
+              putStrLn $ show (length tds) <> " testdata written to " <> outputFp
+            Nothing -> do
+              putStrLn "# BEGIN"
+              putStr (T.unpack (decodeUtf8 (Data.Yaml.encode tds)))
+              putStrLn "# END"
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \sf ->

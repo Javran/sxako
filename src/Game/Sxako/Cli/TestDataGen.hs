@@ -96,53 +96,51 @@ snapshotPuzzle sf r ps = do
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
-    ["from-lichess", inputFp] -> do
-      rawLines <- lines <$> readFile inputFp
-      let parseLine raw = do
-            let xs = splitOn "," raw
-                actualLen = length xs
-            unless (actualLen == 9) $ do
-              putStrLn $ "Cannot parse:" <> raw
-              putStrLn $ "Expected 9 elements but " <> show actualLen <> " were found."
-              exitFailure
-            let pzId : fenRaw : movesRaw : _ = xs
-                parsePlies ms = case readP_to_S (parser <* eof) ms of
-                  [(v, "")] -> pure v
-                  _ -> Nothing
-                  where
-                    parser = readS_to_P @Ply reads `sepBy1` char ' '
-            case (reads @Record fenRaw, parsePlies movesRaw) of
-              ([(record, "")], Just ms) ->
-                pure (pzId, record, ms)
-              _ -> do
-                putStrLn "Failed to parse FEN or moves."
-                putStrLn $ "Raw FEN: " <> fenRaw
-                putStrLn $ "Raw moves: " <> movesRaw
-                exitFailure
+    "from-lichess" : inputFp : mOutputFp
+      | -- zero or one element.
+        take 1 mOutputFp == mOutputFp ->
+        do
+          rawLines <- lines <$> readFile inputFp
+          let parseLine raw = do
+                let xs = splitOn "," raw
+                    actualLen = length xs
+                unless (actualLen == 9) $ do
+                  putStrLn $ "Cannot parse:" <> raw
+                  putStrLn $ "Expected 9 elements but " <> show actualLen <> " were found."
+                  exitFailure
+                let pzId : fenRaw : movesRaw : _ = xs
+                    parsePlies ms = case readP_to_S (parser <* eof) ms of
+                      [(v, "")] -> pure v
+                      _ -> Nothing
+                      where
+                        parser = readS_to_P @Ply reads `sepBy1` char ' '
+                case (reads @Record fenRaw, parsePlies movesRaw) of
+                  ([(record, "")], Just ms) ->
+                    pure (pzId, record, ms)
+                  _ -> do
+                    putStrLn "Failed to parse FEN or moves."
+                    putStrLn $ "Raw FEN: " <> fenRaw
+                    putStrLn $ "Raw moves: " <> movesRaw
+                    exitFailure
 
-      {-
-        TODO: read from CSV and generate YAML files:
+          {-
+            TODO: read from CSV and generate YAML files:
 
-        - tag: Lichess Puzzle {id}, {0}/{n}: init
-        - tag: Lichess Puzzle {id}, {1}/{n}: {ply 1}
-        - tag: Lichess Puzzle {id}, {2}/{n}: {ply 2}
-        - ...
-       -}
-      puzzles <- mapM parseLine rawLines
-      withStockfish $ \sf ->
-        forM_ puzzles $ \(pzId, record, ms) -> do
-          let recordFinalM = foldM go record ms
-                where
-                  go recordCur m = do
-                    r <- legalPliesMap recordCur M.!? m
-                    pure r
-          putStrLn $ "Lichess Puzzle #" <> pzId
-          let l = length ms
-              tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1..] ms
-          rs <- snapshotPuzzle sf record ms
-          forM_ (zip tags rs) $ \(tag, result@(pos,lps)) -> do
-            putStrLn $ "  " <> tag
-            putStrLn $ "    pos: " <> show pos <> ", pv count:"  <> show (M.size lps)
+            - tag: Lichess Puzzle {id}, {0}/{n}: init
+            - tag: Lichess Puzzle {id}, {1}/{n}: {ply 1}
+            - tag: Lichess Puzzle {id}, {2}/{n}: {ply 2}
+            - ...
+           -}
+          puzzles <- mapM parseLine rawLines
+          withStockfish $ \sf ->
+            forM_ puzzles $ \(pzId, record, ms) -> do
+              putStrLn $ "Lichess Puzzle #" <> pzId
+              let l = length ms
+                  tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
+              rs <- snapshotPuzzle sf record ms
+              forM_ (zip tags rs) $ \(tag, (pos, lps)) -> do
+                putStrLn $ "  " <> tag
+                putStrLn $ "    pos: " <> show pos <> ", pv count:" <> show (M.size lps)
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \sf ->
@@ -150,5 +148,6 @@ subCmdMain cmdHelpPrefix =
           lps <- getAllLegalPlies sf tdPosition
           pure td {tdLegalPlies = Just lps}
     _ -> do
-      putStrLn $ cmdHelpPrefix <> "<testdata>"
+      putStrLn $ cmdHelpPrefix <> "from-lichess <source csv> [target]"
+      putStrLn $ cmdHelpPrefix <> "snapshot <test yaml>"
       exitFailure

@@ -6,6 +6,7 @@
 module Game.Sxako.Cli.TestDataGen where
 
 import Control.Monad
+import Data.Aeson
 import Data.List.Split
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
@@ -13,8 +14,8 @@ import Data.Yaml
 import Game.Sxako.Cli.Stockfish
 import Game.Sxako.Fen
 import Game.Sxako.Move
-import Data.Aeson
 import System.Environment
+import Data.Text.Encoding
 import System.Exit
 import Text.ParserCombinators.ReadP
 
@@ -67,16 +68,17 @@ instance FromJSON TestData where
 
 instance ToJSON TestData where
   toJSON TestData {tdTag, tdPosition, tdLegalPlies} =
-    object
+    object $
       [ "tag" .= tdTag
       , "position" .= tdPosition
-      , "legal-plies" .= tdLegalPlies
       ]
+        <> maybe [] ((: []) . ("legal-plies" .=)) tdLegalPlies
+
   toEncoding TestData {tdTag, tdPosition, tdLegalPlies} =
     pairs
       ("tag" .= tdTag
          <> "position" .= tdPosition
-         <> "legal-plies" .= tdLegalPlies)
+         <> maybe mempty ("legal-plies" .=) tdLegalPlies)
 
 type LegalMoves = M.Map Ply Record
 
@@ -138,23 +140,23 @@ subCmdMain cmdHelpPrefix =
                     exitFailure
 
           {-
-            TODO: read from CSV and generate YAML files:
-
-            - tag: Lichess Puzzle {id}, {0}/{n}: init
-            - tag: Lichess Puzzle {id}, {1}/{n}: {ply 1}
-            - tag: Lichess Puzzle {id}, {2}/{n}: {ply 2}
-            - ...
+            read from CSV and generate YAML files.
            -}
           puzzles <- mapM parseLine rawLines
-          withStockfish $ \sf ->
-            forM_ puzzles $ \(pzId, record, ms) -> do
-              putStrLn $ "Lichess Puzzle #" <> pzId
-              let l = length ms
-                  tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
-              rs <- snapshotPuzzle sf record ms
-              forM_ (zip tags rs) $ \(tag, (pos, lps)) -> do
-                putStrLn $ "  " <> tag
-                putStrLn $ "    pos: " <> show pos <> ", pv count:" <> show (M.size lps)
+          tds <-
+            concat
+              <$> withStockfish (\sf ->
+                     forM puzzles $ \(pzId, record, ms) -> do
+                       let prefix = "Lichess Puzzle #" <> pzId <> ", "
+                       putStrLn $ "Lichess Puzzle #" <> pzId
+                       let l = length ms
+                           tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
+                       rs <- snapshotPuzzle sf record ms
+                       forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
+                         let tdTag = T.pack $ prefix <> tag
+                         pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps})
+          putStrLn (T.unpack (decodeUtf8 (Data.Yaml.encode tds)))
+          pure ()
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
       withStockfish $ \sf ->

@@ -166,6 +166,7 @@ subCmdMain cmdHelpPrefix =
               putStrLn "# END"
     ["snapshot", inputFp] -> do
       Right tests <- decodeFileEither @[TestData] inputFp
+      putStrLn $ "Found " <> show (length tests) <> " tests."
       withStockfish $ \sf ->
         forM_ tests $ \td@TestData {tdPosition} -> do
           lps <- getAllLegalPlies sf tdPosition

@@ -1,16 +1,22 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.MoveSpec where
 
+import Control.Monad
 import qualified Data.Map.Strict as M
 import Data.Maybe
+import qualified Data.Text as T
+import Data.Yaml as Yaml
 import Game.Sxako.Castling
+import Game.Sxako.Cli.TestDataGen
 import Game.Sxako.Coord
 import Game.Sxako.Fen
 import Game.Sxako.Move
 import Game.Sxako.TestBoard
 import Game.Sxako.Types
+import Paths_sxako
 import Test.Hspec
 
 spec :: Spec
@@ -23,6 +29,7 @@ spec = do
   queenPliesSpec
   kingPliesSpec
   examplesSpec
+  testDataSpec
 
 attackingSquaresSpec :: Spec
 attackingSquaresSpec = describe "attackingSquares" $ do
@@ -1179,3 +1186,19 @@ examplesSpec =
           rAfter = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
           mbd' = legalPliesMap r M.!? read "e3f2"
       mbd' `shouldBe` Just rAfter
+
+testDataSpec :: Spec
+testDataSpec =
+  describe "legalPlies.testdata" $ do
+    tds <- runIO $ do
+      fp <- getDataFileName "testdata/lichess-puzzles.yaml"
+      r <- Yaml.decodeFileEither @[TestData] fp
+      case r of
+        Left msg ->
+          error $ "Failed when loading testdata: " <> show msg
+        Right v -> pure v
+    forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
+      specify (T.unpack tdTag) $ case tdLegalPlies of
+        Nothing -> pending
+        Just expectedLps ->
+          legalPliesMap tdPosition `shouldBe` expectedLps

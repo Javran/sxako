@@ -31,6 +31,7 @@ dependencies:
 
 data-files: 
 - data/ChessMerida.svg
+- testdata/lichess-puzzles.yaml
 
 library:
   source-dirs: src

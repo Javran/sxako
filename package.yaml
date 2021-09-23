@@ -28,6 +28,8 @@ dependencies:
 - text
 - hashable
 - resourcet
+- mtl
+- writer-cps-mtl
 
 data-files: 
 - data/ChessMerida.svg

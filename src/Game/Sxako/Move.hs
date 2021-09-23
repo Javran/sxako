@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -12,6 +13,7 @@ module Game.Sxako.Move
 where
 
 import Control.Monad
+import Control.Monad.Writer.CPS
 import Data.Aeson
 import Data.Bits
 import Data.Hashable
@@ -235,9 +237,6 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
 
   TODO: would `Endo Record` be more concise than providing option as ADT values?
 
-  TODO: tests failing: it could be the case that plyTo and plyFrom are both rooks,
-  by if-branching below, we only properly set one castling flag but missed another.
-
  -}
 finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)
 finalize
@@ -262,23 +261,28 @@ finalize
            -}
           if castling == none
             then castling
-            else case activeColor of
-              White ->
-                if
-                    | plyTo == a8 -> castling `minusCastleRight` blackQueenSide
-                    | plyTo == h8 -> castling `minusCastleRight` blackKingSide
-                    | plyFrom == e1 -> removeCastleRight White castling
-                    | plyFrom == a1 -> castling `minusCastleRight` whiteQueenSide
-                    | plyFrom == h1 -> castling `minusCastleRight` whiteKingSide
-                    | otherwise -> castling
-              Black ->
-                if
-                    | plyTo == a1 -> castling `minusCastleRight` whiteQueenSide
-                    | plyTo == h1 -> castling `minusCastleRight` whiteKingSide
-                    | plyFrom == e8 -> removeCastleRight Black castling
-                    | plyFrom == a8 -> castling `minusCastleRight` blackQueenSide
-                    | plyFrom == h8 -> castling `minusCastleRight` blackKingSide
-                    | otherwise -> castling
+            else
+              let Endo update = execWriter $ do
+                    {-
+                      accumulate modifiers so we can combine results from testing both plyTo and plyFrom
+                      rather than ignoring one of them.
+                     -}
+                    let cond ~> fn =
+                          if cond then tell (Endo fn) else pure ()
+                    case activeColor of
+                      White -> do
+                        (plyTo == a8) ~> (`minusCastleRight` blackQueenSide)
+                        (plyTo == h8) ~> (`minusCastleRight` blackKingSide)
+                        (plyFrom == e1) ~> removeCastleRight White
+                        (plyFrom == a1) ~> (`minusCastleRight` whiteQueenSide)
+                        (plyFrom == h1) ~> (`minusCastleRight` whiteKingSide)
+                      Black -> do
+                        (plyTo == a1) ~> (`minusCastleRight` whiteQueenSide)
+                        (plyTo == h1) ~> (`minusCastleRight` whiteKingSide)
+                        (plyFrom == e8) ~> removeCastleRight Black
+                        (plyFrom == a8) ~> (`minusCastleRight` blackQueenSide)
+                        (plyFrom == h8) ~> (`minusCastleRight` blackKingSide)
+               in update castling
      in ( ply
         , r
             { activeColor = oppoColor

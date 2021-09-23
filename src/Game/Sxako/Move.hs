@@ -235,6 +235,14 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
 
   TODO: would `Mono Record` be more concise than providing option as ADT values?
 
+  TODO: missing coverage for:
+
+  - active: White:
+    + a ply to a8
+    + a ply to h8
+  - active: Black:
+    + a ply to a1
+
  -}
 finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)
 finalize

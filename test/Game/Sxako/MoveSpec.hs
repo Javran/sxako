@@ -1187,6 +1187,11 @@ examplesSpec =
           mbd' = legalPliesMap r M.!? read "e3f2"
       mbd' `shouldBe` Just rAfter
 
+{-
+  For coverage of just those data samples:
+
+  stack test --ta='--match "/Game.Sxako.Move/legalPlies.testdata"' --coverage
+ -}
 testDataSpec :: Spec
 testDataSpec =
   describe "legalPlies.testdata" $ do

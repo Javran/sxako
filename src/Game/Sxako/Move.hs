@@ -233,15 +233,10 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
   TODO: it appears that stockfish does not add en passant target if the capture isn't possible,
   we might consider processing enPassantTarget in finalizer as well.
 
-  TODO: would `Mono Record` be more concise than providing option as ADT values?
+  TODO: would `Endo Record` be more concise than providing option as ADT values?
 
-  TODO: missing coverage for:
-
-  - active: White:
-    + a ply to a8
-    + a ply to h8
-  - active: Black:
-    + a ply to a1
+  TODO: tests failing: it could be the case that plyTo and plyFrom are both rooks,
+  by if-branching below, we only properly set one castling flag but missed another.
 
  -}
 finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)

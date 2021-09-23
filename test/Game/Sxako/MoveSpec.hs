@@ -1179,13 +1179,37 @@ castlePliesSpec = describe "kingPlies (castle)" $ do
         \R___K__R"
 
 examplesSpec :: Spec
-examplesSpec =
+examplesSpec = do
+  let mkExample tag inputRecord inputPly expectRecord =
+        specify tag $ do
+          let r = read @Record inputRecord
+              rAfter = read @Record expectRecord
+              mbd' = legalPliesMap r M.!? read inputPly
+          mbd' `shouldBe` Just rAfter
   describe "Examples" $
-    specify "example #0" $ do
-      let r = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP1p3/5RPP/6K1 b - - 0 26"
-          rAfter = read @Record "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
-          mbd' = legalPliesMap r M.!? read "e3f2"
-      mbd' `shouldBe` Just rAfter
+    mkExample
+      "example #0"
+      "4rrk1/R1Q3pp/8/1p6/8/1PP1p3/5RPP/6K1 b - - 0 26"
+      "e3f2"
+      "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
+  describe "Rook takes rook" $ do
+    mkExample "a8 Rook taken"
+       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
+       "a1a8"
+       "Rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/1NBQKBNR b Kk - 0 1"
+    mkExample "h8 Rook taken"
+       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
+       "h1h8"
+       "rnbqkbnR/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBN1 b Qq - 0 1"
+    mkExample "a1 Rook taken"
+       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
+       "a8a1"
+       "1nbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/rNBQKBNR w Kk - 0 2"
+    mkExample "h1 Rook taken"
+       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
+       "h8h1"
+       "rnbqkbn1/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNr w Qq - 0 2"
+
 
 {-
   For coverage of just those data samples:

@@ -268,7 +268,7 @@ finalize
                       rather than ignoring one of them.
                      -}
                     let cond ~> fn =
-                          if cond then tell (Endo fn) else pure ()
+                          when cond $ tell (Endo fn)
                     case activeColor of
                       White -> do
                         (plyTo == a8) ~> (`minusCastleRight` blackQueenSide)

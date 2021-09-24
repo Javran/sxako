@@ -15,7 +15,6 @@ dependencies:
 - bytestring
 - colour
 - containers
-- containers
 - diagrams-core
 - diagrams-lib
 - diagrams-rasterific

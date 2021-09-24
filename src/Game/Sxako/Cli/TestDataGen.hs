@@ -23,7 +23,6 @@ import Text.ParserCombinators.ReadP
 {-
   Note on generating testdata:
 
-  (TODO: not implemented yet)
   We are making test cases with Lichess puzzles as input:
 
   For each puzzle, we follow along the move list and snapshot all legal moves
@@ -49,8 +48,6 @@ import Text.ParserCombinators.ReadP
 
   If we want to "follw some game", all we need is a sequence of plies
   and we can split then into such plie, applying one more ply at a time.
-
-  TODO: since we are importing from Lichess data, might as well consume their CSV format.
 
  -}
 data TestData = TestData

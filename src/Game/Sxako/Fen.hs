@@ -28,9 +28,17 @@ import Game.Sxako.Coord
 import Game.Sxako.Types
 
 {-
+
   Reference:
   - https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
   - https://ia902908.us.archive.org/26/items/pgn-standard-1994-03-12/PGN_standard_1994-03-12.txt
+
+  Notes on `enPassantTarget`: although the spec says en passant target needs to be present
+  even if taking is not possible, both Stockfish and Lichess are implementing them
+  in a way such that the target is present only when taking is possible.
+  Here we lean towards common practice and do not set en passant target
+  if taking is not possible.
+
  -}
 
 data Record = Record

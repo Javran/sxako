@@ -232,11 +232,7 @@ hasSafeKings c bd = kings == Bitboard 0 || ((kings .&. oppoAttacking) /= kings)
   - halfMove
   - fullMove
 
-  TODO: it appears that stockfish does not add en passant target if the capture isn't possible,
-  we might consider processing enPassantTarget in finalizer as well.
-
   TODO: would `Endo Record` be more concise than providing option as ADT values?
-
  -}
 finalize :: EnPassantReset -> HalfMoveReset -> Ply -> Record -> (Ply, Record)
 finalize

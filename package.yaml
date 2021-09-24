@@ -9,27 +9,27 @@ copyright: "Copyright: (c) 2019 Javran Cheng"
 description: description
 
 dependencies:
-- base
-- vector
-- split
+- aeson
 - attoparsec
-- SVGFonts
+- base
+- bytestring
+- colour
+- containers
+- containers
 - diagrams-core
 - diagrams-lib
 - diagrams-rasterific
-- bytestring
-- containers
 - fixed-vector
-- colour
-- containers
-- typed-process
-- aeson
-- yaml
-- text
 - hashable
-- resourcet
 - mtl
+- resourcet
+- split
+- SVGFonts
+- text
+- typed-process
+- vector
 - writer-cps-mtl
+- yaml
 
 data-files: 
 - data/ChessMerida.svg

@@ -5,6 +5,7 @@
 module Game.Sxako.MoveSpec where
 
 import Control.Monad
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -12,11 +13,11 @@ import Data.Yaml as Yaml
 import Game.Sxako.Castling
 import Game.Sxako.Cli.TestDataGen
 import Game.Sxako.Coord
+import Game.Sxako.DataFiles
 import Game.Sxako.Fen
 import Game.Sxako.Move
 import Game.Sxako.TestBoard
 import Game.Sxako.Types
-import Paths_sxako
 import Test.Hspec
 
 spec :: Spec
@@ -1165,23 +1166,26 @@ examplesSpec = do
       "e3f2"
       "4rrk1/R1Q3pp/8/1p6/8/1PP5/5pPP/6K1 w - - 0 27"
   describe "Rook takes rook" $ do
-    mkExample "a8 Rook taken"
-       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
-       "a1a8"
-       "Rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/1NBQKBNR b Kk - 0 1"
-    mkExample "h8 Rook taken"
-       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
-       "h1h8"
-       "rnbqkbnR/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBN1 b Qq - 0 1"
-    mkExample "a1 Rook taken"
-       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
-       "a8a1"
-       "1nbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/rNBQKBNR w Kk - 0 2"
-    mkExample "h1 Rook taken"
-       "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
-       "h8h1"
-       "rnbqkbn1/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNr w Qq - 0 2"
-
+    mkExample
+      "a8 Rook taken"
+      "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
+      "a1a8"
+      "Rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/1NBQKBNR b Kk - 0 1"
+    mkExample
+      "h8 Rook taken"
+      "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR w KQkq - 0 1"
+      "h1h8"
+      "rnbqkbnR/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBN1 b Qq - 0 1"
+    mkExample
+      "a1 Rook taken"
+      "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
+      "a8a1"
+      "1nbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/rNBQKBNR w Kk - 0 2"
+    mkExample
+      "h1 Rook taken"
+      "rnbqkbnr/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNR b KQkq - 0 1"
+      "h8h1"
+      "rnbqkbn1/1pppppp1/8/8/8/8/1PPPPPP1/RNBQKBNr w Qq - 0 2"
 
 {-
   For coverage of just those data samples:
@@ -1192,8 +1196,8 @@ testDataSpec :: Spec
 testDataSpec =
   describe "legalPlies.testdata" $ do
     tds <- runIO $ do
-      fp <- getDataFileName "testdata/lichess-puzzles.yaml"
-      r <- Yaml.decodeFileEither @[TestData] fp
+      raw <- loadDataFile "testdata/lichess-puzzles.yaml"
+      let r = Yaml.decodeEither' @[TestData] (BSL.toStrict raw)
       case r of
         Left msg ->
           error $ "Failed when loading testdata: " <> show msg

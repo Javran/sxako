@@ -29,10 +29,12 @@ dependencies:
 - vector
 - writer-cps-mtl
 - yaml
+- lzma
 
 data-files: 
 - data/ChessMerida.svg
-- testdata/lichess-puzzles.yaml
+- testdata/*.yaml
+- testdata/*.yaml.xz
 
 library:
   source-dirs: src

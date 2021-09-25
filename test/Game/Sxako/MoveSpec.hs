@@ -1192,17 +1192,22 @@ examplesSpec = do
   stack test --ta='--match "/Game.Sxako.Move/legalPlies.testdata"' --coverage
  -}
 testDataSpec :: Spec
-testDataSpec =
-  describe "legalPlies.testdata" $ do
-    tds <- runIO $ do
-      raw <- loadDataFileStrict "testdata/lichess-puzzles.yaml"
-      let r = Yaml.decodeEither' @[TestData] raw
-      case r of
-        Left msg ->
-          error $ "Failed when loading testdata: " <> show msg
-        Right v -> pure v
-    forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
-      specify (T.unpack tdTag) $ case tdLegalPlies of
-        Nothing -> pending
-        Just expectedLps ->
-          legalPliesMap tdPosition `shouldBe` expectedLps
+testDataSpec = do
+  let testBig = False
+      mkSpecFromFile tag src =
+        describe tag $ do
+          tds <- runIO $ do
+            raw <- loadDataFileStrict src
+            let r = Yaml.decodeEither' @[TestData] raw
+            case r of
+              Left msg ->
+                error $ "Failed when loading testdata: " <> show msg
+              Right v -> pure v
+          forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
+            specify (T.unpack tdTag) $ case tdLegalPlies of
+              Nothing -> pending
+              Just expectedLps ->
+                legalPliesMap tdPosition `shouldBe` expectedLps
+  mkSpecFromFile "legalPlies.testdata" "testdata/lichess-puzzles.yaml.xz"
+  when testBig $
+    mkSpecFromFile "legalPlies.testdata-big" "testdata/lichess-puzzles-big.yaml.xz"

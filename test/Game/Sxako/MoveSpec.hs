@@ -5,7 +5,6 @@
 module Game.Sxako.MoveSpec where
 
 import Control.Monad
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -1196,8 +1195,8 @@ testDataSpec :: Spec
 testDataSpec =
   describe "legalPlies.testdata" $ do
     tds <- runIO $ do
-      raw <- loadDataFile "testdata/lichess-puzzles.yaml"
-      let r = Yaml.decodeEither' @[TestData] (BSL.toStrict raw)
+      raw <- loadDataFileStrict "testdata/lichess-puzzles.yaml"
+      let r = Yaml.decodeEither' @[TestData] raw
       case r of
         Left msg ->
           error $ "Failed when loading testdata: " <> show msg

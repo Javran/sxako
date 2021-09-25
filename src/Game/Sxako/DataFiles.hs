@@ -1,10 +1,12 @@
 module Game.Sxako.DataFiles
   ( loadDataFile
+  , loadDataFileStrict
   )
 where
 
 import qualified Codec.Compression.Lzma as Lzma
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString as BS
 import Data.List
 import Paths_sxako
 
@@ -16,3 +18,6 @@ loadDataFile fpPre = do
           then Lzma.decompress
           else id
   process <$> BSL.readFile fp
+
+loadDataFileStrict :: FilePath -> IO BS.ByteString
+loadDataFileStrict = fmap BSL.toStrict . loadDataFile

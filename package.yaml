@@ -13,19 +13,13 @@ dependencies:
 - attoparsec
 - base
 - bytestring
-- colour
 - containers
-- diagrams-core
-- diagrams-lib
-- diagrams-rasterific
 - fixed-vector
 - hashable
 - mtl
 - resourcet
 - split
-- SVGFonts
 - text
-- typed-process
 - vector
 - writer-cps-mtl
 - yaml
@@ -48,6 +42,13 @@ executables:
     source-dirs: exe
     dependencies:
       - sxako
+      - colour
+      - diagrams-core
+      - diagrams-lib
+      - diagrams-rasterific
+      - SVGFonts
+      - typed-process
+
     ghc-options:
       - -Wall
       - -O2

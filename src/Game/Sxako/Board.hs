@@ -36,6 +36,12 @@ import Game.Sxako.Coord
 import Game.Sxako.Types
 
 {-
+  TODO: implement an alternative Board representation using standard vector.
+  profiling indicates that the slowness mostly come from fixed-vector operations -
+  probably Peano-encoding makes accesses not really constant but linear.
+ -}
+
+{-
   There are multiple ways to represent a board with Bitboard as elements:
 
   - we can do a vector of 12 elements

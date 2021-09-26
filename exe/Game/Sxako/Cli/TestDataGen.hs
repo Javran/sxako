@@ -6,7 +6,6 @@
 module Game.Sxako.Cli.TestDataGen where
 
 import Control.Monad
-import Data.Aeson
 import Data.List.Split
 import qualified Data.Map.Strict as M
 import Data.Maybe
@@ -16,6 +15,7 @@ import Data.Yaml
 import Game.Sxako.Cli.Stockfish
 import Game.Sxako.Fen
 import Game.Sxako.Move
+import Game.Sxako.TestData
 import System.Environment
 import System.Exit
 import System.IO
@@ -51,33 +51,6 @@ import Text.ParserCombinators.ReadP
   and we can split then into such plie, applying one more ply at a time.
 
  -}
-data TestData = TestData
-  { tdTag :: T.Text
-  , tdPosition :: Record
-  , tdLegalPlies :: Maybe (M.Map Ply Record)
-  }
-  deriving (Show)
-
-instance FromJSON TestData where
-  parseJSON = withObject "TestData" $ \o -> do
-    tdTag <- o .: "tag"
-    tdPosition <- o .: "position"
-    tdLegalPlies <- o .:? "legal-plies"
-    pure $ TestData {tdTag, tdPosition, tdLegalPlies}
-
-instance ToJSON TestData where
-  toJSON TestData {tdTag, tdPosition, tdLegalPlies} =
-    object $
-      [ "tag" .= tdTag
-      , "position" .= tdPosition
-      ]
-        <> maybe [] ((: []) . ("legal-plies" .=)) tdLegalPlies
-
-  toEncoding TestData {tdTag, tdPosition, tdLegalPlies} =
-    pairs
-      ("tag" .= tdTag
-         <> "position" .= tdPosition
-         <> maybe mempty ("legal-plies" .=) tdLegalPlies)
 
 type LegalMoves = M.Map Ply Record
 

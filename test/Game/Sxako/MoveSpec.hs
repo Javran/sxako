@@ -10,12 +10,12 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Yaml as Yaml
 import Game.Sxako.Castling
-import Game.Sxako.Cli.TestDataGen
 import Game.Sxako.Coord
 import Game.Sxako.DataFiles
 import Game.Sxako.Fen
 import Game.Sxako.Move
 import Game.Sxako.TestBoard
+import Game.Sxako.TestData
 import Game.Sxako.Types
 import Test.Hspec
 

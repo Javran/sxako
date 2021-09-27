@@ -24,14 +24,11 @@ import Control.Monad.ST.Strict
 import Data.Bits
 import Data.Foldable
 import Data.Function
-import Data.Functor.Identity
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import qualified Data.Vector.Fixed as VF
-import qualified Data.Vector.Fixed.Boxed as VFB
-import qualified Data.Vector.Fixed.Mutable as VFM
 import Game.Sxako.Bitboard
+import Game.Sxako.Board.Halfboard
 import Game.Sxako.Coord
 import Game.Sxako.Types
 
@@ -54,17 +51,7 @@ import Game.Sxako.Types
 
   I choose to use a pair of boxed vectors so to allow more sharing.
  -}
-type Halfboard = VFB.Vec 6 Bitboard
 
-emptyHb :: Halfboard
-emptyHb = VF.replicate (Bitboard 0)
-
-hbAt :: Halfboard -> PieceType -> Bitboard
-hbAt hb pt = hb VF.! fromEnum pt
-
-modifyBitboard :: (Bitboard -> Bitboard) -> PieceType -> Halfboard -> Halfboard
-modifyBitboard f pt =
-  runIdentity . VF.element (fromEnum pt) (pure . f)
 
 {-
   (<white side>, <black side>)
@@ -73,24 +60,24 @@ newtype Board = Board (Halfboard, Halfboard) deriving (Eq)
 
 fromPlacement2d :: Placement2D -> Board
 fromPlacement2d ps2d = runST $ do
-  whiteHb <- VFM.thaw emptyHb
-  blackHb <- VFM.thaw emptyHb
+  whiteHb <- hbThaw emptyHb
+  blackHb <- hbThaw emptyHb
   let pairs :: [] (Coord, Piece)
       pairs =
         catMaybes
           (zipWith
              (\mcp c -> (c,) <$> mcp)
-             (concat $ VF.toList $ fmap VF.toList ps2d)
+             (concat $ toList $ fmap toList ps2d)
              (concat fenCoords))
   forM_ pairs $ \(coord, (c, pt)) -> do
     let hb = case c of
           White -> whiteHb
           Black -> blackHb
         pInd = fromEnum pt
-    Bitboard v <- VFM.unsafeRead hb pInd
-    VFM.unsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
-  w <- VFM.unsafeFreeze whiteHb
-  b <- VFM.unsafeFreeze blackHb
+    Bitboard v <- hbUnsafeRead hb pInd
+    hbUnsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
+  w <- hbUnsafeFreeze whiteHb
+  b <- hbUnsafeFreeze blackHb
   pure $ Board (w, b)
 
 {-

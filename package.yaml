@@ -32,6 +32,8 @@ data-files:
 
 library:
   source-dirs: src
+  dependencies:
+    - primitive
   ghc-options:
     - -Wall
     - -O2

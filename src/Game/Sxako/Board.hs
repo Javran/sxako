@@ -1,8 +1,6 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DataKinds #-}
 
 module Game.Sxako.Board
   ( Board
@@ -28,7 +26,7 @@ import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Game.Sxako.Bitboard
-import Game.Sxako.Board.Halfboard
+import qualified Game.Sxako.Board.Halfboard.FixedVector as Hb
 import Game.Sxako.Coord
 import Game.Sxako.Types
 
@@ -52,16 +50,19 @@ import Game.Sxako.Types
   I choose to use a pair of boxed vectors so to allow more sharing.
  -}
 
+-- type Halfboard = Vec FixedVector
 
 {-
   (<white side>, <black side>)
  -}
 newtype Board = Board (Halfboard, Halfboard) deriving (Eq)
 
+type Halfboard = Hb.Halfboard
+
 fromPlacement2d :: Placement2D -> Board
 fromPlacement2d ps2d = runST $ do
-  whiteHb <- hbThaw emptyHb
-  blackHb <- hbThaw emptyHb
+  whiteHb <- Hb.thaw Hb.empty
+  blackHb <- Hb.thaw Hb.empty
   let pairs :: [] (Coord, Piece)
       pairs =
         catMaybes
@@ -74,10 +75,10 @@ fromPlacement2d ps2d = runST $ do
           White -> whiteHb
           Black -> blackHb
         pInd = fromEnum pt
-    Bitboard v <- hbUnsafeRead hb pInd
-    hbUnsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
-  w <- hbUnsafeFreeze whiteHb
-  b <- hbUnsafeFreeze blackHb
+    Bitboard v <- Hb.unsafeRead hb pInd
+    Hb.unsafeWrite hb pInd $! Bitboard (v .|. toBit coord)
+  w <- Hb.unsafeFreeze whiteHb
+  b <- Hb.unsafeFreeze blackHb
   pure $ Board (w, b)
 
 {-
@@ -110,7 +111,7 @@ at (Board (bs, ws)) c = asum $ zipWith go (toList bs <> toList ws) whats
           <*> universe @PieceType
 
 infoOccupied :: Board -> (Bitboard, Bitboard)
-infoOccupied (Board (w, b)) = (foldr1 (.|.) w, foldr1 (.|.) b)
+infoOccupied (Board (w, b)) = (foldr1 (.|.) (toList w), foldr1 (.|.) (toList b))
 
 getHalfboard :: Board -> Color -> Halfboard
 getHalfboard (Board (w, b)) c = case c of
@@ -129,7 +130,7 @@ modifyHalfboard f c (Board (w, b)) = case c of
  -}
 setBoardAt :: Piece -> Coord -> Bool -> Board -> Board
 setBoardAt (color, pt) coord newVal =
-  modifyHalfboard (modifyBitboard modify pt) color
+  modifyHalfboard (Hb.modifyBitboard modify pt) color
   where
     modify :: Bitboard -> Bitboard
     modify (Bitboard bb) =
@@ -140,6 +141,12 @@ setBoardAt (color, pt) coord newVal =
       where
         cb = toBit coord
         masked = bb .&. complement cb
+
+emptyHb :: Halfboard
+emptyHb = Hb.empty
+
+hbAt :: Halfboard -> PieceType -> Bitboard
+hbAt = Hb.at
 
 {-
   Pretty-print a board similar to stockfish's `d` command.

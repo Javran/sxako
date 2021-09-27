@@ -1,5 +1,7 @@
 # A standard Chess implementation
 
+[![Build Status](https://app.travis-ci.com/Javran/sxako.svg?branch=master)](https://app.travis-ci.com/Javran/sxako)
+
 This is a toy project to implement standard Chess for fun.
 
 The project begins with just the concept of [bitboard](https://en.wikipedia.org/wiki/Bitboard#Standard),

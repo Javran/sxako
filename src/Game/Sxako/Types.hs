@@ -20,6 +20,15 @@ import qualified Data.Map.Strict as M
 import Data.Tuple
 import qualified Data.Vector.Fixed as VF
 
+{-
+  TODO: we should probably get rid of fixed-vector usage.
+
+  as profiling indicates that there's still a significant amount
+  of allocation overhead in fixed-vectors, it might not be the best
+  structure to use as parsing intermediates.
+
+ -}
+
 type EightElems = VF.VecList 8
 
 {-

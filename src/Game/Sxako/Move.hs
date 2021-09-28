@@ -172,7 +172,7 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   coord <- allSetCoords pieceBd
   let cs :: [Coord]
       cs = attackingSquaresAux bd (c, pt) coord
-  pure $ Bitboard $ foldr (.|.) 0 (fmap toBit cs)
+  Bitboard . toBit <$> cs
 
 {-
   Internal type synonym.

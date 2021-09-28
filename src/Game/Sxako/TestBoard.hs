@@ -5,7 +5,6 @@ where
 
 import Control.Monad
 import Data.List
-import qualified Data.Vector.Fixed as VF
 import Game.Sxako.Board
 import Game.Sxako.Types
 import Text.ParserCombinators.ReadP
@@ -30,8 +29,8 @@ instance Read TestBoard where
               ch <- get
               Just p <- pure (charToPiece ch)
               pure (Just p)
-        lineP = VF.fromList' <$> replicateM 8 sqP
+        lineP = replicateM 8 sqP
     x <- lineP
     xs <- replicateM 7 (char '|' *> lineP)
-    let ys = VF.fromList' (x : xs)
+    let ys = x : xs
     pure $ TestBoard $ fromPlacement2d ys

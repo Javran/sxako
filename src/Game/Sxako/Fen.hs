@@ -20,7 +20,6 @@ import Data.Monoid
 import Data.String
 import qualified Data.Text as T
 import Data.Text.Encoding
-import qualified Data.Vector.Fixed as VF
 import Data.Word
 import Game.Sxako.Board
 import Game.Sxako.Castling
@@ -114,15 +113,14 @@ pElemP = pieceP <|> emptiesP
 {-
   Parsing a rank, should produce exactly 8 elements.
  -}
-rankP :: Parser (EightElems Square)
+rankP :: Parser [Square]
 rankP = do
   (Sum 8, es) <- mconcat <$> many1 pElemP
-  pure $ VF.fromList' es
+  pure es
 
 placement2dP :: Parser Placement2D
-placement2dP = do
-  fs <- (:) <$> rankP <*> replicateM 7 (char '/' *> rankP)
-  pure $ VF.fromList' fs
+placement2dP =
+  (:) <$> rankP <*> replicateM 7 (char '/' *> rankP)
 
 activeColorP :: Parser Color
 activeColorP = (White <$ char 'w') <|> (Black <$ char 'b')

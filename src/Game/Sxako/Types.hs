@@ -18,7 +18,6 @@ where
 
 import qualified Data.Map.Strict as M
 import Data.Tuple
-import qualified Data.Vector.Fixed as VF
 
 {-
   TODO: we should probably get rid of fixed-vector usage.
@@ -29,7 +28,10 @@ import qualified Data.Vector.Fixed as VF
 
  -}
 
-type EightElems = VF.VecList 8
+{-
+  (Unchecked) a list containing exactly 8 elements.
+ -}
+type EightElems = []
 
 {-
   pawns and kings might not be considered pieces,

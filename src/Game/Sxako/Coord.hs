@@ -167,7 +167,7 @@ testBoard bb (Coord c) = testBit bb (fromIntegral c)
 
 allSetCoords :: Bitboard -> [Coord]
 allSetCoords (Bitboard b) =
-  concatMap (\c -> [Coord (fromIntegral c) | (1 `shiftL` c) .&. b /= 0]) [0 .. 63 :: Int]
+  filter (\(Coord v) -> (1 `shiftL` fromIntegral v) .&. b /= 0) allCoords
 
 _gen :: IO ()
 _gen = do

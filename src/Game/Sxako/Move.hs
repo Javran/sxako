@@ -169,8 +169,7 @@ attackingSquares bd c = foldr (.|.) (Bitboard 0) $ do
   pt <- [Pawn, Knight, Bishop, Rook, Queen, King]
   let hb = getHalfboard bd c
       pieceBd = hbAt hb pt
-  coord <- allCoords
-  guard $ testBoard pieceBd coord
+  coord <- allSetCoords pieceBd
   let cs :: [Coord]
       cs = attackingSquaresAux bd (c, pt) coord
   pure $ Bitboard $ foldr (.|.) 0 (fmap toBit cs)

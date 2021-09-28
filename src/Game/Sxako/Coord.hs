@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
+
 {-
   Coordinates on a Chess board.
  -}
@@ -18,6 +19,7 @@ module Game.Sxako.Coord
   , nextCoord
   , nextCoords
   , testBoard
+  , allSetCoords
   , straightDirs
   , diagonalDirs
   , allDirs
@@ -162,6 +164,10 @@ fenCoords = reverse (chunksOf 8 allCoords)
 
 testBoard :: Bitboard -> Coord -> Bool
 testBoard bb (Coord c) = testBit bb (fromIntegral c)
+
+allSetCoords :: Bitboard -> [Coord]
+allSetCoords (Bitboard b) =
+  concatMap (\c -> [Coord (fromIntegral c) | (1 `shiftL` c) .&. b /= 0]) [0 .. 63 :: Int]
 
 _gen :: IO ()
 _gen = do

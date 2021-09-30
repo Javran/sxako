@@ -45,6 +45,26 @@ data Ply
   deriving (Eq, Ord)
 
 {-
+  Note that the rule of Chess also declares that
+  threefold (or fivefold) repetition be a draw,
+  but `Record` type (which is meant to be equivalent to what FEN could encode)
+  does not contain sufficient information for us to determine that.
+
+  TODO: we might implement draw by repetition once we make it possible
+  to have ply list as input.
+
+ -}
+
+data DrawReason
+  = Stalemate
+  | FiftyMoves
+  | InsufficientMaterial
+
+data GameResult
+  = Checkmate Color -- color indicates the winner.
+  | Draw DrawReason
+
+{-
   Encode a Ply for hashing
  -}
 encodePlyForHash :: Ply -> Word32
@@ -109,6 +129,24 @@ legalPlies r@Record {placement = bd, activeColor} = do
 
 legalPliesMap :: Record -> M.Map Ply Record
 legalPliesMap = M.fromList . legalPlies
+
+{-
+  TODO: to be tested.
+
+  Either returns a non-empty list of possible next plies,
+  or returns a Left to indicate that the game has concluded.
+
+ -}
+legalPliesEither :: Record -> Either GameResult [(Ply, Record)]
+legalPliesEither record@Record {activeColor, placement} = case legalPlies record of
+  [] ->
+    Left $
+      if hasSafeKings activeColor placement
+        then Draw Stalemate
+        else Checkmate (opposite activeColor)
+  xs@(_ : _) ->
+    -- TODO: check for insufficient material.
+    pure xs
 
 {-
   Auxilary function to figure out squares being attacked.

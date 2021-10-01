@@ -25,3 +25,7 @@ converted to SVG Font with fontforge.
 ### Test data
 
 Some test data are randomly picked from [lichess.org open database](https://database.lichess.org/)
+
+### PGN example
+
+`example.pgn` from [Wikipedia]https://en.wikipedia.org/wiki/Portable_Game_Notation#Example().

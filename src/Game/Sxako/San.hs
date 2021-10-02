@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -14,9 +15,10 @@ where
  -}
 
 import Control.Applicative
+import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
+import Data.Char
 import Game.Sxako.Coord
-import Game.Sxako.Move
 import Game.Sxako.Types
 
 data San
@@ -43,8 +45,48 @@ data Disamb
 data CheckType = Check | Checkmate
   deriving (Show, Eq)
 
+rankP :: Parser Int
+rankP = do
+  ch <- satisfy (\ch -> ch >= '1' && ch <= '8')
+  pure $ ord ch - ord '1'
+
+fileP :: Parser Int
+fileP = do
+  ch <- satisfy (\ch -> ch >= 'a' && ch <= 'h')
+  pure $ ord ch - ord 'a'
+
+coordP :: Parser Coord
+coordP = unsafeFromRankAndFile <$> rankP <*> fileP
+
+pieceTypeP :: Parser PieceType
+pieceTypeP =
+  peekChar >>= \case
+    Just ch
+      | Just (White, pt) <- charToPiece ch ->
+        pt <$ anyChar
+    _ -> fail "unknown piece type"
+
+captureP :: Parser Bool
+captureP = option False (True <$ char 'x')
+
+promoP :: Parser (Maybe PieceType)
+promoP =
+  option Nothing $
+    Just <$> do
+      _ <- char '='
+      pt <- pieceTypeP
+      guard $ pt /= Pawn && pt /= King
+      pure pt
+
+checkP :: Parser (Maybe CheckType)
+checkP =
+  option Nothing $
+    Just
+      <$> ((Check <$ char '+')
+             <|> (Checkmate <$ char '#'))
+
 sanP :: Parser San
-sanP = castleP
+sanP = castleP <|> normalMoveP
   where
     castleP = do
       _ <- string "O-O"
@@ -52,9 +94,27 @@ sanP = castleP
       sSide <- case mCh of
         Just '-' -> QueenSide <$ string "-O"
         _ -> pure KingSide
-      sCheck <-
-        option Nothing $
-          Just
-            <$> ((Check <$ char '+')
-                   <|> (Checkmate <$ char '#'))
+      sCheck <- checkP
       pure SCastle {sSide, sCheck}
+
+    pieceFromP :: Parser PieceType
+    pieceFromP =
+      option Pawn pieceTypeP
+
+    normalMoveP :: Parser San
+    normalMoveP = do
+      sPieceFrom <- pieceFromP
+      sFrom <- pure Nothing -- TODO
+      sCapture <- captureP
+      sTo <- coordP
+      sPromo <- promoP
+      sCheck <- checkP
+      pure $
+        SNorm
+          { sPieceFrom
+          , sFrom
+          , sCapture
+          , sTo
+          , sPromo
+          , sCheck
+          }

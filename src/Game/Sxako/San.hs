@@ -23,10 +23,10 @@ data San
   = SNorm
       { sPieceFrom :: PieceType
       , sFrom :: Maybe Disamb
-      , sTo :: Coord
       , sCapture :: Bool
-      , sCheck :: Maybe CheckType
+      , sTo :: Coord
       , sPromo :: Maybe PieceType
+      , sCheck :: Maybe CheckType
       }
   | SCastle
       { sSide :: Side

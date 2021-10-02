@@ -66,6 +66,26 @@ pieceTypeP =
         pt <$ anyChar
     _ -> fail "unknown piece type"
 
+disambP :: Parser (Maybe Disamb)
+disambP = option Nothing (postCheck startWithFileP <|> postCheck startWithRankP)
+  where
+    startWithFileP = do
+      fInd <- fileP
+      option (DisambByFile fInd) $ do
+        rInd <- rankP
+        pure $ DisambByCoord $ unsafeFromRankAndFile rInd fInd
+    startWithRankP = DisambByRank <$> rankP
+
+    {-
+      Run the parser and make sure we are not mistakening consuming Coords
+      that are not supposed to be consumed as disambiguating term.
+     -}
+    postCheck p = do
+      r <- p
+      peekChar >>= \case
+        Just ch | isLower ch -> pure (Just r)
+        _ -> fail ""
+
 captureP :: Parser Bool
 captureP = option False (True <$ char 'x')
 
@@ -104,7 +124,7 @@ sanP = castleP <|> normalMoveP
     normalMoveP :: Parser San
     normalMoveP = do
       sPieceFrom <- pieceFromP
-      sFrom <- pure Nothing -- TODO
+      sFrom <- disambP
       sCapture <- captureP
       sTo <- coordP
       sPromo <- promoP

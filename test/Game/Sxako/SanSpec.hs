@@ -27,3 +27,8 @@ spec = describe "sanP" $
       mkTest "Nc5#" $ SNorm Knight Nothing False c5 Nothing (Just Checkmate)
       mkTest "Qg2#" $ SNorm Queen Nothing False g2 Nothing (Just Checkmate)
       mkTest "Kxe2" $ SNorm King Nothing True e2 Nothing Nothing
+
+      let [_a,_b,_c,d,_e,_f,_g,_h] = [0..7]
+      mkTest "Rdxb1" $ SNorm Rook (Just (DisambByFile d)) True b1 Nothing Nothing
+      mkTest "R2xb1+" $ SNorm Rook (Just (DisambByRank (2-1))) True b1 Nothing (Just Check)
+      mkTest "Qg3xf4#" $ SNorm Queen (Just (DisambByCoord g3)) True f4 Nothing (Just Checkmate)

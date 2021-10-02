@@ -56,7 +56,7 @@ fileP = do
   pure $ ord ch - ord 'a'
 
 coordP :: Parser Coord
-coordP = unsafeFromRankAndFile <$> rankP <*> fileP
+coordP = flip unsafeFromRankAndFile <$> fileP <*> rankP
 
 pieceTypeP :: Parser PieceType
 pieceTypeP =

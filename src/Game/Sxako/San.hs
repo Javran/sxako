@@ -32,13 +32,16 @@ data San
       { sSide :: Side
       , sCheck :: Maybe CheckType
       }
+  deriving (Show, Eq)
 
 data Disamb
   = DisambByFile Int
   | DisambByRank Int
   | DisambByCoord Coord
+  deriving (Show, Eq)
 
 data CheckType = Check | Checkmate
+  deriving (Show, Eq)
 
 sanP :: Parser San
 sanP = castleP

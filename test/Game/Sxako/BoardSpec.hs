@@ -1,11 +1,9 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.BoardSpec where
 
 import Game.Sxako.Board
+import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.TestBoard
-import Game.Sxako.Types
 import Test.Hspec
 
 spec :: Spec

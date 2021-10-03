@@ -6,7 +6,7 @@ where
 import Control.Monad
 import Data.List
 import Game.Sxako.Board
-import Game.Sxako.Types
+import Game.Sxako.Common
 import Text.ParserCombinators.ReadP
 
 {-

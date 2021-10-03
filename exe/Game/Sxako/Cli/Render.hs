@@ -12,9 +12,9 @@ import qualified Data.Map.Strict as M
 import Diagrams.Backend.Rasterific.CmdLine
 import Diagrams.Prelude hiding (font)
 import Game.Sxako.Board as Board
+import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.Fen
-import Game.Sxako.Types
 import Graphics.SVGFonts
 import Graphics.SVGFonts.ReadFont
 import Paths_sxako

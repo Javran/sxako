@@ -25,7 +25,7 @@ where
 
 import Data.Bits
 import Data.Word
-import Game.Sxako.Types
+import Game.Sxako.Common
 import Text.ParserCombinators.ReadP
 
 newtype Castling = Castling Word8

@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Game.Sxako.Types
+module Game.Sxako.Common
   ( EightElems
   , PieceType (..)
   , Color (..)

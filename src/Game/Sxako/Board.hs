@@ -1,6 +1,6 @@
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.Board
   ( Board
@@ -27,8 +27,8 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Game.Sxako.Bitboard
 import qualified Game.Sxako.Board.Halfboard.Vector as Hb
+import Game.Sxako.Common
 import Game.Sxako.Coord
-import Game.Sxako.Types
 
 {-
   TODO: implement an alternative Board representation using standard vector.

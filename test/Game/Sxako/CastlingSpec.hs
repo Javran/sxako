@@ -5,7 +5,7 @@ module Game.Sxako.CastlingSpec where
 import Control.Monad
 import Data.Bits
 import Game.Sxako.Castling
-import Game.Sxako.Types
+import Game.Sxako.Common
 import Test.Hspec
 
 spec :: Spec

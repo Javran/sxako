@@ -1,7 +1,7 @@
-module Game.Sxako.TypesSpec where
+module Game.Sxako.CommonSpec where
 
 import Control.Monad
-import Game.Sxako.Types
+import Game.Sxako.Common
 import Test.Hspec
 
 spec :: Spec

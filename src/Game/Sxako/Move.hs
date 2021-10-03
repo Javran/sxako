@@ -23,9 +23,9 @@ import Data.Word
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
+import Game.Sxako.Common
 import Game.Sxako.Coord as Coord
 import Game.Sxako.Fen
-import Game.Sxako.Types
 import Text.ParserCombinators.ReadP
 
 {-

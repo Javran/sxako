@@ -4,9 +4,9 @@ module Game.Sxako.SanSpec where
 
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
+import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.San
-import Game.Sxako.Types
 import Test.Hspec
 
 spec :: Spec

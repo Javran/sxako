@@ -23,8 +23,8 @@ import Data.Text.Encoding
 import Data.Word
 import Game.Sxako.Board
 import Game.Sxako.Castling
+import Game.Sxako.Common
 import Game.Sxako.Coord
-import Game.Sxako.Types
 
 {-
 

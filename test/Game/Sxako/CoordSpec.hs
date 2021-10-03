@@ -4,8 +4,8 @@ module Game.Sxako.CoordSpec where
 
 import Control.Monad
 import Data.Bits
+import Game.Sxako.Common
 import Game.Sxako.Coord
-import Game.Sxako.Types
 import Test.Hspec
 
 spec :: Spec

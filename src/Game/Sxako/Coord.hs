@@ -44,7 +44,7 @@ import Data.List
 import Data.List.Split
 import Data.Word
 import Game.Sxako.Bitboard
-import Game.Sxako.Types
+import Game.Sxako.Common
 import Text.ParserCombinators.ReadP
 
 {-

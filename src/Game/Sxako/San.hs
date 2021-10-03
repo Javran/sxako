@@ -18,8 +18,8 @@ import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Char
+import Game.Sxako.Common
 import Game.Sxako.Coord
-import Game.Sxako.Types
 
 data San
   = SNorm

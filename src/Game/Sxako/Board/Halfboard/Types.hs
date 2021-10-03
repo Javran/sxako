@@ -7,7 +7,7 @@ where
 
 import Control.Monad.Primitive
 import Game.Sxako.Bitboard
-import Game.Sxako.Types
+import Game.Sxako.Common
 
 class HalfboardImpl (vi :: *) where
   {-

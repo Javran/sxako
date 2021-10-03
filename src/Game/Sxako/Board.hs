@@ -26,7 +26,7 @@ import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Game.Sxako.Bitboard
-import qualified Game.Sxako.Board.Halfboard.Vector as Hb
+import qualified Game.Sxako.Board.Halfboard as Hb
 import Game.Sxako.Common
 import Game.Sxako.Coord
 

@@ -36,7 +36,7 @@ spec = describe "sanP" $
     mkTest "Kxe2" $
       SNorm King Nothing True e2 Nothing Nothing
 
-    let [a, _b, _c, d, e, _f, _g, _h] = [0 .. 7]
+    let [a, _b, _c, d, e, _f, g, _h] = [0 .. 7]
     mkTest "Rdxb1" $
       SNorm Rook (Just (DisambByFile d)) True b1 Nothing Nothing
     mkTest "R2xb1+" $
@@ -47,3 +47,12 @@ spec = describe "sanP" $
       SNorm Pawn (Just (DisambByFile e)) True d5 Nothing Nothing
     mkTest "axb6#" $
       SNorm Pawn (Just (DisambByFile a)) True b6 Nothing (Just Checkmate)
+    mkTest "gxh1=Q+" $
+      SNorm
+        { sPieceFrom = Pawn
+        , sFrom = Just (DisambByFile g)
+        , sCapture = True
+        , sTo = h1
+        , sPromo = Just Queen
+        , sCheck = Just Check
+        }

@@ -7,7 +7,7 @@ import Data.Aeson
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Game.Sxako.Fen
-import Game.Sxako.Move
+import Game.Sxako.Ply
 
 data TestData = TestData
   { tdTag :: T.Text

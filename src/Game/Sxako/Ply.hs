@@ -3,7 +3,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.Move
+module Game.Sxako.Ply
   ( Ply (..)
   , attackingSquares
   , legalPlies

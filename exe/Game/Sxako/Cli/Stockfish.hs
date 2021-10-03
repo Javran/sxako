@@ -32,7 +32,7 @@ import Data.List
 import qualified Data.Map.Strict as M
 import Data.Monoid
 import Game.Sxako.Fen
-import Game.Sxako.Move
+import Game.Sxako.Ply
 import System.Exit
 import System.IO
 import System.Process.Typed

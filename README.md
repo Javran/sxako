@@ -13,6 +13,15 @@ Potential future plans:
 - Support PGN files.
 - Solve well-known endgames with "textbook techniques" (in contrast to brute-forcing a shortest mating / drawing line)
 
+
+## Codebase terminology
+
+### `Ply` vs. `Move`
+
+In this codebase `Ply` is preferred over `Move` as the latter is more ambiguous in the context of Chess.
+You may see `halfMove` or `fullMove` in `FEN` related stuff, which is just to make the naming
+consistent with the specification.
+
 ## Third-party data
 
 ### Chess Font

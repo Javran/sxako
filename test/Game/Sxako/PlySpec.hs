@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.MoveSpec where
+module Game.Sxako.PlySpec where
 
 import Control.Monad
 import qualified Data.Map.Strict as M
@@ -14,7 +14,7 @@ import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.DataFiles
 import Game.Sxako.Fen
-import Game.Sxako.Move
+import Game.Sxako.Ply
 import Game.Sxako.TestBoard
 import Game.Sxako.TestData
 import Test.Hspec
@@ -1189,7 +1189,7 @@ examplesSpec = do
 {-
   For coverage of just those data samples:
 
-  stack test --ta='--match "/Game.Sxako.Move/legalPlies.testdata"' --coverage
+  stack test --ta='--match "/Game.Sxako.Ply/legalPlies.testdata"' --coverage
  -}
 testDataSpec :: Spec
 testDataSpec = do

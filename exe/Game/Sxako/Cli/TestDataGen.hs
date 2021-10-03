@@ -14,7 +14,7 @@ import Data.Text.Encoding
 import Data.Yaml
 import Game.Sxako.Cli.Stockfish
 import Game.Sxako.Fen
-import Game.Sxako.Move
+import Game.Sxako.Ply
 import Game.Sxako.TestData
 import System.Environment
 import System.Exit

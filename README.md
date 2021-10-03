@@ -35,4 +35,4 @@ Some test data are randomly picked from [lichess.org open database](https://data
 
 ### PGN example
 
-`example.pgn` from [Wikipedia]https://en.wikipedia.org/wiki/Portable_Game_Notation#Example().
+`example.pgn` from [Wikipedia](https://en.wikipedia.org/wiki/Portable_Game_Notation#Example).

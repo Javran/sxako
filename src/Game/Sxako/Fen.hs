@@ -84,9 +84,7 @@ instance Show Record where
   show = encodeFen
 
 instance Read Record where
-  readsPrec _ raw = case parseOnly ((,) <$> fenP <*> takeByteString) (BSC.pack raw) of
-    Left msg -> fail msg
-    Right (r, left) -> [(r, BSC.unpack left)]
+  readsPrec _ = readsByAttoparsecChar8 fenP
 
 rawStandardBoard, rawDragonBoard :: IsString s => s
 rawStandardBoard = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

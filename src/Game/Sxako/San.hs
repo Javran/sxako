@@ -45,6 +45,9 @@ data Disamb
 data CheckType = Check | Checkmate
   deriving (Show, Eq)
 
+instance Read San where
+  readsPrec _ = readsByAttoparsecChar8 sanP
+
 rankP :: Parser Int
 rankP = do
   ch <- satisfy (\ch -> ch >= '1' && ch <= '8')

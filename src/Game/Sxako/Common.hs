@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Game.Sxako.Common
@@ -13,9 +14,12 @@ module Game.Sxako.Common
   , charToPiece
   , pieceToChar
   , opposite
+  , readsByAttoparsecChar8
   )
 where
 
+import Data.Attoparsec.ByteString.Char8 as Parser
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as M
 import Data.Tuple
 
@@ -93,3 +97,9 @@ pieceTable =
   where
     [wCh, bCh] <~> p = [(wCh, (White, p)), (bCh, (Black, p))]
     _ <~> _ = error "unreachable"
+
+readsByAttoparsecChar8 :: Parser a -> ReadS a
+readsByAttoparsecChar8 parser raw =
+  case parseOnly ((,) <$> parser <*> takeByteString) (BSC.pack raw) of
+    Left msg -> fail msg
+    Right (r, left) -> [(r, BSC.unpack left)]

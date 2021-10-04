@@ -1,13 +1,17 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.Ply
   ( Ply (..)
+  , GameResult (..)
+  , DrawReason (..)
   , attackingSquares
   , legalPlies
   , legalPliesMap
+  , legalPliesEither
   )
 where
 
@@ -138,15 +142,71 @@ legalPliesMap = M.fromList . legalPlies
 
  -}
 legalPliesEither :: Record -> Either GameResult [(Ply, Record)]
-legalPliesEither record@Record {activeColor, placement} = case legalPlies record of
-  [] ->
-    Left $
-      if hasSafeKings activeColor placement
-        then Draw Stalemate
-        else Checkmate (opposite activeColor)
-  xs@(_ : _) ->
-    -- TODO: check for insufficient material.
-    pure xs
+legalPliesEither
+  record@Record
+    { activeColor
+    , placement
+    , halfMove
+    } = case legalPlies record of
+    [] ->
+      -- the active color has no legal move.
+      Left $
+        if hasSafeKings activeColor placement
+          then Draw Stalemate
+          else Checkmate (opposite activeColor)
+    xs@(_ : _) ->
+      if
+          | halfMove > 100 -> Left $ Draw FiftyMoves
+          | insuffMat -> Left $ Draw InsufficientMaterial
+          | otherwise -> pure xs
+      where
+        [hbW, hbB] = fmap (getHalfboard placement) [White, Black]
+        noHeavyPieceOrPawn :: Halfboard -> Bool
+        noHeavyPieceOrPawn hb =
+          all (\pt -> hbAt hb pt == Bitboard 0) [Pawn, Rook, Queen]
+        countBishopAndKnight
+          :: Halfboard
+          -> ( Int {- knights -}
+             , (Int {- dark bishops -}, Int {- light bishops -})
+             )
+        countBishopAndKnight hb = (knightCount, (darkB, lightB))
+          where
+            (Sum darkB, Sum lightB) =
+              foldMap (\c -> if isDark c then (1, 0) else (0, 1)) $
+                allSetCoords (hbAt hb Bishop)
+            knightCount = popCount (hbAt hb Knight)
+        {-
+          The following are cases of insufficient materials:
+
+          - king versus king
+          - king and bishop versus king
+          - king and knight versus king
+          - king and bishop versus king and bishop with the bishops on the same color.
+
+          Observation:
+          (1) does not qualify if any of queen, rook, pawn remains
+          (2) otherwise count (knight, (light bishop, dark bishop)) for both sides,
+            which should give us sufficient info to perform this IM check.
+         -}
+        insuffMat =
+          -- Observation (1)
+          noHeavyPieceOrPawn hbW
+            && noHeavyPieceOrPawn hbB
+            &&
+            -- Observation (2)
+            let (wKnights, (wDBishops, wLBishops)) = countBishopAndKnight hbW
+                (bKnights, (bDBishops, bLBishops)) = countBishopAndKnight hbB
+             in (wKnights + wDBishops + wLBishops + bKnights + bDBishops + bLBishops <= 1)
+                  || (-- no knights
+                      (wKnights, bKnights) == (0, 0)
+                        &&
+                        -- exactly one bishop on both sides
+                        wDBishops + wLBishops == 1
+                        && bDBishops + bLBishops == 1
+                        &&
+                        -- same color bishops
+                        ((wDBishops, bDBishops) == (1, 1)
+                           || (wLBishops, bLBishops) == (1, 1)))
 
 {-
   Auxilary function to figure out squares being attacked.

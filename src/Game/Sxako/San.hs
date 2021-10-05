@@ -34,7 +34,7 @@ data San
       { sSide :: Side
       , sCheck :: Maybe CheckType
       }
-  deriving (Show, Eq)
+  deriving (Eq)
 
 data Disamb
   = DisambByFile Int
@@ -47,6 +47,36 @@ data CheckType = Check | Checkmate
 
 instance Read San where
   readsPrec _ = readsByAttoparsecChar8 sanP
+
+instance Show San where
+  show x =
+    (case x of
+       SNorm {sPieceFrom, sFrom, sCapture, sTo, sPromo} ->
+         concat
+           [ if sPieceFrom == Pawn
+               then ""
+               else [pieceToChar (White, sPieceFrom)]
+           , case sFrom of
+               Nothing -> ""
+               Just (DisambByFile fInd) -> [['a' .. 'h'] !! fInd]
+               Just (DisambByRank rInd) -> [['1' .. '8'] !! rInd]
+               Just (DisambByCoord c) -> show c
+           , if sCapture then "x" else ""
+           , show sTo
+           , case sPromo of
+               Nothing -> ""
+               Just p -> '=' : [pieceToChar (White, p)]
+           ]
+       SCastle {sSide} ->
+         case sSide of
+           KingSide -> "O-O"
+           QueenSide -> "O-O-O")
+      <> showCheck
+    where
+      showCheck = case sCheck x of
+        Nothing -> ""
+        Just Check -> "+"
+        Just Checkmate -> "#"
 
 rankP :: Parser Int
 rankP = do

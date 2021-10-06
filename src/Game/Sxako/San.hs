@@ -34,16 +34,16 @@ data San
       { sSide :: Side
       , sCheck :: Maybe CheckType
       }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 data Disamb
   = DisambByFile Int
   | DisambByRank Int
   | DisambByCoord Coord
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data CheckType = Check | Checkmate
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 instance Read San where
   readsPrec _ = readsByAttoparsecChar8 sanP

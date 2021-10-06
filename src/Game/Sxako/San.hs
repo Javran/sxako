@@ -20,6 +20,8 @@ import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Char
 import Game.Sxako.Common
 import Game.Sxako.Coord
+import Game.Sxako.Fen
+import Game.Sxako.Ply
 
 data San
   = SNorm
@@ -41,7 +43,6 @@ data Disamb
   | DisambByRank Int
   | DisambByCoord Coord
   deriving (Show, Eq, Ord)
-
 
 instance Read San where
   readsPrec _ = readsByAttoparsecChar8 sanP
@@ -169,3 +170,18 @@ sanP = castleP <|> normalMoveP
           , sPromo
           , sCheck
           }
+
+{-
+  TODO: impl idea:
+
+  (1) deal with special situations:
+    + convert castle plies first
+    + pawn moves always disamb by file
+  (2) after (1) is done, we only have disamb to worry about:
+    + group by (PieceType, pTo)
+    + done if a groupping contains exactly one.
+    + otherwise try disamb by file, by rank, then fallback to coord.
+
+ -}
+legalSansEither :: Record -> Either GameResult [(San, Record)]
+legalSansEither = error "TODO"

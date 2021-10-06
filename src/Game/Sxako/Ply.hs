@@ -10,6 +10,7 @@ module Game.Sxako.Ply
   , DrawReason (..)
   , attackingSquares
   , legalPlies
+  , getCheckType
   , legalPliesMap
   , legalPliesEither
   )
@@ -133,6 +134,16 @@ legalPlies r@Record {placement = bd, activeColor} = do
 
 legalPliesMap :: Record -> M.Map Ply Record
 legalPliesMap = M.fromList . legalPlies
+
+{-
+  Note: it might be possible to merge some logic with `legalPliesEither` below,
+  but I doubt it would worth the effort.
+ -}
+getCheckType :: Record -> Maybe CheckType
+getCheckType r@Record{activeColor,placement} = do
+  guard $ not (hasSafeKings activeColor placement)
+  let hasLegalPlies = not . null . legalPlies $ r
+  pure $ if hasLegalPlies then Check else Checkmate
 
 {-
   TODO: to be tested.

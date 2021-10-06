@@ -65,8 +65,8 @@ data DrawReason
   | InsufficientMaterial
 
 data GameResult
-  = Checkmate Color -- color indicates the winner.
-  | Draw DrawReason
+  = ResultCheckmate Color -- color indicates the winner.
+  | ResultDraw DrawReason
 
 {-
   Encode a Ply for hashing
@@ -152,12 +152,12 @@ legalPliesEither
       -- the active color has no legal move.
       Left $
         if hasSafeKings activeColor placement
-          then Draw Stalemate
-          else Checkmate (opposite activeColor)
+          then ResultDraw Stalemate
+          else ResultCheckmate (opposite activeColor)
     xs@(_ : _) ->
       if
-          | halfMove > 100 -> Left $ Draw FiftyMoves
-          | insuffMat -> Left $ Draw InsufficientMaterial
+          | halfMove > 100 -> Left $ ResultDraw FiftyMoves
+          | insuffMat -> Left $ ResultDraw InsufficientMaterial
           | otherwise -> pure xs
       where
         [hbW, hbB] = fmap (getHalfboard placement) [White, Black]

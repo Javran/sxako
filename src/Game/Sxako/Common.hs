@@ -10,6 +10,7 @@ module Game.Sxako.Common
   , Side (..)
   , Placement2D
   , Square
+  , CheckType(..)
   , universe
   , charToPiece
   , pieceToChar
@@ -103,3 +104,6 @@ readsByAttoparsecChar8 parser raw =
   case parseOnly ((,) <$> parser <*> takeByteString) (BSC.pack raw) of
     Left msg -> fail msg
     Right (r, left) -> [(r, BSC.unpack left)]
+
+data CheckType = Check | Checkmate
+  deriving (Show, Eq, Ord)

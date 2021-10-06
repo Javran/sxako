@@ -42,8 +42,6 @@ data Disamb
   | DisambByCoord Coord
   deriving (Show, Eq, Ord)
 
-data CheckType = Check | Checkmate
-  deriving (Show, Eq, Ord)
 
 instance Read San where
   readsPrec _ = readsByAttoparsecChar8 sanP

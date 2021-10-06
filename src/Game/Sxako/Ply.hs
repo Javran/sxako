@@ -11,11 +11,13 @@ module Game.Sxako.Ply
   , attackingSquares
   , legalPlies
   , getCheckType
+  , isCastlePly
   , legalPliesMap
   , legalPliesEither
   )
 where
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Writer.CPS
 import Data.Aeson
@@ -140,10 +142,23 @@ legalPliesMap = M.fromList . legalPlies
   but I doubt it would worth the effort.
  -}
 getCheckType :: Record -> Maybe CheckType
-getCheckType r@Record{activeColor,placement} = do
+getCheckType r@Record {activeColor, placement} = do
   guard $ not (hasSafeKings activeColor placement)
   let hasLegalPlies = not . null . legalPlies $ r
   pure $ if hasLegalPlies then Check else Checkmate
+
+isCastlePly :: Record -> Ply -> Maybe Side
+isCastlePly Record {activeColor, placement} p = do
+  {-
+    Note that castling right is not checked here - this assumes that Record
+    fields are self-consistent.
+   -}
+  let (kingInitCoord, (kSideCoord, qSideCoord)) = case activeColor of
+        White -> (e1, (g1, c1))
+        Black -> (e8, (g8, c8))
+  guard $ at placement kingInitCoord == Just (activeColor, King)
+  KingSide <$ guard (p == PlyNorm kingInitCoord kSideCoord)
+    <|> QueenSide <$ guard (p == PlyNorm kingInitCoord qSideCoord)
 
 {-
   TODO: to be tested.

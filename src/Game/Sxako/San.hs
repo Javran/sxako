@@ -185,7 +185,9 @@ sanP = castleP <|> normalMoveP
     + group by (PieceType, pTo)
     + done if a groupping contains exactly one.
     + otherwise try disamb by file, by rank, then fallback to coord.
-
+  FEN for testing:
+  - kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K w - - 0 1
+  - kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K b - - 0 1
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
 legalSansEither r@Record {placement} = convert <$> legalPliesEither r
@@ -232,10 +234,9 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
         ls2 :: [[(Ply, Record)]]
         (ls2, rs2) = partitionEithers $
           fmap go $ do
-            grp <- ls1
-            M.toList $ performDisambByFile grp
+            M.toList $ performDisambByFile (concat ls1)
           where
-            go (fInd, vs) = case vs of
+            go ((_, fInd), vs) = case vs of
               [] -> error "unreachable"
               [v] -> Right (Just (DisambByFile fInd), v)
               _ : _ : _ -> Left vs
@@ -243,28 +244,29 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
         ls3 :: [[(Ply, Record)]]
         (ls3, rs3) = partitionEithers $
           fmap go $ do
-            grp <- ls2
-            M.toList $ performDisambByRank grp
+            M.toList $ performDisambByRank (concat ls2)
           where
-            go (rInd, vs) = case vs of
+            go ((_, rInd), vs) = case vs of
               [] -> error "unreachable"
               [v] -> Right (Just (DisambByRank rInd), v)
               _ : _ : _ -> Left vs
         rs4 = (\v@(p, _) -> (Just (DisambByCoord (pFrom p)), v)) <$> concat ls3
 
+    getPieceTypeCoord :: Ply -> (PieceType, Coord)
+    getPieceTypeCoord p = let Just (_, pt) = at placement (pFrom p) in (pt, pTo p)
     performDisambBasic :: [(Ply, Record)] -> M.Map (PieceType, Coord) [(Ply, Record)]
     performDisambBasic xs = M.fromListWith (<>) $ do
       v@(p, _) <- xs
       let Just (_, pt) = at placement (pFrom p)
       pure ((pt, pTo p), [v])
-    performDisambByFile :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
+    performDisambByFile :: [(Ply, Record)] -> M.Map ((PieceType, Coord), Int) [(Ply, Record)]
     performDisambByFile xs =
       M.fromListWith (<>) $
-        fmap (\v@(p, _) -> (withRankAndFile (pFrom p) (\_rInd fInd -> fInd), [v])) xs
-    performDisambByRank :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
+        fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\_rInd fInd -> fInd)), [v])) xs
+    performDisambByRank :: [(Ply, Record)] -> M.Map ((PieceType, Coord), Int) [(Ply, Record)]
     performDisambByRank xs =
       M.fromListWith (<>) $
-        fmap (\v@(p, _) -> (withRankAndFile (pFrom p) (\rInd _fInd -> rInd), [v])) xs
+        fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\rInd _fInd -> rInd)), [v])) xs
 
     handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
     handleSpecialPlies a = case castlePlyToSan a of

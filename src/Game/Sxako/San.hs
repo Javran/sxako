@@ -197,6 +197,19 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           we can deal with other types of plies left by `ls`.
          -}
         (ls, rs) = partitionEithers (fmap handleSpecialPlies xs)
+    performDisambBasic :: [(Ply, Record)] -> M.Map (PieceType, Coord) [(Ply, Record)]
+    performDisambBasic xs = M.fromListWith (<>) $ do
+      v@(p, _) <- xs
+      let Just (_, pt) = at placement (pFrom p)
+      pure ((pt, pTo p), [v])
+    performDisambByFile :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
+    performDisambByFile xs =
+      M.fromListWith (<>) $
+        fmap (\v@(p,_) -> (withRankAndFile (pFrom p) (\_rInd fInd -> fInd), [v])) xs
+    performDisambByRank :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
+    performDisambByRank xs =
+      M.fromListWith (<>) $
+        fmap (\v@(p,_) -> (withRankAndFile (pFrom p) (\rInd _fInd -> rInd), [v])) xs
 
     handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
     handleSpecialPlies a = case castlePlyToSan a of

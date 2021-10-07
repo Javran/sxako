@@ -18,6 +18,8 @@ import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Char
+import qualified Data.Map.Strict as M
+import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.Fen
@@ -184,4 +186,28 @@ sanP = castleP <|> normalMoveP
 
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
-legalSansEither = error "TODO"
+legalSansEither r@Record {placement} = error "TODO"
+  where
+    castlePlyToSan :: (Ply, Record) -> Maybe (San, Record)
+    castlePlyToSan (p, r') = do
+      s <- isCastlePly r p
+      pure (SCastle s (getCheckType r'), r')
+    pawnPlyToSan :: (Ply, Record) -> Maybe (San, Record)
+    pawnPlyToSan (p, r') = do
+      (_, Pawn) <- at placement (pFrom p)
+      pure
+        ( SNorm
+            { sPieceFrom = Pawn
+            , sFrom =
+                Just
+                  (DisambByFile
+                     (withRankAndFile (pFrom p) (\_r f -> f)))
+            , sCapture = isCapturePly r p
+            , sTo = pTo p
+            , sPromo = case p of
+                PlyNorm {} -> Nothing
+                PlyPromo {pPiece} -> Just pPiece
+            , sCheck = getCheckType r'
+            }
+        , r'
+        )

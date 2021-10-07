@@ -12,6 +12,7 @@ module Game.Sxako.Ply
   , legalPlies
   , getCheckType
   , isCastlePly
+  , isCapturePly
   , legalPliesMap
   , legalPliesEither
   )
@@ -159,6 +160,19 @@ isCastlePly Record {activeColor, placement} p = do
   guard $ at placement kingInitCoord == Just (activeColor, King)
   KingSide <$ guard (p == PlyNorm kingInitCoord kSideCoord)
     <|> QueenSide <$ guard (p == PlyNorm kingInitCoord qSideCoord)
+
+isCapturePly :: Record -> Ply -> Bool
+isCapturePly Record {placement, enPassantTarget} p =
+  case targetSq of
+    Just _ -> True
+    Nothing -> case enPassantTarget of
+      Just c | c == pTo p ->
+               case at placement (pFrom p) of
+                 Just (_, Pawn) -> True
+                 _ -> False
+      _ -> False
+ where
+   targetSq = at placement (pTo p)
 
 {-
   TODO: to be tested.

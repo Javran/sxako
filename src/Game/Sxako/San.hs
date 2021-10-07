@@ -189,6 +189,9 @@ sanP = castleP <|> normalMoveP
 legalSansEither :: Record -> Either GameResult [(San, Record)]
 legalSansEither r@Record {placement} = convert <$> legalPliesEither r
   where
+    {-
+      TODO: quick and dirty for now.
+     -}
     simpleConvert :: Maybe Disamb -> (Ply, Record) -> (San, Record)
     simpleConvert sFrom (p, r') =
       ( SNorm
@@ -196,7 +199,9 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           , sFrom
           , sCapture = isCapturePly r p
           , sTo = pTo p
-          , sPromo = Nothing
+          , sPromo = case p of
+              PlyNorm {} -> Nothing
+              PlyPromo {} -> error "unexpected pawn ply"
           , sCheck = getCheckType r'
           }
       , r'
@@ -206,7 +211,9 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     convert xs =
       rs
         <> fmap (uncurry simpleConvert) rs1
-        <> undefined
+        <> fmap (uncurry simpleConvert) rs2
+        <> fmap (uncurry simpleConvert) rs3
+        <> fmap (uncurry simpleConvert) rs4
       where
         {-
           Handle castle plies and pawn plies, after which
@@ -221,6 +228,28 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
               [] -> error "unreachable"
               [v] -> Right (Nothing, v)
               _ : _ : _ -> Left vs
+        ls2 :: [[(Ply, Record)]]
+        (ls2, rs2) = partitionEithers $
+          fmap go $ do
+            grp <- ls1
+            M.toList $ performDisambByFile grp
+          where
+            go (fInd, vs) = case vs of
+              [] -> error "unreachable"
+              [v] -> Right (Just (DisambByFile fInd), v)
+              _ : _ : _ -> Left vs
+
+        ls3 :: [[(Ply, Record)]]
+        (ls3, rs3) = partitionEithers $
+          fmap go $ do
+            grp <- ls2
+            M.toList $ performDisambByRank grp
+          where
+            go (rInd, vs) = case vs of
+              [] -> error "unreachable"
+              [v] -> Right (Just (DisambByRank rInd), v)
+              _ : _ : _ -> Left vs
+        rs4 = (\v@(p, _) -> (Just (DisambByCoord (pFrom p)), v)) <$> concat ls3
 
     performDisambBasic :: [(Ply, Record)] -> M.Map (PieceType, Coord) [(Ply, Record)]
     performDisambBasic xs = M.fromListWith (<>) $ do

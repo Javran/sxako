@@ -67,10 +67,12 @@ data DrawReason
   = Stalemate
   | FiftyMoves
   | InsufficientMaterial
+  deriving (Show)
 
 data GameResult
   = ResultCheckmate Color -- color indicates the winner.
   | ResultDraw DrawReason
+  deriving (Show)
 
 {-
   Encode a Ply for hashing
@@ -167,12 +169,12 @@ isCapturePly Record {placement, enPassantTarget} p =
     Just _ -> True
     Nothing -> case enPassantTarget of
       Just c | c == pTo p ->
-               case at placement (pFrom p) of
-                 Just (_, Pawn) -> True
-                 _ -> False
+        case at placement (pFrom p) of
+          Just (_, Pawn) -> True
+          _ -> False
       _ -> False
- where
-   targetSq = at placement (pTo p)
+  where
+    targetSq = at placement (pTo p)
 
 {-
   TODO: to be tested.

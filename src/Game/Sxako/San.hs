@@ -18,6 +18,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Char
+import Data.Either
 import qualified Data.Map.Strict as M
 import Game.Sxako.Board
 import Game.Sxako.Common
@@ -186,8 +187,24 @@ sanP = castleP <|> normalMoveP
 
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
-legalSansEither r@Record {placement} = error "TODO"
+legalSansEither r@Record {placement} = convert <$> legalPliesEither r
   where
+    convert :: [(Ply, Record)] -> [(San, Record)]
+    convert xs = rs <> undefined
+      where
+        {-
+          Handle castle plies and pawn plies, after which
+          we can deal with other types of plies left by `ls`.
+         -}
+        (ls, rs) = partitionEithers (fmap handleSpecialPlies xs)
+
+    handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
+    handleSpecialPlies a = case castlePlyToSan a of
+      Nothing -> case pawnPlyToSan a of
+        Nothing -> Left a
+        Just b -> Right b
+      Just b -> Right b
+
     castlePlyToSan :: (Ply, Record) -> Maybe (San, Record)
     castlePlyToSan (p, r') = do
       s <- isCastlePly r p

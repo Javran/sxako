@@ -189,14 +189,39 @@ sanP = castleP <|> normalMoveP
 legalSansEither :: Record -> Either GameResult [(San, Record)]
 legalSansEither r@Record {placement} = convert <$> legalPliesEither r
   where
+    simpleConvert :: Maybe Disamb -> (Ply, Record) -> (San, Record)
+    simpleConvert sFrom (p, r') =
+      ( SNorm
+          { sPieceFrom = undefined
+          , sFrom
+          , sCapture = isCapturePly r p
+          , sTo = pTo p
+          , sPromo = Nothing
+          , sCheck = getCheckType r'
+          }
+      , r'
+      )
+
     convert :: [(Ply, Record)] -> [(San, Record)]
-    convert xs = rs <> undefined
+    convert xs =
+      rs
+        <> fmap (uncurry simpleConvert) rs1
+        <> undefined
       where
         {-
           Handle castle plies and pawn plies, after which
           we can deal with other types of plies left by `ls`.
          -}
         (ls, rs) = partitionEithers (fmap handleSpecialPlies xs)
+        ls1 :: [[(Ply, Record)]]
+        rs1 :: [(Maybe Disamb, (Ply, Record))]
+        (ls1, rs1) = partitionEithers $ fmap go $ M.toList $ performDisambBasic ls
+          where
+            go (_k, vs) = case vs of
+              [] -> error "unreachable"
+              [v] -> Right (Nothing, v)
+              _ : _ : _ -> Left vs
+
     performDisambBasic :: [(Ply, Record)] -> M.Map (PieceType, Coord) [(Ply, Record)]
     performDisambBasic xs = M.fromListWith (<>) $ do
       v@(p, _) <- xs
@@ -205,11 +230,11 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     performDisambByFile :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
     performDisambByFile xs =
       M.fromListWith (<>) $
-        fmap (\v@(p,_) -> (withRankAndFile (pFrom p) (\_rInd fInd -> fInd), [v])) xs
+        fmap (\v@(p, _) -> (withRankAndFile (pFrom p) (\_rInd fInd -> fInd), [v])) xs
     performDisambByRank :: [(Ply, Record)] -> M.Map Int [(Ply, Record)]
     performDisambByRank xs =
       M.fromListWith (<>) $
-        fmap (\v@(p,_) -> (withRankAndFile (pFrom p) (\rInd _fInd -> rInd), [v])) xs
+        fmap (\v@(p, _) -> (withRankAndFile (pFrom p) (\rInd _fInd -> rInd), [v])) xs
 
     handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
     handleSpecialPlies a = case castlePlyToSan a of

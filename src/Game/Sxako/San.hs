@@ -7,6 +7,7 @@ module Game.Sxako.San
   , Disamb (..)
   , CheckType (..)
   , sanP
+  , legalSansEither
   )
 where
 
@@ -179,7 +180,7 @@ sanP = castleP <|> normalMoveP
 
   (1) deal with special situations:
     + convert castle plies first
-    + pawn moves always disamb by file
+    + convert pawn promotion
   (2) after (1) is done, we only have disamb to worry about:
     + group by (PieceType, pTo)
     + done if a groupping contains exactly one.
@@ -195,13 +196,13 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     simpleConvert :: Maybe Disamb -> (Ply, Record) -> (San, Record)
     simpleConvert sFrom (p, r') =
       ( SNorm
-          { sPieceFrom = undefined
+          { sPieceFrom = let Just (_, pt) = at placement (pFrom p) in pt
           , sFrom
           , sCapture = isCapturePly r p
           , sTo = pTo p
           , sPromo = case p of
               PlyNorm {} -> Nothing
-              PlyPromo {} -> error "unexpected pawn ply"
+              PlyPromo {} -> error "unexpected pawn promotion"
           , sCheck = getCheckType r'
           }
       , r'
@@ -267,7 +268,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
     handleSpecialPlies a = case castlePlyToSan a of
-      Nothing -> case pawnPlyToSan a of
+      Nothing -> case promoPlyToSan a of
         Nothing -> Left a
         Just b -> Right b
       Just b -> Right b
@@ -276,8 +277,9 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     castlePlyToSan (p, r') = do
       s <- isCastlePly r p
       pure (SCastle s (getCheckType r'), r')
-    pawnPlyToSan :: (Ply, Record) -> Maybe (San, Record)
-    pawnPlyToSan (p, r') = do
+    promoPlyToSan :: (Ply, Record) -> Maybe (San, Record)
+    promoPlyToSan (p, r') = do
+      PlyPromo {pPiece} <- pure p
       (_, Pawn) <- at placement (pFrom p)
       pure
         ( SNorm
@@ -288,9 +290,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
                      (withRankAndFile (pFrom p) (\_r f -> f)))
             , sCapture = isCapturePly r p
             , sTo = pTo p
-            , sPromo = case p of
-                PlyNorm {} -> Nothing
-                PlyPromo {pPiece} -> Just pPiece
+            , sPromo = Just pPiece
             , sCheck = getCheckType r'
             }
         , r'

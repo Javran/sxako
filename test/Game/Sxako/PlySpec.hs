@@ -8,11 +8,9 @@ import Control.Monad
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
-import Data.Yaml as Yaml
 import Game.Sxako.Castling
 import Game.Sxako.Common
 import Game.Sxako.Coord
-import Game.Sxako.DataFiles
 import Game.Sxako.Fen
 import Game.Sxako.Ply
 import Game.Sxako.TestBoard
@@ -1196,13 +1194,7 @@ testDataSpec = do
   let testBig = False
       mkSpecFromFile tag src =
         describe tag $ do
-          tds <- runIO $ do
-            raw <- loadDataFileStrict src
-            let r = Yaml.decodeEither' @[TestData] raw
-            case r of
-              Left msg ->
-                error $ "Failed when loading testdata: " <> show msg
-              Right v -> pure v
+          tds <- runIO $ loadTestDataList src
           forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
             specify (T.unpack tdTag) $ case tdLegalPlies of
               Nothing -> pending

@@ -1,11 +1,18 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Game.Sxako.TestData where
+module Game.Sxako.TestData
+  ( TestData (..)
+  , loadTestDataList
+  )
+where
 
 import Data.Aeson
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Data.Yaml as Yaml
+import Game.Sxako.DataFiles
 import Game.Sxako.Fen
 import Game.Sxako.Ply
 
@@ -36,3 +43,12 @@ instance ToJSON TestData where
       ("tag" .= tdTag
          <> "position" .= tdPosition
          <> maybe mempty ("legal-plies" .=) tdLegalPlies)
+
+loadTestDataList :: FilePath -> IO [TestData]
+loadTestDataList src = do
+  raw <- loadDataFileStrict src
+  let r = Yaml.decodeEither' @[TestData] raw
+  case r of
+    Left msg ->
+      error $ "Failed when loading testdata: " <> show msg
+    Right v -> pure v

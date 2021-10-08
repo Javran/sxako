@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
@@ -5,6 +6,7 @@
 module Game.Sxako.PlySpec where
 
 import Control.Monad
+import Data.Char
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -15,7 +17,19 @@ import Game.Sxako.Fen
 import Game.Sxako.Ply
 import Game.Sxako.TestBoard
 import Game.Sxako.TestData
+import System.Environment
 import Test.Hspec
+
+{-
+  If TEST_BIG is set to contain any non-space character,
+  the large testdata will be used.
+ -}
+
+getBigFlag :: IO Bool
+getBigFlag =
+  lookupEnv "TEST_BIG" >>= \case
+    Just xs | not (all isSpace xs) -> pure True
+    _ -> pure False
 
 spec :: Spec
 spec = do
@@ -1193,8 +1207,7 @@ testDataSpec :: Spec
 testDataSpec = describe "legalPlies" $
   describe "testdata" $
     do
-      let testBig = False
-          mkSpecFromFile tag src =
+      let mkSpecFromFile tag src =
             describe tag $ do
               tds <- runIO $ loadTestDataList src
               forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
@@ -1204,5 +1217,6 @@ testDataSpec = describe "legalPlies" $
                     legalPliesMap tdPosition `shouldBe` expectedLps
       mkSpecFromFile "plies" "testdata/plies.yaml"
       mkSpecFromFile "lichess-puzzles" "testdata/lichess-puzzles.yaml.xz"
-      when testBig $
+      b <- runIO getBigFlag
+      when b $
         mkSpecFromFile "lichess-puzzles-big" "testdata/lichess-puzzles-big.yaml.xz"

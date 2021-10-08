@@ -115,11 +115,4 @@ spec = do
     + have the exact same Set of Records.
     + # of Ply in the Set should be the same as that of San
       (i.e. disambiguation does resolve conflicts)
-
-  - also a few sample FENs for testing:
-
-    + kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K w - - 0 1
-    + kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K b - - 0 1
-
-
  -}

@@ -13,40 +13,38 @@ import Test.Hspec.QuickCheck
 import Test.QuickCheck
 
 {-
-  A newtype meant for generating random SAN for tests.
+  Generates random SANs for tests.
 
-  The Arbitrary instance might generate non-sensical moves,
+  Note that this might generate non-sensical moves,
   but it should be good enough for the purpose of verifying
   Read & Show instance.
  -}
-newtype GenSan = GenSan San deriving (Show)
-
-instance Arbitrary GenSan where
-  arbitrary =
-    frequency
-      [ (9, GenSan <$> genNorm)
-      , (1, GenSan <$> genCastle)
-      ]
-    where
-      gen07 = chooseInt (0, 7)
-      genCheck = elements [Nothing, Just Check, Just Checkmate]
-      genCoord = unsafeFromRankAndFile <$> gen07 <*> gen07
-      genNorm =
-        SNorm <$> elements @PieceType universe
-          <*> oneof
-            (pure Nothing :
-             (fmap . fmap)
-               Just
-               [ DisambByFile <$> gen07
-               , DisambByRank <$> gen07
-               , DisambByCoord <$> genCoord
-               ])
-          <*> elements [False, True]
-          <*> genCoord
-          <*> elements (Nothing : fmap Just [Knight .. Queen])
-          <*> genCheck
-      genSide = elements [KingSide, QueenSide]
-      genCastle = SCastle <$> genSide <*> genCheck
+genSan :: Gen San
+genSan =
+  frequency
+    [ (9, genNorm)
+    , (1, genCastle)
+    ]
+  where
+    gen07 = chooseInt (0, 7)
+    genCheck = elements [Nothing, Just Check, Just Checkmate]
+    genCoord = unsafeFromRankAndFile <$> gen07 <*> gen07
+    genNorm =
+      SNorm <$> elements @PieceType universe
+        <*> oneof
+          (pure Nothing :
+           (fmap . fmap)
+             Just
+             [ DisambByFile <$> gen07
+             , DisambByRank <$> gen07
+             , DisambByCoord <$> genCoord
+             ])
+        <*> elements [False, True]
+        <*> genCoord
+        <*> elements (Nothing : fmap Just [Knight .. Queen])
+        <*> genCheck
+    genSide = elements [KingSide, QueenSide]
+    genCastle = SCastle <$> genSide <*> genCheck
 
 spec :: Spec
 spec = do
@@ -97,6 +95,9 @@ spec = do
           , sCheck = Just Check
           }
   describe "San" $
-    prop "Read & Show instance" $
-      \(GenSan s) ->
-        read (show s) === s
+    prop "Read & Show instance" $ do
+      s <- genSan
+      let lbl = case s of
+            SNorm {} -> "SNorm"
+            SCastle {} -> "SCastle"
+      pure $ label lbl $ read (show s) === s

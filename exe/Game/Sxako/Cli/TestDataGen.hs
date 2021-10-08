@@ -8,7 +8,6 @@ module Game.Sxako.Cli.TestDataGen where
 import Control.Monad
 import Data.List.Split
 import qualified Data.Map.Strict as M
-import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding
 import Data.Yaml
@@ -81,13 +80,32 @@ snapshotPuzzle sf r ps = do
           pure np
       snapshotPuzzle sf nextPos xs
 
+zeroOrOne :: [a] -> Maybe (Maybe a)
+zeroOrOne = \case
+  [] -> Just Nothing
+  [a] -> Just (Just a)
+  _ : _ : _ -> Nothing
+
+outputTestData :: Maybe FilePath -> [TestData] -> IO ()
+outputTestData mOutputFp tds =
+  case mOutputFp of
+    Just outputFp -> do
+      Data.Yaml.encodeFile outputFp tds
+      putStrLn $ show (length tds) <> " testdata written to " <> outputFp
+    Nothing -> do
+      putStrLn "# BEGIN"
+      putStr (T.unpack (decodeUtf8 (Data.Yaml.encode tds)))
+      putStrLn "# END"
+
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
   getArgs >>= \case
-    "from-lichess" : inputFp : mOutputFp
-      | -- zero or one element.
-        take 1 mOutputFp == mOutputFp ->
+    "from-lichess" : inputFp : mOut
+      | Just mOutputFp <- zeroOrOne mOut ->
         do
+          {-
+            This subcommand consumes rows of Lichess CSV data and creates [TestData]
+           -}
           rawLines <- lines <$> readFile inputFp
           let parseLine raw = do
                 let xs = splitOn "," raw
@@ -129,22 +147,25 @@ subCmdMain cmdHelpPrefix =
                      forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
                        let tdTag = T.pack $ prefix <> tag
                        pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps})
-          case listToMaybe mOutputFp of
-            Just outputFp -> do
-              Data.Yaml.encodeFile outputFp tds
-              putStrLn $ show (length tds) <> " testdata written to " <> outputFp
-            Nothing -> do
-              putStrLn "# BEGIN"
-              putStr (T.unpack (decodeUtf8 (Data.Yaml.encode tds)))
-              putStrLn "# END"
-    ["snapshot", inputFp] -> do
-      Right tests <- decodeFileEither @[TestData] inputFp
-      putStrLn $ "Found " <> show (length tests) <> " tests."
-      withStockfish $ \sf ->
-        forM_ tests $ \td@TestData {tdPosition} -> do
-          lps <- getAllLegalPlies sf tdPosition
-          pure td {tdLegalPlies = Just lps}
+          outputTestData mOutputFp tds
+    "fill" : inputFp : mOut
+      | Just mOutputFp <- zeroOrOne mOut -> do
+        {-
+          This subcommand reads [TestData] and fills in missing tdLegalPlies with stockfish.
+         -}
+
+        Right tests <- decodeFileEither @[TestData] inputFp
+        putStrLn $ "Found " <> show (length tests) <> " tests."
+        tests' <-
+          withStockfish $ \sf -> do
+            forM tests $ \td@TestData {tdPosition, tdLegalPlies} ->
+              case tdLegalPlies of
+                Nothing -> do
+                  lps <- getAllLegalPlies sf tdPosition
+                  pure td {tdLegalPlies = Just lps}
+                Just _ -> pure td
+        outputTestData mOutputFp tests'
     _ -> do
       putStrLn $ cmdHelpPrefix <> "from-lichess <source csv> [target]"
-      putStrLn $ cmdHelpPrefix <> "snapshot <test yaml>"
+      putStrLn $ cmdHelpPrefix <> "fill <source yaml> [target yaml]"
       exitFailure

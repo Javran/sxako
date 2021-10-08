@@ -101,3 +101,25 @@ spec = do
             SNorm {} -> "SNorm"
             SCastle {} -> "SCastle"
       pure $ label lbl $ read (show s) === s
+
+{-
+  TODO: test coverage for Ply to San conversion:
+
+  Here we trust that Game.Sxako.Ply has been implemented correctly,
+  and verify the correctness of legalSansEither.
+  In particular:
+
+  - Given same input (we assume that the WHNF of the result is always Right),
+    legalPliesEither and legalSansEither should:
+
+    + have the exact same Set of Records.
+    + # of Ply in the Set should be the same as that of San
+      (i.e. disambiguation does resolve conflicts)
+
+  - also a few sample FENs for testing:
+
+    + kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K w - - 0 1
+    + kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K b - - 0 1
+
+
+ -}

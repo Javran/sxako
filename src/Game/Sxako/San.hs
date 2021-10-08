@@ -176,18 +176,16 @@ sanP = castleP <|> normalMoveP
           }
 
 {-
-  TODO: impl idea:
+  Either gives all possible next plies, or
+  conclude the game according to rules.
 
-  (1) deal with special situations:
-    + convert castle plies first
-    + convert pawn promotion
-  (2) after (1) is done, we only have disamb to worry about:
-    + group by (PieceType, pTo)
-    + done if a groupping contains exactly one.
-    + otherwise try disamb by file, by rank, then fallback to coord.
-  FEN for testing:
-  - kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K w - - 0 1
-  - kn6/r3r3/1n6/2Q1Q3/8/2Q1Q3/8/7K b - - 0 1
+  Implementation notes:
+
+  - Castle and Pawn promotion are special cases and are dealt with
+    as the first step.
+
+  - otherwise we try different approaches of disambiguation
+    according to SAN spec.
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
 legalSansEither r@Record {placement} = convert <$> legalPliesEither r

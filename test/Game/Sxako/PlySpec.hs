@@ -1187,19 +1187,22 @@ examplesSpec = do
 {-
   For coverage of just those data samples:
 
-  stack test --ta='--match "/Game.Sxako.Ply/legalPlies.testdata"' --coverage
+  stack test --ta='--match "/Game.Sxako.Ply/legalPlies/testdata"' --coverage
  -}
 testDataSpec :: Spec
-testDataSpec = do
-  let testBig = False
-      mkSpecFromFile tag src =
-        describe tag $ do
-          tds <- runIO $ loadTestDataList src
-          forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
-            specify (T.unpack tdTag) $ case tdLegalPlies of
-              Nothing -> pending
-              Just expectedLps ->
-                legalPliesMap tdPosition `shouldBe` expectedLps
-  mkSpecFromFile "legalPlies.testdata" "testdata/lichess-puzzles.yaml.xz"
-  when testBig $
-    mkSpecFromFile "legalPlies.testdata-big" "testdata/lichess-puzzles-big.yaml.xz"
+testDataSpec = describe "legalPlies" $
+  describe "testdata" $
+    do
+      let testBig = False
+          mkSpecFromFile tag src =
+            describe tag $ do
+              tds <- runIO $ loadTestDataList src
+              forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
+                specify (T.unpack tdTag) $ case tdLegalPlies of
+                  Nothing -> pending
+                  Just expectedLps ->
+                    legalPliesMap tdPosition `shouldBe` expectedLps
+      mkSpecFromFile "plies" "testdata/plies.yaml"
+      mkSpecFromFile "lichess-puzzles" "testdata/lichess-puzzles.yaml.xz"
+      when testBig $
+        mkSpecFromFile "lichess-puzzles-big" "testdata/lichess-puzzles-big.yaml.xz"

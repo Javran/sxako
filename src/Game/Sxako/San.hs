@@ -229,11 +229,14 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
               | otherwise -> Right pr
 
     simpleConvert :: Maybe Disamb -> PlyRec -> (San, Record)
-    simpleConvert sFrom (p, r') =
-      -- TODO: always disamb on pawn captures.
+    simpleConvert sFromPre (p, r') =
       ( SNorm
           { sPieceFrom = let Just (_, pt) = at placement (pFrom p) in pt
-          , sFrom
+          , sFrom =
+              sFromPre <|> do
+                (Pawn, _) <- pure (getPieceTypeCoord p)
+                guard sCapture
+                pure $ DisambByFile (coordFile (pFrom p))
           , sCapture = isCapturePly r p
           , sTo = pTo p
           , sPromo = case p of
@@ -243,6 +246,8 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           }
       , r'
       )
+      where
+        sCapture = isCapturePly r p
 
     convert :: [PlyRec] -> [(San, Record)]
     convert xs =
@@ -310,7 +315,6 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
       s <- isCastlePly r p
       pure (SCastle s (getCheckType r'), r')
 
-    -- TODO: do this properly
     promoPliesToSan :: [PlyRec] -> [SanRec]
     promoPliesToSan pp =
       fmap (uncurry mkSan) $

@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -18,9 +19,11 @@ where
 import Control.Applicative
 import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
+import Data.Bifunctor
 import Data.Char
 import Data.Either
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord
@@ -175,6 +178,10 @@ sanP = castleP <|> normalMoveP
           , sCheck
           }
 
+type PlyRec = (Ply, Record)
+
+type SanRec = (San, Record)
+
 {-
   Either gives all possible next plies, or
   conclude the game according to rules.
@@ -193,7 +200,34 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     {-
       TODO: quick and dirty for now.
      -}
-    simpleConvert :: Maybe Disamb -> (Ply, Record) -> (San, Record)
+
+    {-
+      Plies are separated into 3 categories:
+      - castles
+      - pawn promotions
+      - everything else
+
+      and each of which are handled in a particular way.
+     -}
+    partitionPlies
+      :: [PlyRec]
+      -> ( ( {- all castle plies -}
+             [SanRec]
+           , {- all pawn promotion plies -}
+             [PlyRec]
+           )
+         , {- all of the rest -}
+           [PlyRec]
+         )
+    partitionPlies xs = first mconcat $ partitionEithers (go <$> xs)
+      where
+        go pr@(p, _) =
+          if
+              | Just sr <- castlePlyToSan pr -> Left ([sr], mempty)
+              | PlyPromo {} <- p -> Left (mempty, [pr])
+              | otherwise -> Right pr
+
+    simpleConvert :: Maybe Disamb -> PlyRec -> (San, Record)
     simpleConvert sFrom (p, r') =
       ( SNorm
           { sPieceFrom = let Just (_, pt) = at placement (pFrom p) in pt
@@ -208,9 +242,9 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
       , r'
       )
 
-    convert :: [(Ply, Record)] -> [(San, Record)]
+    convert :: [PlyRec] -> [(San, Record)]
     convert xs =
-      rs
+      castles <> promoPliesToSan pawnPromos
         <> fmap (uncurry simpleConvert) rs1
         <> fmap (uncurry simpleConvert) rs2
         <> fmap (uncurry simpleConvert) rs3
@@ -220,16 +254,16 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           Handle castle plies and pawn plies, after which
           we can deal with other types of plies left by `ls`.
          -}
-        (ls, rs) = partitionEithers (fmap handleSpecialPlies xs)
-        ls1 :: [[(Ply, Record)]]
-        rs1 :: [(Maybe Disamb, (Ply, Record))]
+        ((castles, pawnPromos), ls) = partitionPlies xs
+        ls1 :: [[PlyRec]]
+        rs1 :: [(Maybe Disamb, PlyRec)]
         (ls1, rs1) = partitionEithers $ fmap go $ M.toList $ performDisambBasic ls
           where
             go (_k, vs) = case vs of
               [] -> error "unreachable"
               [v] -> Right (Nothing, v)
               _ : _ : _ -> Left vs
-        ls2 :: [[(Ply, Record)]]
+        ls2 :: [[PlyRec]]
         (ls2, rs2) = partitionEithers $
           fmap go $ do
             M.toList $ performDisambByFile (concat ls1)
@@ -239,7 +273,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
               [v] -> Right (Just (DisambByFile fInd), v)
               _ : _ : _ -> Left vs
 
-        ls3 :: [[(Ply, Record)]]
+        ls3 :: [[PlyRec]]
         (ls3, rs3) = partitionEithers $
           fmap go $ do
             M.toList $ performDisambByRank (concat ls2)
@@ -252,31 +286,29 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     getPieceTypeCoord :: Ply -> (PieceType, Coord)
     getPieceTypeCoord p = let Just (_, pt) = at placement (pFrom p) in (pt, pTo p)
-    performDisambBasic :: [(Ply, Record)] -> M.Map (PieceType, Coord) [(Ply, Record)]
+    performDisambBasic :: [PlyRec] -> M.Map (PieceType, Coord) [PlyRec]
     performDisambBasic xs = M.fromListWith (<>) $ do
       v@(p, _) <- xs
       pure (getPieceTypeCoord p, [v])
-    performDisambByFile :: [(Ply, Record)] -> M.Map ((PieceType, Coord), Int) [(Ply, Record)]
+    performDisambByFile :: [PlyRec] -> M.Map ((PieceType, Coord), Int) [PlyRec]
     performDisambByFile xs =
       M.fromListWith (<>) $
         fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\_rInd fInd -> fInd)), [v])) xs
-    performDisambByRank :: [(Ply, Record)] -> M.Map ((PieceType, Coord), Int) [(Ply, Record)]
+    performDisambByRank :: [PlyRec] -> M.Map ((PieceType, Coord), Int) [PlyRec]
     performDisambByRank xs =
       M.fromListWith (<>) $
         fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\rInd _fInd -> rInd)), [v])) xs
 
-    handleSpecialPlies :: (Ply, Record) -> Either (Ply, Record) (San, Record)
-    handleSpecialPlies a = case castlePlyToSan a of
-      Nothing -> case promoPlyToSan a of
-        Nothing -> Left a
-        Just b -> Right b
-      Just b -> Right b
-
-    castlePlyToSan :: (Ply, Record) -> Maybe (San, Record)
+    castlePlyToSan :: PlyRec -> Maybe (San, Record)
     castlePlyToSan (p, r') = do
       s <- isCastlePly r p
       pure (SCastle s (getCheckType r'), r')
-    promoPlyToSan :: (Ply, Record) -> Maybe (San, Record)
+
+    -- TODO: do this properly
+    promoPliesToSan :: [PlyRec] -> [SanRec]
+    promoPliesToSan = fmap (fromJust . promoPlyToSan)
+
+    promoPlyToSan :: PlyRec -> Maybe (San, Record)
     promoPlyToSan (p, r') = do
       PlyPromo {pPiece} <- pure p
       (_, Pawn) <- at placement (pFrom p)

@@ -12,6 +12,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Game.Sxako.Common
 import Game.Sxako.Coord
+import Game.Sxako.Fen
 import Game.Sxako.San
 import Game.Sxako.TestData
 import Test.Hspec
@@ -108,7 +109,33 @@ spec = do
             SCastle {} -> "SCastle"
       pure $ label lbl $ read (show s) === s
   describe "legalSansEither" $
-    describe "Right" $
+    describe "Right" $ do
+      {-
+        By verfiying Show instance on Sans, we can have coverage on
+        whether check marks are set correctly.
+
+        Note that some of the FENs below are also present in testdata/plies.yaml,
+        which allows us to coverage on resulting Records, thus still necessary.
+       -}
+      describe "Sets of all SANs" $ do
+        let mkTest tag rawFen sanWs =
+              specify tag $ do
+                let record = read @Record rawFen
+                    Right result = legalSansEither record
+                    allSanShows = S.fromList (show . fst <$> result)
+                allSanShows `shouldBe` S.fromList (words sanWs)
+        mkTest
+          "Promotion with check"
+          "6k1/4P2p/7K/8/8/8/8/8 w - - 0 1"
+          -- TODO: ee8 should be just e8
+          "Kg5 Kh5 ee8=B ee8=N ee8=Q# ee8=R+"
+        mkTest
+          "Castle check"
+          "3RnkbQ/4p1p1/8/8/8/8/8/4K2R w K - 1 1"
+          "Kd1 Kd2 Ke2 Kf1 Kf2 O-O# \
+          \Qh2 Qh3 Qh4 Qh5 Qh6 Qh7 Qxg7+ Qxg8+ \
+          \Ra8 Rb8 Rc8 Rd1 Rd2 Rd3 Rd4 Rd5 Rd6 Rd7 Rf1# Rg1 Rh2 Rh3 Rh4 Rh5 Rh6 Rh7 Rxe8+"
+
       describe "plies.yaml" $ do
         tds <- runIO $ loadTestDataList "testdata/plies.yaml"
         forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do

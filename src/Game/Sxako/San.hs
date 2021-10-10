@@ -284,6 +284,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
         ( SNorm
             { sPieceFrom = Pawn
             , sFrom =
+                -- TODO: handle disamb properly.
                 Just
                   (DisambByFile
                      (withRankAndFile (pFrom p) (\_r f -> f)))

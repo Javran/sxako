@@ -2,6 +2,8 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Game.Sxako.San
   ( San (..)
@@ -23,7 +25,6 @@ import Data.Bifunctor
 import Data.Char
 import Data.Either
 import qualified Data.Map.Strict as M
-import Data.Maybe
 import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord
@@ -229,6 +230,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     simpleConvert :: Maybe Disamb -> PlyRec -> (San, Record)
     simpleConvert sFrom (p, r') =
+      -- TODO: always disamb on pawn captures.
       ( SNorm
           { sPieceFrom = let Just (_, pt) = at placement (pFrom p) in pt
           , sFrom
@@ -286,6 +288,10 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     getPieceTypeCoord :: Ply -> (PieceType, Coord)
     getPieceTypeCoord p = let Just (_, pt) = at placement (pFrom p) in (pt, pTo p)
+
+    coordRank, coordFile :: Coord -> Int
+    coordRank c = withRankAndFile c (\rInd _fInd -> rInd)
+    coordFile c = withRankAndFile c (\_rInd fInd -> fInd)
     performDisambBasic :: [PlyRec] -> M.Map (PieceType, Coord) [PlyRec]
     performDisambBasic xs = M.fromListWith (<>) $ do
       v@(p, _) <- xs
@@ -293,11 +299,11 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
     performDisambByFile :: [PlyRec] -> M.Map ((PieceType, Coord), Int) [PlyRec]
     performDisambByFile xs =
       M.fromListWith (<>) $
-        fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\_rInd fInd -> fInd)), [v])) xs
+        fmap (\v@(p, _) -> ((getPieceTypeCoord p, coordFile (pFrom p)), [v])) xs
     performDisambByRank :: [PlyRec] -> M.Map ((PieceType, Coord), Int) [PlyRec]
     performDisambByRank xs =
       M.fromListWith (<>) $
-        fmap (\v@(p, _) -> ((getPieceTypeCoord p, withRankAndFile (pFrom p) (\rInd _fInd -> rInd)), [v])) xs
+        fmap (\v@(p, _) -> ((getPieceTypeCoord p, coordRank (pFrom p)), [v])) xs
 
     castlePlyToSan :: PlyRec -> Maybe (San, Record)
     castlePlyToSan (p, r') = do
@@ -306,24 +312,50 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     -- TODO: do this properly
     promoPliesToSan :: [PlyRec] -> [SanRec]
-    promoPliesToSan = fmap (fromJust . promoPlyToSan)
+    promoPliesToSan pp =
+      fmap (uncurry mkSan) $
+        fmap (,Nothing) noDisambs
+          <> fmap (\pr@(p, _) -> (pr, Just (DisambByFile (coordFile (pFrom p))))) needDisambs
+      where
+        {-
+          first group pawn promotes by (source file, target file).
 
-    promoPlyToSan :: PlyRec -> Maybe (San, Record)
-    promoPlyToSan (p, r') = do
-      PlyPromo {pPiece} <- pure p
-      (_, Pawn) <- at placement (pFrom p)
-      pure
-        ( SNorm
-            { sPieceFrom = Pawn
-            , sFrom =
-                -- TODO: handle disamb properly.
-                Just
-                  (DisambByFile
-                     (withRankAndFile (pFrom p) (\_r f -> f)))
-            , sCapture = isCapturePly r p
-            , sTo = pTo p
-            , sPromo = Just pPiece
-            , sCheck = getCheckType r'
-            }
-        , r'
-        )
+          Since elements of each such group only differs in promotion target piece types,
+          they don't need to be disambiguated against each other.
+
+         -}
+        promoGroups :: M.Map (Int, Int) [PlyRec]
+        promoGroups =
+          M.fromListWith (<>) $
+            fmap (\pr@(p, _) -> ((coordFile (pFrom p), coordFile (pTo p)), [pr])) pp
+
+        {-
+          Basic disambiguation by file of the target coord.
+         -}
+        disambs :: M.Map Int [[PlyRec]]
+        disambs = M.fromListWith (<>) $ (\((_srcF, tgtF), v) -> (tgtF, [v])) <$> M.toList promoGroups
+        noDisambs, needDisambs :: [PlyRec]
+        (concat -> noDisambs, concat . concat -> needDisambs) = partitionEithers $ go <$> M.elems disambs
+          where
+            go = \case
+              [] -> error "unreachable"
+              [v] -> Left v
+              xs@(_ : _ : _) -> Right xs
+        mkSan :: PlyRec -> Maybe Disamb -> SanRec
+        mkSan (p@PlyPromo {pPiece}, r') sFromPre =
+          ( SNorm
+              { sPieceFrom = Pawn
+              , sFrom =
+                  sFromPre <|> do
+                    guard sCapture
+                    pure $ DisambByFile (coordFile (pFrom p))
+              , sCapture
+              , sTo = pTo p
+              , sPromo = Just pPiece
+              , sCheck = getCheckType r'
+              }
+          , r'
+          )
+          where
+            sCapture = isCapturePly r p
+        mkSan _ _ = error "unreachable"

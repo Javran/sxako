@@ -127,15 +127,27 @@ spec = do
         mkTest
           "Promotion with check"
           "6k1/4P2p/7K/8/8/8/8/8 w - - 0 1"
-          -- TODO: ee8 should be just e8
-          "Kg5 Kh5 ee8=B ee8=N ee8=Q# ee8=R+"
+          "Kg5 Kh5 e8=B e8=N e8=Q# e8=R+"
         mkTest
           "Castle check"
           "3RnkbQ/4p1p1/8/8/8/8/8/4K2R w K - 1 1"
           "Kd1 Kd2 Ke2 Kf1 Kf2 O-O# \
           \Qh2 Qh3 Qh4 Qh5 Qh6 Qh7 Qxg7+ Qxg8+ \
           \Ra8 Rb8 Rc8 Rd1 Rd2 Rd3 Rd4 Rd5 Rd6 Rd7 Rf1# Rg1 Rh2 Rh3 Rh4 Rh5 Rh6 Rh7 Rxe8+"
-
+        mkTest
+           "Promotion disambiguation 0"
+           "3n2k1/2PPP3/6K1/8/8/8/8/8 w - - 0 1"
+            "Kf5 Kf6 Kg5 Kh5 Kh6 \
+            \c8=B c8=N c8=Q c8=R \
+            \cxd8=B cxd8=N cxd8=Q# cxd8=R# \
+            \e8=B e8=N e8=Q# e8=R# \
+            \exd8=B exd8=N exd8=Q# exd8=R#"
+        mkTest
+           "Promotion disambiguation 1"
+            "3n2k1/3PP3/6K1/8/8/8/8/8 w - - 0 1"
+            "Kf5 Kf6 Kg5 Kh5 Kh6 \
+            \e8=B e8=N e8=Q# e8=R# \
+            \exd8=B exd8=N exd8=Q# exd8=R#"
       describe "plies.yaml" $ do
         tds <- runIO $ loadTestDataList "testdata/plies.yaml"
         forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do

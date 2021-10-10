@@ -1,13 +1,19 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.SanSpec where
 
+import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
+import qualified Data.Map.Strict as M
+import qualified Data.Set as S
+import qualified Data.Text as T
 import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.San
+import Game.Sxako.TestData
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
@@ -101,18 +107,18 @@ spec = do
             SNorm {} -> "SNorm"
             SCastle {} -> "SCastle"
       pure $ label lbl $ read (show s) === s
-
-{-
-  TODO: test coverage for Ply to San conversion:
-
-  Here we trust that Game.Sxako.Ply has been implemented correctly,
-  and verify the correctness of legalSansEither.
-  In particular:
-
-  - Given same input (we assume that the WHNF of the result is always Right),
-    legalPliesEither and legalSansEither should:
-
-    + have the exact same Set of Records.
-    + # of Ply in the Set should be the same as that of San
-      (i.e. disambiguation does resolve conflicts)
- -}
+  describe "legalSansEither" $
+    describe "Right" $
+      describe "plies.yaml" $ do
+        tds <- runIO $ loadTestDataList "testdata/plies.yaml"
+        forM_ tds $ \TestData {tdTag, tdPosition, tdLegalPlies} -> do
+          specify (T.unpack tdTag) $ case tdLegalPlies of
+            Nothing -> pending
+            Just expectedLps -> do
+              let Right result = legalSansEither tdPosition
+                  nextPositions = S.fromList (snd <$> result)
+                  nextSans = S.fromList (fst <$> result)
+              -- expect exact same set of resulting Records.
+              nextPositions `shouldBe` S.fromList (M.elems expectedLps)
+              -- expect that we have same # of Sans.
+              S.size nextSans `shouldBe` M.size expectedLps

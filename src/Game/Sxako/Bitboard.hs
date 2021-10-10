@@ -15,7 +15,7 @@ import Text.ParserCombinators.ReadP
 newtype Bitboard = Bitboard
   { getBitboard :: Word64
   }
-  deriving (Eq, Bits, Bounded) via Word64
+  deriving (Eq, Bits, Bounded, Ord) via Word64
 
 {-
   Show & Read instance:

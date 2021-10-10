@@ -48,7 +48,7 @@ data Record = Record
   , halfMove :: Int
   , fullMove :: Int
   }
-  deriving (Eq)
+  deriving (Eq, Ord)
 
 instance FromJSON Record where
   parseJSON = withText "FEN" $ \t ->

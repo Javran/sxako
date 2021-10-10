@@ -55,7 +55,7 @@ import Game.Sxako.Coord
 {-
   (<white side>, <black side>)
  -}
-newtype Board = Board (Halfboard, Halfboard) deriving (Eq)
+newtype Board = Board (Halfboard, Halfboard) deriving (Eq, Ord)
 
 type Halfboard = Hb.Halfboard
 

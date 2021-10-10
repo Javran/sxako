@@ -29,7 +29,7 @@ import Game.Sxako.Common
 import Text.ParserCombinators.ReadP
 
 newtype Castling = Castling Word8
-  deriving (Eq, Enum, Bits) via Word8
+  deriving (Eq, Enum, Bits, Ord) via Word8
 
 none, whiteKingSide, whiteQueenSide, blackKingSide, blackQueenSide, allAllowed :: Castling
 ( [ none

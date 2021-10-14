@@ -241,7 +241,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           , sTo = pTo p
           , sPromo = case p of
               PlyNorm {} -> Nothing
-              PlyPromo {} -> error "unexpected pawn promotion"
+              PlyPromo {pPiece} -> Just pPiece
           , sCheck = getCheckType r'
           }
       , r'
@@ -317,7 +317,7 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
     promoPliesToSan :: [PlyRec] -> [SanRec]
     promoPliesToSan pp =
-      fmap (uncurry mkSan) $
+      fmap (\(p, md) -> simpleConvert md p) $
         fmap (,Nothing) noDisambs
           <> fmap (\pr@(p, _) -> (pr, Just (DisambByFile (coordFile (pFrom p))))) needDisambs
       where
@@ -345,21 +345,3 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
               [] -> error "unreachable"
               [v] -> Left v
               xs@(_ : _ : _) -> Right xs
-        mkSan :: PlyRec -> Maybe Disamb -> SanRec
-        mkSan (p@PlyPromo {pPiece}, r') sFromPre =
-          ( SNorm
-              { sPieceFrom = Pawn
-              , sFrom =
-                  sFromPre <|> do
-                    guard sCapture
-                    pure $ DisambByFile (coordFile (pFrom p))
-              , sCapture
-              , sTo = pTo p
-              , sPromo = Just pPiece
-              , sCheck = getCheckType r'
-              }
-          , r'
-          )
-          where
-            sCapture = isCapturePly r p
-        mkSan _ _ = error "unreachable"

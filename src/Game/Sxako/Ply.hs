@@ -120,6 +120,16 @@ instance ToJSON Ply where
 
 instance ToJSONKey Ply
 
+{-
+  TODO: To improve performance,
+  we can probably do with a vector of 6 elements for each piece type.
+  This would allow us to avoid some list concats and make it easier
+  when it comes to converting to SANs - in current implementation
+  we basically just merge all plies together and later separate each piece types out,
+  resulting in some unnecessary works.
+
+  This will also allow us to generalize Halfboard into some PieceType-indexed vector.
+ -}
 legalPlies :: Record -> [(Ply, Record)]
 legalPlies r@Record {placement = bd, activeColor} = do
   coord <- universe

@@ -234,6 +234,23 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
           { sPieceFrom = let Just (_, pt) = at placement (pFrom p) in pt
           , sFrom =
               sFromPre <|> do
+                {-
+                  Dispite that disambiguation on pawn moves are not always necessary,
+                  PGN spec states that:
+
+                  ... pawn captures include the file letter of the originating square
+                  of the capturing pawn immediately prior to the "x" character.
+
+                  So we need to make sure this disambiguation is here.
+
+                  In addition, note the fact that only disambiguation by file is possible
+                  on pawn moves. This is because all SAN includes target location (except for castle moves),
+                  which implies source rank for pawn (since pawn can only move forward).
+                  (double forward requires two squares in front of it being empty, therefore,
+                  two pawn moves to the same target, say e3-e4 and e2-e4, cannot be possible at the same time)
+                  This fact implies that it is unnecessary to include ranks in disambiguation of pawn moves,
+                  excluding disambiguation by coord / rank.
+                  -}
                 (Pawn, _) <- pure (getPieceTypeCoord p)
                 guard sCapture
                 pure $ DisambByFile (coordFile (pFrom p))

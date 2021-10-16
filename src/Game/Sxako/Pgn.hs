@@ -37,3 +37,36 @@ where
     verification included.
 
  -}
+
+import Data.Attoparsec.ByteString.Char8 as Parser
+import qualified Data.ByteString.Builder as Builder
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Text as T
+import Data.Text.Encoding
+import Control.Applicative
+
+type TagPair = (T.Text, T.Text)
+
+todo :: a
+todo = error "todo"
+
+tok :: Parser a -> Parser a
+tok = (<* skipSpace)
+
+stringLitP :: Parser T.Text
+stringLitP = tr <$> (char '"' *> many noEscapeChunk <* char '"')
+  where
+    tr :: [Builder.Builder] -> T.Text
+    tr = decodeLatin1 . BSL.toStrict . Builder.toLazyByteString . mconcat
+    noEscapeChunk = Builder.byteString <$> Parser.takeWhile1 (/= '\\')
+
+tagPairP :: Parser TagPair
+tagPairP =
+  tok (char '[')
+    *> ((,)
+          <$> (decodeLatin1 <$> tok (Parser.takeWhile1 isTagSymbol))
+            <*> tok stringLitP)
+    <* tok (char ']')
+  where
+    -- A further restriction on tag names is that they are composed exclusively of letters, digits, and the underscore character.
+    isTagSymbol ch = isAlpha_iso8859_15 ch || isDigit ch || ch == '_'

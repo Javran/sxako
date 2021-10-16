@@ -66,6 +66,8 @@ tests:
       - sxako
       - QuickCheck
       - hspec
+      - hspec-attoparsec
+      - raw-strings-qq
     ghc-options:
       - -Wall
       - -O2

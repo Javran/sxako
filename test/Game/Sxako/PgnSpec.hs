@@ -1,25 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Game.Sxako.PgnSpec where
 
-import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import Game.Sxako.Pgn
 import Test.Hspec
+import Test.Hspec.Attoparsec
+import Text.RawString.QQ
 
 spec :: Spec
 spec =
-  describe "stringLitP" $ do
-    let mkTest inp expected = do
-          specify ("Example: " <> inp) $ do
-            let r = parseOnly stringLitP (BSC.pack inp)
-            r `shouldBe` Right expected
+  describe "stringLitP" $
+    describe "examples" $ do
+      let mkTest inp expected =
+            specify inp $
+              BSC.pack inp ~> stringLitP
+                `parseSatisfies` (== expected)
 
-    mkTest "\"\"" ""
-    mkTest "\"abcd\"" "abcd"
-    mkTest "\"ab\\\\cd\"" "ab\\cd"
-    mkTest "\"ab\\\\cd\\\"123\"" "ab\\cd\"123"
-
-{-
-  TODO: hspec-attoparsec
- -}
+      mkTest [r|""|] [r||]
+      mkTest [r|"abcd"|] [r|abcd|]
+      mkTest [r|"ab\\cd"|] [r|ab\cd|]
+      mkTest [r|"ab\\cd\"\\123"|] [r|ab\cd"\123|]

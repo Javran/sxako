@@ -1,5 +1,5 @@
 module Game.Sxako.Pgn
-  (
+  ( tagPairP
   )
 where
 
@@ -38,12 +38,13 @@ where
 
  -}
 
+import Control.Applicative
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Builder as Builder
 import qualified Data.ByteString.Lazy as BSL
+import Data.Char
 import qualified Data.Text as T
 import Data.Text.Encoding
-import Control.Applicative
 
 type TagPair = (T.Text, T.Text)
 
@@ -54,11 +55,33 @@ tok :: Parser a -> Parser a
 tok = (<* skipSpace)
 
 stringLitP :: Parser T.Text
-stringLitP = tr <$> (char '"' *> many noEscapeChunk <* char '"')
+stringLitP =
+  tr
+    <$> (char '"'
+           *> many
+             (noEscapeChunk
+                <|> (charToBuilder <$> escapedChar))
+             <* char '"')
   where
     tr :: [Builder.Builder] -> T.Text
-    tr = decodeLatin1 . BSL.toStrict . Builder.toLazyByteString . mconcat
-    noEscapeChunk = Builder.byteString <$> Parser.takeWhile1 (/= '\\')
+    tr =
+      decodeLatin1
+        . BSL.toStrict
+        . Builder.toLazyByteString
+        . mconcat
+
+    {-
+      A quote inside a string is represented by the backslash immediately followed by a quote.
+      A backslash inside a string is represented by two adjacent backslashes.
+     -}
+    noEscapeChunk =
+      Builder.byteString
+        <$> Parser.takeWhile1 (/= '\\')
+    charToBuilder :: Char -> Builder.Builder
+    charToBuilder = Builder.int8 . fromIntegral . ord
+    escapedChar =
+      char '\\'
+        *> (('"' <$ char '"') <|> ('\\' <$ char '\\'))
 
 tagPairP :: Parser TagPair
 tagPairP =
@@ -68,5 +91,8 @@ tagPairP =
             <*> tok stringLitP)
     <* tok (char ']')
   where
-    -- A further restriction on tag names is that they are composed exclusively of letters, digits, and the underscore character.
-    isTagSymbol ch = isAlpha_iso8859_15 ch || isDigit ch || ch == '_'
+    {-
+      A further restriction on tag names is that they are composed exclusively of
+      letters, digits, and the underscore character.
+     -}
+    isTagSymbol ch = isAlpha_iso8859_15 ch || Parser.isDigit ch || ch == '_'

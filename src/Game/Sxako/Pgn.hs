@@ -51,6 +51,7 @@ type TagPair = (T.Text, T.Text)
 todo :: a
 todo = error "todo"
 
+-- TODO: how to recognize end of tag pair section if we are using skipSpace?
 tok :: Parser a -> Parser a
 tok = (<* skipSpace)
 

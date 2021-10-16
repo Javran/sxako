@@ -1,5 +1,6 @@
 module Game.Sxako.Pgn
-  ( tagPairP
+  ( TagPair
+  , tagPairP
   , stringLitP
   )
 where
@@ -44,6 +45,7 @@ import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Builder as Builder
 import qualified Data.ByteString.Lazy as BSL
 import Data.Char
+import Data.Functor
 import qualified Data.Text as T
 import Data.Text.Encoding
 
@@ -52,14 +54,22 @@ type TagPair = (T.Text, T.Text)
 todo :: a
 todo = error "todo"
 
-{-
-  TODO: how to recognize end of tag pair section if we are using skipSpace?
-
-  Plan: tagPairP should only succeed on non-empty inputs,
-  so an empty line can be recognized as start of movetext section.
- -}
 tok :: Parser a -> Parser a
 tok = (<* skipSpace)
+
+{-
+  PGN spec isn't clear on this one, let's just handle the most common ones, namely:
+
+  - \n (most common)
+  - \r \n
+  - \r
+
+ -}
+newlineP :: Parser ()
+newlineP = lf <|> (cr *> option () lf)
+  where
+    cr = void $ char '\r'
+    lf = void $ char '\n'
 
 stringLitP :: Parser T.Text
 stringLitP =
@@ -90,6 +100,15 @@ stringLitP =
       char '\\'
         *> (('"' <$ char '"') <|> ('\\' <$ char '\\'))
 
+{-
+  Parses a single tag pair.
+
+  TODO: one line can contain multiple tag pairs. so we can
+  probably try `many (many1 tagPairP <* newlineP)`, which should
+  consume all tag pair lines, leading us to the empty line signaling
+  start of movetext section.
+
+ -}
 tagPairP :: Parser TagPair
 tagPairP =
   tok (char '[')

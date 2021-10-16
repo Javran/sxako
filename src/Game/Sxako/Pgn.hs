@@ -1,5 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Game.Sxako.Pgn
   ( tagPairP
+  , stringLitP
   )
 where
 
@@ -51,7 +54,12 @@ type TagPair = (T.Text, T.Text)
 todo :: a
 todo = error "todo"
 
--- TODO: how to recognize end of tag pair section if we are using skipSpace?
+{-
+  TODO: how to recognize end of tag pair section if we are using skipSpace?
+
+  Plan: tagPairP should only succeed on non-empty inputs,
+  so an empty line can be recognized as start of movetext section.
+ -}
 tok :: Parser a -> Parser a
 tok = (<* skipSpace)
 
@@ -61,7 +69,7 @@ stringLitP =
     <$> (char '"'
            *> many
              (noEscapeChunk
-                <|> (charToBuilder <$> escapedChar))
+                <|> charToBuilder <$> escapedChar)
              <* char '"')
   where
     tr :: [Builder.Builder] -> T.Text
@@ -77,7 +85,7 @@ stringLitP =
      -}
     noEscapeChunk =
       Builder.byteString
-        <$> Parser.takeWhile1 (/= '\\')
+        <$> Parser.takeWhile1 (`notElem` ['\\', '\"'])
     charToBuilder :: Char -> Builder.Builder
     charToBuilder = Builder.int8 . fromIntegral . ord
     escapedChar =
@@ -90,7 +98,7 @@ tagPairP =
     *> ((,)
           <$> (decodeLatin1 <$> tok (Parser.takeWhile1 isTagSymbol))
             <*> tok stringLitP)
-    <* tok (char ']')
+    <* char ']'
   where
     {-
       A further restriction on tag names is that they are composed exclusively of

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Game.Sxako.Pgn
   ( tagPairP
   , stringLitP

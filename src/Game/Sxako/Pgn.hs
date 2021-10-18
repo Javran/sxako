@@ -2,6 +2,8 @@ module Game.Sxako.Pgn
   ( TagPair
   , tagPairP
   , stringLitP
+  , MtElem (..)
+  , mtElemP
   )
 where
 
@@ -51,15 +53,6 @@ import Data.Text.Encoding
 import Game.Sxako.San
 
 type TagPair = (T.Text, T.Text)
-
-{-
-  short for MoveText element.
- -}
-data MtElem
-  = MtMoveNum Int
-  | MtSan San Int {- Int for NAG, suffix annotation will be translated into NAG. -}
-  | MtCommentary T.Text
-  | MtRav [MtElem]
 
 todo :: a
 todo = error "todo"
@@ -132,3 +125,40 @@ tagPairP =
       letters, digits, and the underscore character.
      -}
     isTagSymbol ch = isAlpha_iso8859_15 ch || Parser.isDigit ch || ch == '_'
+
+{-
+  Short for MoveText element.
+
+  Note that PGN spec says just that "Comment text may appear in PGN data"
+  without being specific about where it could appear.
+  So for now let's just keep it simple and just assume brace-surrounding
+  commentaries are only available in movetext section.
+
+  TODO: is there any value support commentary in tag pair sections?
+ -}
+data MtElem
+  = MtMoveNum Int
+  | MtSan San Int {- Int for NAG, suffix annotation will be translated into NAG. -}
+  | MtCommentary T.Text
+  | MtRav [MtElem]
+
+{-
+  TODO: impl
+ -}
+mtElemP :: Parser MtElem
+mtElemP =
+  mtMoveNumP
+    <|> fail "TODO: SAN"
+    <|> mtCommentaryP
+    <|> fail "TODO: RAV"
+  where
+    mtMoveNumP =
+      MtMoveNum
+        <$> (decimal <* skipSpace <* Parser.takeWhile (== '.'))
+    mtCommentaryP =
+      MtCommentary <$> do
+        _ <- char '{'
+        xs <- Parser.takeWhile (/= '}')
+        _ <- char '}'
+        -- TODO: probably trim spaces and collapse newlines into spaces.
+        pure (decodeLatin1 xs)

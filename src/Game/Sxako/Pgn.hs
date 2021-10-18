@@ -48,8 +48,18 @@ import Data.Char
 import Data.Functor
 import qualified Data.Text as T
 import Data.Text.Encoding
+import Game.Sxako.San
 
 type TagPair = (T.Text, T.Text)
+
+{-
+  short for MoveText element.
+ -}
+data MtElem
+  = MtMoveNum Int
+  | MtSan San Int {- Int for NAG, suffix annotation will be translated into NAG. -}
+  | MtCommentary T.Text
+  | MtRav [MtElem]
 
 todo :: a
 todo = error "todo"

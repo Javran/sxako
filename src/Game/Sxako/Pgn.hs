@@ -144,6 +144,19 @@ data MtElem
 
 {-
   TODO: impl
+
+  NAG table:
+
+  - !: $1
+  - !!: $3
+  - !?: $5
+  - ?: $2
+  - ??: $4
+  - ?!: $6
+
+  Also to make parsing easier,
+  SAN move suffix annotations and NAG cannot both present for a single ply.
+
  -}
 mtElemP :: Parser MtElem
 mtElemP =

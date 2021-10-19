@@ -155,7 +155,7 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
  -}
 data MtElem
   = MtMoveNum Int
-  | MtSan San Int {- Int for NAG, suffix annotation will be translated into NAG. -}
+  | MtSan San (Maybe Int {- Int for NAG, suffix annotation will be translated into NAG. -})
   | MtCommentary T.Text
   | MtRav [MtElem]
 
@@ -168,22 +168,33 @@ sanSuffixP =
     <|> (char '?' *> option 2 (6 <$ char '!' <|> 4 <$ char '?'))
 
 {-
-  TODO: impl
 
-  Also to make parsing easier,
-  SAN move suffix annotations and NAG cannot both present for a single ply.
+  Note that in order to make parsing easier,
+  SAN move suffix annotations and NAG cannot both present for the same ply.
 
  -}
 mtElemP :: Parser MtElem
 mtElemP =
   mtMoveNumP
-    <|> fail "TODO: SAN"
+    <|> mtSanP
     <|> mtCommentaryP
-    <|> fail "TODO: RAV"
+    <|> mtRavP
   where
     mtMoveNumP =
       MtMoveNum
         <$> (decimal <* skipSpace <* Parser.takeWhile (== '.'))
+    mtSanP = do
+      s <- sanP
+      let sufOrNag =
+            {-
+              A SAN suffix must immediate follow SAN,
+              but NAG token is allowed to be separated with
+              some spaces between as it is considered a single token.
+             -}
+            sanSuffixP
+              <|> (skipSpace *> char '$' *> decimal)
+      n <- option Nothing (Just <$> sufOrNag)
+      pure $ MtSan s n
     mtCommentaryP =
       MtCommentary <$> do
         _ <- char '{'
@@ -191,3 +202,9 @@ mtElemP =
         _ <- char '}'
         -- TODO: probably trim spaces and collapse newlines into spaces.
         pure (decodeLatin1 xs)
+    mtRavP =
+      MtRav <$> do
+        _ <- char '('
+        xs <- many (tok mtElemP)
+        _ <- char ')'
+        pure xs

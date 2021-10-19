@@ -3,6 +3,7 @@
 
 module Game.Sxako.PgnSpec where
 
+import Control.Monad
 import qualified Data.ByteString.Char8 as BSC
 import Game.Sxako.Pgn
 import Test.Hspec
@@ -10,7 +11,7 @@ import Test.Hspec.Attoparsec
 import Text.RawString.QQ
 
 spec :: Spec
-spec =
+spec = do
   describe "stringLitP" $
     describe "examples" $ do
       let mkTest inp expected =
@@ -22,3 +23,15 @@ spec =
       mkTest [r|"abcd"|] [r|abcd|]
       mkTest [r|"ab\\cd"|] [r|ab\cd|]
       mkTest [r|"ab\\cd\"\\123"|] [r|ab\cd"\123|]
+  describe "sanSuffixP" $
+    describe "examples" $ do
+        let mkTest inp expected =
+             specify inp $
+              BSC.pack inp ~> sanSuffixP
+                `parseSatisfies` (== expected)
+        mkTest "!" 1
+        mkTest "?" 2
+        mkTest "!!" 3
+        mkTest "??" 4
+        mkTest "!?" 5
+        mkTest "?!" 6

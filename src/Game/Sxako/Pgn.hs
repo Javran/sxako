@@ -2,6 +2,7 @@ module Game.Sxako.Pgn
   ( TagPair
   , tagPairP
   , stringLitP
+  , sanSuffixP
   , MtElem (..)
   , mtElemP
   )
@@ -143,16 +144,15 @@ data MtElem
   | MtRav [MtElem]
 
 {-
+  Parsing suffix of a SAN ply as NAG.
+ -}
+sanSuffixP :: Parser Int
+sanSuffixP =
+  (char '!' *> option 1 (3 <$ char '!' <|> 5 <$ char '?'))
+    <|> (char '?' *> option 2 (6 <$ char '!' <|> 4 <$ char '?'))
+
+{-
   TODO: impl
-
-  NAG table:
-
-  - !: $1
-  - !!: $3
-  - !?: $5
-  - ?: $2
-  - ??: $4
-  - ?!: $6
 
   Also to make parsing easier,
   SAN move suffix annotations and NAG cannot both present for a single ply.

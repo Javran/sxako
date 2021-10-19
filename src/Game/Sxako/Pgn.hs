@@ -128,6 +128,22 @@ tagPairP =
     isTagSymbol ch = isAlpha_iso8859_15 ch || Parser.isDigit ch || ch == '_'
 
 {-
+  a tag pair section is 0 to many non-empty lines of tag pairs
+  (separated by non-newline whitespaces on each line),
+  followed by an empty newline.
+ -}
+tagPairSectionP :: Parser [TagPair]
+tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
+  where
+    tagPairLine :: Parser [TagPair]
+    tagPairLine =
+      many1
+        (tagPairP
+           <* skipWhile nonNlSpace)
+        <* newlineP
+    nonNlSpace ch = Parser.isSpace ch && ch /= '\r' && ch /= '\n'
+
+{-
   Short for MoveText element.
 
   Note that PGN spec says just that "Comment text may appear in PGN data"

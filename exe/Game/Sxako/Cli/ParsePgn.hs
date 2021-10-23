@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Game.Sxako.Cli.ParsePgn
   ( subCmdMain
@@ -16,9 +17,10 @@ subCmdMain cmdHelpPrefix =
   getArgs >>= \case
     [pgnFp] -> do
       raw <- BS.readFile pgnFp
-      case Parser.parseOnly manyPgnsP raw of
+      let fuckBom = option () (() <$ string "\239\187\191")
+      case Parser.parseOnly (fuckBom *> manyPgnsP <* endOfInput) raw of
         Left msg -> putStrLn msg
-        Right r -> print r
+        Right r -> mapM_ (\l -> print l >> putStrLn "") r
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<PGN file>"
       exitFailure

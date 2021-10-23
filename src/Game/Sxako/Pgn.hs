@@ -6,7 +6,7 @@ module Game.Sxako.Pgn
   , tagPairP
   , stringLitP
   , sanSuffixP
-  , MtElem (..)
+  , MovetextElem (..)
   , mtElemP
   , MovetextResult (..)
   , movetextResultP
@@ -63,9 +63,6 @@ import Game.Sxako.Common
 import Game.Sxako.San
 
 type TagPair = (T.Text, T.Text)
-
-todo :: a
-todo = error "todo"
 
 tok :: Parser a -> Parser a
 tok = (<* skipSpace)
@@ -162,11 +159,11 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
 
   TODO: is there any value support commentary in tag pair sections?
  -}
-data MtElem
+data MovetextElem
   = MtMoveNum Int
   | MtSan San (Maybe Int {- Int for NAG, suffix annotation will be translated into NAG. -})
   | MtCommentary T.Text
-  | MtRav [MtElem]
+  | MtRav [MovetextElem]
   deriving (Show)
 
 {-
@@ -183,7 +180,7 @@ sanSuffixP =
   SAN move suffix annotations and NAG cannot both present for the same ply.
 
  -}
-mtElemP :: Parser MtElem
+mtElemP :: Parser MovetextElem
 mtElemP =
   mtMoveNumP
     <|> mtSanP
@@ -233,7 +230,7 @@ movetextResultP =
            *> (MtrWon White <$ string "-0"
                  <|> MtrDrawn <$ "/2-1/2"))
 
-movetextSectionP :: Parser ([MtElem], MovetextResult)
+movetextSectionP :: Parser ([MovetextElem], MovetextResult)
 movetextSectionP = endP <|> continueP
   where
     endP = ([],) <$> movetextResultP
@@ -241,7 +238,7 @@ movetextSectionP = endP <|> continueP
       e <- tok mtElemP
       first (e :) <$> movetextSectionP
 
-type PgnRep = ([TagPair], ([MtElem], MovetextResult))
+type PgnRep = ([TagPair], ([MovetextElem], MovetextResult))
 
 pgnP :: Parser PgnRep
 pgnP = (,) <$> tagPairSectionP <*> movetextSectionP

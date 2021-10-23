@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Game.Sxako.Pgn
   ( TagPair
   , tagPairP
@@ -5,6 +7,8 @@ module Game.Sxako.Pgn
   , sanSuffixP
   , MtElem (..)
   , mtElemP
+  , MovetextResult (..)
+  , movetextResultP
   )
 where
 
@@ -51,6 +55,7 @@ import Data.Char
 import Data.Functor
 import qualified Data.Text as T
 import Data.Text.Encoding
+import Game.Sxako.Common
 import Game.Sxako.San
 
 type TagPair = (T.Text, T.Text)
@@ -208,3 +213,17 @@ mtElemP =
         xs <- many (tok mtElemP)
         _ <- char ')'
         pure xs
+
+data MovetextResult
+  = MtrWon Color
+  | MtrDrawn
+  | MtrUnknown
+  deriving (Eq, Show)
+
+movetextResultP :: Parser MovetextResult
+movetextResultP =
+  MtrUnknown <$ char '*'
+    <|> MtrWon Black <$ string "0-1"
+    <|> (char '1'
+           *> (MtrWon White <$ string "-0"
+                 <|> MtrDrawn <$ "/2-1/2"))

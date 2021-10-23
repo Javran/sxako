@@ -167,6 +167,7 @@ data MtElem
   | MtSan San (Maybe Int {- Int for NAG, suffix annotation will be translated into NAG. -})
   | MtCommentary T.Text
   | MtRav [MtElem]
+  deriving (Show)
 
 {-
   Parsing suffix of a SAN ply as NAG.

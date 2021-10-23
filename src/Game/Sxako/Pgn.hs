@@ -207,14 +207,14 @@ mtElemP =
       pure $ MtSan s n
     mtCommentaryP =
       MtCommentary <$> do
-        _ <- char '{'
+        _ <- tok (char '{')
         xs <- Parser.takeWhile (/= '}')
         _ <- char '}'
         -- TODO: probably trim spaces and collapse newlines into spaces.
         pure (decodeLatin1 xs)
     mtRavP =
       MtRav <$> do
-        _ <- char '('
+        _ <- tok (char '(')
         xs <- many (tok mtElemP)
         _ <- char ')'
         pure xs

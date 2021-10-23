@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Game.Sxako.Pgn
   ( TagPair
@@ -9,6 +10,8 @@ module Game.Sxako.Pgn
   , mtElemP
   , MovetextResult (..)
   , movetextResultP
+  , pgnP
+  , manyPgnsP
   )
 where
 
@@ -49,6 +52,7 @@ where
 
 import Control.Applicative
 import Data.Attoparsec.ByteString.Char8 as Parser
+import Data.Bifunctor
 import qualified Data.ByteString.Builder as Builder
 import qualified Data.ByteString.Lazy as BSL
 import Data.Char
@@ -227,3 +231,19 @@ movetextResultP =
     <|> (char '1'
            *> (MtrWon White <$ string "-0"
                  <|> MtrDrawn <$ "/2-1/2"))
+
+movetextSectionP :: Parser ([MtElem], MovetextResult)
+movetextSectionP = endP <|> continueP
+  where
+    endP = ([],) <$> movetextResultP
+    continueP = do
+      e <- tok mtElemP
+      first (e :) <$> movetextSectionP
+
+type PgnRep = ([TagPair], ([MtElem], MovetextResult))
+
+pgnP :: Parser PgnRep
+pgnP = (,) <$> tagPairSectionP <*> movetextSectionP
+
+manyPgnsP :: Parser [PgnRep]
+manyPgnsP = many (tok pgnP)

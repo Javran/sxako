@@ -157,7 +157,23 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
   So for now let's just keep it simple and just assume brace-surrounding
   commentaries are only available in movetext section.
 
+  Note that MovetextElem is not structural, but rather tokens to enable further passing.
+
   TODO: is there any value support commentary in tag pair sections?
+
+  TODO: plan for further passing:
+
+  - probably megaparsec would come into play - at next round of passing
+    MovetextElem *are* the tokens.
+
+  - commentary are not meant to present alone:
+
+    + consecutive comments are collected into a list
+    + a comment right after a move number is attached to that move
+    + a comment right after a ply is attached to that ply
+    + a special case is when comments appear right before anything else for movetext section,
+      in which case we should have a "pretext" field to contain it.
+
  -}
 data MovetextElem
   = MtMoveNum Int
@@ -165,6 +181,7 @@ data MovetextElem
   | MtCommentary T.Text
   | MtRav [MovetextElem]
   deriving (Show)
+
 
 {-
   Parsing suffix of a SAN ply as NAG.

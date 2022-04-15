@@ -1,8 +1,12 @@
-resolver: lts-16.31
+resolver: lts-18.20
 packages:
 - .
 
 extra-deps:
-- QuickCheck-2.14.2
-- random-1.2.0
-- splitmix-0.1.0.3
+- SVGFonts-1.7.0.1
+- diagrams-core-1.5.0
+- diagrams-lib-1.4.5.1
+- diagrams-rasterific-1.4.2.2
+- active-0.2.0.15
+- dual-tree-0.2.3.0
+- monoid-extras-0.6.1

@@ -21,6 +21,8 @@ import Paths_sxako
 import System.Environment
 import System.Exit
 
+-- TODO: migrate to use SVGFonts-1.8 or newer
+
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p =
   strokeP chessPath # fc black # lw 0 <> strokeP outline # fc white # lw none

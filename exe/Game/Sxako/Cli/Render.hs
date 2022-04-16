@@ -21,15 +21,13 @@ import Paths_sxako
 import System.Environment
 import System.Exit
 
--- TODO: migrate to use SVGFonts-1.8 or newer
-
 renderPiece :: PreparedFont Double -> Piece -> Diagram B
 renderPiece font p =
   strokeP chessPath # fc black # lw 0 <> strokeP outline # fc white # lw none
   where
     chessPath :: Path V2 Double
-    chessPath = textSVG' opts [ch]
-    opts = TextOpts font INSIDE_H KERN False 1 70
+    chessPath = [ch] # svgText opts # fit_height 70 # drop_rect
+    opts = (def :: TextOpts Double) {textFont = font}
     (ch, bgInds) = meridaMeta M.! p
     outline = toPath (fmap (pathTrails chessPath !!) bgInds)
 
@@ -108,16 +106,16 @@ _mainFindTrailIndices = do
   fp <- getDataFileName "data/ChessMerida.svg"
   lFont <- lin @Double
   font <- loadFont @Double fp
-  let opts = TextOpts font INSIDE_H KERN False 1 70
+  let opts = (def :: TextOpts Double) {textFont = font}
       paths :: [Path V2 Double]
-      paths = fmap (\ch -> textSVG' opts [ch]) pieceChars
+      paths = fmap (\ch -> [ch] # svgText opts # fit_height 70 # drop_rect) pieceChars
       pathComponents :: Path V2 Double -> Diagram B
       pathComponents p =
         hcat $
           (\(i, t) ->
              (strokeP
-                (let opts' = TextOpts lFont INSIDE_H KERN False 1 20
-                  in textSVG' opts' (show i))
+                (let opts' = (def :: TextOpts Double) {textFont = lFont}
+                  in show i # svgText opts' # fit_height 20 # drop_rect)
                 # lw 1
                 # alignBL)
                <> strokeLocTrail t # fc red # lw none

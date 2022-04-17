@@ -49,6 +49,7 @@ executables:
       - diagrams-rasterific
       - SVGFonts
       - typed-process
+      - random
 
     ghc-options:
       - -Wall

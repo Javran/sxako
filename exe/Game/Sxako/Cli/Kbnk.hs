@@ -1,14 +1,16 @@
 {-# LANGUAGE TypeApplications #-}
+
 module Game.Sxako.Cli.Kbnk
   ( subCmdMain
   )
 where
 
-import Data.List
-import Game.Sxako.Coord
 import Control.Monad.State.Strict
-import System.Random
+import Data.List
 import Game.Sxako.Board
+import Game.Sxako.Common
+import Game.Sxako.Coord
+import System.Random
 
 {-
   For KBNK (King + Bishop + Knight vs. King) endgame practice.
@@ -36,20 +38,24 @@ pick xs = map sp (init $ zip (inits xs) (tails xs))
     sp (ls, v : rs) = (v, ls ++ rs)
     sp _ = error "cannot split empty list"
 
-genBoard :: State StdGen ()
+genBoard :: State StdGen Board
 genBoard = do
-  v0 <- state (\g -> uniformR (0,63) g)
+  v0 <- state (\g -> uniformR (0, 63) g)
   let (whiteKing, cs0) = pick allCoords !! v0
 
-  v1 <- state (\g -> uniformR (0,62) g)
+  v1 <- state (\g -> uniformR (0, 62) g)
   let (whiteBishop, cs1) = pick cs0 !! v1
 
-  v2 <- state (\g -> uniformR (0,61) g)
+  v2 <- state (\g -> uniformR (0, 61) g)
   let (whiteKnight, _cs2) = pick cs1 !! v2
 
-  -- let bd = Board (emptyHb, emptyHb)
+  let bd =
+        setBoardAt (White, Knight) whiteKnight True
+          . setBoardAt (White, Bishop) whiteBishop True
+          . setBoardAt (White, King) whiteKing True
+          $ emptyBoard
 
-  pure ()
+  pure bd
 
 subCmdMain :: String -> IO ()
 subCmdMain _cmdHelpPrefix = do

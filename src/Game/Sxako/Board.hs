@@ -14,6 +14,7 @@ module Game.Sxako.Board
   , pprBoard
   , unpackToFenOrd
   , setBoardAt
+  , emptyBoard
   )
 where
 
@@ -144,6 +145,12 @@ setBoardAt (color, pt) coord newVal =
 
 emptyHb :: Halfboard
 emptyHb = Hb.empty
+
+emptyBoard :: Board
+emptyBoard = Board (emptyHb, emptyHb)
+
+swapBoardSide :: Board -> Board
+swapBoardSide (Board (w, b)) = Board (b, w)
 
 hbAt :: Halfboard -> PieceType -> Bitboard
 hbAt = Hb.at

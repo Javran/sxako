@@ -7,9 +7,11 @@ where
 
 import Control.Monad.State.Strict
 import Data.List
+import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord
+import Game.Sxako.Ply
 import System.Random
 
 {-
@@ -47,17 +49,26 @@ genBoard = do
   let (whiteBishop, cs1) = pick cs0 !! v1
 
   v2 <- state (\g -> uniformR (0, 61) g)
-  let (whiteKnight, _cs2) = pick cs1 !! v2
+  let (whiteKnight, cs2) = pick cs1 !! v2
 
   let bd =
         setBoardAt (White, Knight) whiteKnight True
           . setBoardAt (White, Bishop) whiteBishop True
           . setBoardAt (White, King) whiteKing True
           $ emptyBoard
+      atk :: Bitboard
+      atk = attackingSquares bd White
+      blackKingCoords = filter (\c -> not (testBoard atk c)) cs2
 
-  pure bd
+  v3 <- state (\g -> uniformR (0, length blackKingCoords - 1) g)
+  let (blackKing, _cs3)  = pick blackKingCoords !! v3
+  pure $ setBoardAt (Black, King) blackKing True bd
 
 subCmdMain :: String -> IO ()
 subCmdMain _cmdHelpPrefix = do
+  g <- newStdGen
+  let bd = evalState genBoard g
+  pprBoard bd
+  print bd
   -- TODO
   pure ()

@@ -15,6 +15,7 @@ module Game.Sxako.Board
   , unpackToFenOrd
   , setBoardAt
   , emptyBoard
+  , swapBoardSide
   )
 where
 

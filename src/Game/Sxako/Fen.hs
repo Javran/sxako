@@ -7,6 +7,7 @@ module Game.Sxako.Fen
   , fenP
   , initRecord
   , dragonRecord
+  , encodeFen
   )
 where
 

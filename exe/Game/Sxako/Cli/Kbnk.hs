@@ -23,19 +23,18 @@ import System.Random
 {-
   For KBNK (King + Bishop + Knight vs. King) endgame practice.
 
-  TODO:
-
   - Generate a position:
     + pick 3 squares for white king, bishop, knight.
     + exclude all squares being attacked, place black king
       in one of the remaining squares.
+      (this guarantees that black king is not in check).
     + 50% chance to flip color (and of course which side to move)
       just to avoid practicing as one specific side all the time.
 
-  - Preliminary validation
-    (simple validations like white king should not be in check
-    when it's black to move)
   - Check with tablebase API to make sure we have a winnable position
+
+  TODO:
+
   - Generate FEN and links for practice.
 
  -}
@@ -83,10 +82,19 @@ subCmdMain _cmdHelpPrefix = do
   putStrLn $ "FEN: " <> encodeFen record
 
   mgr <- newManager tlsManagerSettings
+  -- reference: https://github.com/lichess-org/lila-tablebase
+  -- also: https://syzygy-tables.info/metrics regarding terms.
   let tableBaseApiLink = "http://tablebase.lichess.ovh/standard?fen=" <> URI.encode (encodeFen record)
   req <- parseRequest tableBaseApiLink
   resp <- httpLbs req mgr
   let raw = responseBody resp
+  {-
+    TODO: a bunch of things to be verified:
+
+    - DTZ, DTM: not null, positive integer value, we need to extra those values
+    - checkmate, stalemate, insufficient_material: false
+    - category: win
+   -}
   case Aeson.eitherDecode @Aeson.Value raw of
     Left msg -> error $ "Decode error: " <> msg
     Right v ->

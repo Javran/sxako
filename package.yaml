@@ -50,6 +50,9 @@ executables:
       - SVGFonts
       - typed-process
       - random
+      - uri-encode
+      - http-client
+      - http-client-tls
 
     ghc-options:
       - -Wall

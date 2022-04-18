@@ -6,12 +6,18 @@ module Game.Sxako.Cli.Kbnk
 where
 
 import Control.Monad.State.Strict
+import qualified Data.Aeson as Aeson
 import Data.List
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
+import Game.Sxako.Castling
 import Game.Sxako.Common
 import Game.Sxako.Coord
+import Game.Sxako.Fen
 import Game.Sxako.Ply
+import Network.HTTP.Client
+import Network.HTTP.Client.TLS (tlsManagerSettings)
+import qualified Network.URI.Encode as URI
 import System.Random
 
 {-
@@ -40,7 +46,7 @@ pick xs = map sp (init $ zip (inits xs) (tails xs))
     sp (ls, v : rs) = (v, ls ++ rs)
     sp _ = error "cannot split empty list"
 
-genBoard :: State StdGen Board
+genBoard :: State StdGen Record
 genBoard = do
   v0 <- state (\g -> uniformR (0, 63) g)
   let (whiteKing, cs0) = pick allCoords !! v0
@@ -51,24 +57,37 @@ genBoard = do
   v2 <- state (\g -> uniformR (0, 61) g)
   let (whiteKnight, cs2) = pick cs1 !! v2
 
-  let bd =
+  let bd0 =
         setBoardAt (White, Knight) whiteKnight True
           . setBoardAt (White, Bishop) whiteBishop True
           . setBoardAt (White, King) whiteKing True
           $ emptyBoard
       atk :: Bitboard
-      atk = attackingSquares bd White
+      atk = attackingSquares bd0 White
       blackKingCoords = filter (\c -> not (testBoard atk c)) cs2
 
   v3 <- state (\g -> uniformR (0, length blackKingCoords - 1) g)
-  let (blackKing, _cs3)  = pick blackKingCoords !! v3
-  pure $ setBoardAt (Black, King) blackKing True bd
+  let (blackKing, _cs3) = pick blackKingCoords !! v3
+      bd1 = setBoardAt (Black, King) blackKing True bd0
+  shouldFlip <- state uniform
+  pure $
+    if shouldFlip
+      then initRecord {placement = swapBoardSide bd1, activeColor = Black, castling = none}
+      else initRecord {placement = bd1, activeColor = White, castling = none}
 
 subCmdMain :: String -> IO ()
 subCmdMain _cmdHelpPrefix = do
   g <- newStdGen
-  let bd = evalState genBoard g
-  pprBoard bd
-  print bd
-  -- TODO
-  pure ()
+  let record = evalState genBoard g
+  pprBoard (placement record)
+  putStrLn $ "FEN: " <> encodeFen record
+
+  mgr <- newManager tlsManagerSettings
+  let tableBaseApiLink = "http://tablebase.lichess.ovh/standard?fen=" <> URI.encode (encodeFen record)
+  req <- parseRequest tableBaseApiLink
+  resp <- httpLbs req mgr
+  let raw = responseBody resp
+  case Aeson.eitherDecode @Aeson.Value raw of
+    Left msg -> error $ "Decode error: " <> msg
+    Right v ->
+      print v

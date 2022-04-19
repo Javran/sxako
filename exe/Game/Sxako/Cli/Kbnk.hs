@@ -96,7 +96,8 @@ subCmdMain _cmdHelpPrefix = fix \redo -> do
   mgr <- newManager tlsManagerSettings
 
   -- Reference: https://syzygy-tables.info/metrics regarding terms.
-  let tableBaseApiLink = "http://tablebase.lichess.ovh/standard?fen=" <> URI.encode (encodeFen record)
+  let fenEnc = URI.encode (encodeFen record)
+      tableBaseApiLink = "http://tablebase.lichess.ovh/standard?fen=" <> fenEnc
   req <- parseRequest tableBaseApiLink
   resp <- httpLbs req mgr
   let raw = responseBody resp
@@ -120,6 +121,7 @@ subCmdMain _cmdHelpPrefix = fix \redo -> do
                 Just m = mDtm
             putStrLn $ "DTZ " <> show z
             putStrLn $ "DTM " <> show m
+            putStrLn $ "https://www.chess.com/practice/custom?fen=" <> fenEnc
           else do
             putStrLn "Generated position not winnable."
             print r

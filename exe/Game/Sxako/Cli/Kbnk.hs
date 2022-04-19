@@ -1,3 +1,7 @@
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Game.Sxako.Cli.Kbnk
@@ -8,9 +12,11 @@ where
 import Control.Monad.State.Strict
 import qualified Data.Aeson as Aeson
 import Data.List
+import GHC.Generics
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
+import qualified Game.Sxako.Cli.Tablebase as Tb
 import Game.Sxako.Common
 import Game.Sxako.Coord
 import Game.Sxako.Fen
@@ -74,28 +80,48 @@ genBoard = do
       then initRecord {placement = swapBoardSide bd1, activeColor = Black, castling = none}
       else initRecord {placement = bd1, activeColor = White, castling = none}
 
+data TablebaseResult = TablebaseResult
+  { checkmate :: Bool
+  , stalemate :: Bool
+  }
+  deriving (Generic)
+
 subCmdMain :: String -> IO ()
-subCmdMain _cmdHelpPrefix = do
+subCmdMain _cmdHelpPrefix = fix \redo -> do
   g <- newStdGen
   let record = evalState genBoard g
   pprBoard (placement record)
   putStrLn $ "FEN: " <> encodeFen record
 
   mgr <- newManager tlsManagerSettings
-  -- reference: https://github.com/lichess-org/lila-tablebase
-  -- also: https://syzygy-tables.info/metrics regarding terms.
+
+  -- Reference: https://syzygy-tables.info/metrics regarding terms.
   let tableBaseApiLink = "http://tablebase.lichess.ovh/standard?fen=" <> URI.encode (encodeFen record)
   req <- parseRequest tableBaseApiLink
   resp <- httpLbs req mgr
   let raw = responseBody resp
-  {-
-    TODO: a bunch of things to be verified:
-
-    - DTZ, DTM: not null, positive integer value, we need to extra those values
-    - checkmate, stalemate, insufficient_material: false
-    - category: win
-   -}
-  case Aeson.eitherDecode @Aeson.Value raw of
+  case Aeson.eitherDecode @Tb.TbResult raw of
     Left msg -> error $ "Decode error: " <> msg
-    Right v ->
-      print v
+    Right
+      r@Tb.TbResult
+        { Tb.dtz = mDtz
+        , Tb.dtm = mDtm
+        , Tb.checkmate
+        , Tb.stalemate
+        , Tb.insufficient_material
+        , Tb.category
+        } ->
+        if not checkmate
+          && not stalemate
+          && not insufficient_material
+          && category == "win"
+          then do
+            let Just z = mDtz
+                Just m = mDtm
+            putStrLn $ "DTZ " <> show z
+            putStrLn $ "DTM " <> show m
+          else do
+            putStrLn "Generated position not winnable."
+            print r
+            putStrLn "Will try to re-generate."
+            redo

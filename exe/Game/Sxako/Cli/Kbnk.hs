@@ -122,6 +122,7 @@ subCmdMain _cmdHelpPrefix = fix \redo -> do
             putStrLn $ "DTZ " <> show z
             putStrLn $ "DTM " <> show m
             putStrLn $ "https://www.chess.com/practice/custom?fen=" <> fenEnc
+            putStrLn $ "https://www.chess.com/analysis?fen=" <> fenEnc
           else do
             putStrLn "Generated position not winnable."
             print r

@@ -19,7 +19,8 @@ subCmdMain cmdHelpPrefix =
       raw <- BS.readFile pgnFp
       let fuckBom = option () (() <$ string "\239\187\191")
       case Parser.parseOnly (fuckBom *> manyPgnsP <* endOfInput) raw of
-        Left msg -> putStrLn msg
+        Left msg ->
+          die $ "Failed when parsing: " <> msg
         Right r -> mapM_ (\l -> print l >> putStrLn "") r
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<PGN file>"

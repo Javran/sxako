@@ -1,0 +1,148 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 06cdd090d18147cd1a56e373a16a05310cb6348df8e22d83d074b6567a4c4140
+
+name:           sxako
+version:        0.1.0.0
+description:    description
+homepage:       https://github.com/Javran/sxako#readme
+bug-reports:    https://github.com/Javran/sxako/issues
+author:         Javran Cheng
+maintainer:     javran.c@gmail.com
+copyright:      Copyright: (c) 2019 Javran Cheng
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+data-files:
+    data/ChessMerida.svg
+    testdata/plies.yaml
+    testdata/lichess-puzzles-big.yaml.xz
+    testdata/lichess-puzzles.yaml.xz
+
+source-repository head
+  type: git
+  location: https://github.com/Javran/sxako
+
+library
+  exposed-modules:
+      Game.Sxako.Bitboard
+      Game.Sxako.Board
+      Game.Sxako.Board.Halfboard
+      Game.Sxako.Castling
+      Game.Sxako.Common
+      Game.Sxako.Coord
+      Game.Sxako.DataFiles
+      Game.Sxako.Fen
+      Game.Sxako.Pgn
+      Game.Sxako.Ply
+      Game.Sxako.San
+      Game.Sxako.TestBoard
+      Game.Sxako.TestData
+  other-modules:
+      Paths_sxako
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -O2
+  build-depends:
+      aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , hashable
+    , lzma
+    , mtl
+    , primitive
+    , resourcet
+    , split
+    , text
+    , vector
+    , writer-cps-mtl
+    , yaml
+  default-language: Haskell2010
+
+executable demo
+  main-is: Main.hs
+  other-modules:
+      Game.Sxako.Cli.Kbnk
+      Game.Sxako.Cli.Main
+      Game.Sxako.Cli.ParsePgn
+      Game.Sxako.Cli.Render
+      Game.Sxako.Cli.Stockfish
+      Game.Sxako.Cli.Tablebase
+      Game.Sxako.Cli.TestDataGen
+      Paths_sxako
+  hs-source-dirs:
+      exe
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      SVGFonts
+    , aeson
+    , attoparsec
+    , base
+    , bytestring
+    , colour
+    , containers
+    , diagrams-core
+    , diagrams-lib
+    , diagrams-rasterific
+    , hashable
+    , http-client
+    , http-client-tls
+    , lzma
+    , mtl
+    , random
+    , resourcet
+    , split
+    , sxako
+    , text
+    , typed-process
+    , uri-encode
+    , vector
+    , writer-cps-mtl
+    , yaml
+  default-language: Haskell2010
+
+test-suite hspec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Game.Sxako.BitboardSpec
+      Game.Sxako.BoardSpec
+      Game.Sxako.CastlingSpec
+      Game.Sxako.CommonSpec
+      Game.Sxako.CoordSpec
+      Game.Sxako.FenSpec
+      Game.Sxako.PgnSpec
+      Game.Sxako.PlySpec
+      Game.Sxako.SanSpec
+      Game.Sxako.TestBoardSpec
+      Paths_sxako
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -main-is Spec
+  build-depends:
+      QuickCheck
+    , aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , hashable
+    , hspec
+    , hspec-attoparsec
+    , lzma
+    , mtl
+    , raw-strings-qq
+    , resourcet
+    , split
+    , sxako
+    , text
+    , vector
+    , writer-cps-mtl
+    , yaml
+  default-language: Haskell2010

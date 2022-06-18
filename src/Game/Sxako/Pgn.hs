@@ -190,6 +190,7 @@ sanSuffixP :: Parser Int
 sanSuffixP =
   (char '!' *> option 1 (3 <$ char '!' <|> 5 <$ char '?'))
     <|> (char '?' *> option 2 (6 <$ char '!' <|> 4 <$ char '?'))
+    <?> "sanSuffixP"
 
 {-
 
@@ -203,6 +204,7 @@ mtElemP =
     <|> mtSanP
     <|> mtCommentaryP
     <|> mtRavP
+    <?> "mtElemP"
   where
     mtMoveNumP =
       MtMoveNum
@@ -246,9 +248,10 @@ movetextResultP =
     <|> (char '1'
            *> (MtrWon White <$ string "-0"
                  <|> MtrDrawn <$ "/2-1/2"))
+    <?> "movetextResultP"
 
 movetextSectionP :: Parser ([MovetextElem], MovetextResult)
-movetextSectionP = endP <|> continueP
+movetextSectionP = endP <|> continueP <?> "movetextSectionP"
   where
     endP = ([],) <$> movetextResultP
     continueP = do

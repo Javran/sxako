@@ -18,9 +18,9 @@ subCmdMain cmdHelpPrefix =
   getArgs >>= \case
     [pgnFp] -> do
       raw <- BS.readFile pgnFp
-      let fuckBom = option () (() <$ string "\239\187\191")
-          parser = do
-            _ <- fuckBom
+      let parser = do
+            -- fuck BOM
+            _ <- option () (() <$ string "\239\187\191")
             ps <- manyPgnsP
             leftover <- manyTill' anyChar endOfInput
             pure (ps, leftover)

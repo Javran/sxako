@@ -177,7 +177,7 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
  -}
 data MovetextElem
   = MtMoveNum Int
-  | MtSan San (Maybe Int {- Int for NAG, suffix annotation will be translated into NAG. -})
+  | MtSan San [Int {- Int for NAG, suffix annotation will be translated into NAG. -}]
   | MtCommentary T.Text
   | MtRav [MovetextElem]
   deriving (Show)
@@ -219,7 +219,7 @@ mtElemP =
              -}
             sanSuffixP
               <|> (skipSpace *> char '$' *> decimal)
-      n <- option Nothing (Just <$> sufOrNag)
+      n <- option [] (pure <$> sufOrNag)
       pure $ MtSan s n
     mtCommentaryP =
       MtCommentary <$> do

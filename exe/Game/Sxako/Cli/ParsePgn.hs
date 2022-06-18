@@ -11,6 +11,7 @@ import qualified Data.ByteString as BS
 import Game.Sxako.Pgn
 import System.Environment
 import System.Exit
+import Text.Printf
 
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
@@ -18,10 +19,31 @@ subCmdMain cmdHelpPrefix =
     [pgnFp] -> do
       raw <- BS.readFile pgnFp
       let fuckBom = option () (() <$ string "\239\187\191")
-      case Parser.parseOnly (fuckBom *> manyPgnsP <* endOfInput) raw of
+          parser = do
+            _ <- fuckBom
+            ps <- manyPgnsP
+            leftover <- manyTill' anyChar endOfInput
+            pure (ps, leftover)
+      case Parser.parseOnly parser raw of
         Left msg ->
           die $ "Failed when parsing: " <> msg
-        Right r -> mapM_ (\l -> print l >> putStrLn "") r
+        Right (r, leftover) ->
+          if null leftover
+            then do
+              mapM_ (\l -> print l >> putStrLn "") r
+              printf "Parsed %d records, all succeeded.\n" (length r)
+            else do
+              printf
+                "Parsed %d records, with leftover length %d.\n"
+                (length r)
+                (length leftover)
+              case r of
+                [] -> pure ()
+                _ -> do
+                  putStrLn "Last record:"
+                  print $ last r
+              putStrLn "Start of leftover:"
+              putStrLn $ Prelude.take 100 leftover
     _ -> do
       putStrLn $ cmdHelpPrefix <> "<PGN file>"
       exitFailure

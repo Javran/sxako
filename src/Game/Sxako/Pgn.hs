@@ -211,15 +211,16 @@ mtElemP =
         <$> (decimal <* skipSpace <* Parser.takeWhile (== '.'))
     mtSanP = do
       s <- sanP
-      let sufOrNag =
+      let sufOrNag :: Parser [Int]
+          sufOrNag =
             {-
               A SAN suffix must immediate follow SAN,
               but NAG token is allowed to be separated with
               some spaces between as it is considered a single token.
              -}
-            sanSuffixP
-              <|> (skipSpace *> char '$' *> decimal)
-      n <- option [] (pure <$> sufOrNag)
+            (pure <$> sanSuffixP)
+              <|> many (skipSpace *> char '$' *> decimal)
+      n <- option [] sufOrNag
       pure $ MtSan s n
     mtCommentaryP =
       MtCommentary <$> do

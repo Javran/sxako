@@ -25,12 +25,10 @@ jobs:
 
       - name: Setup Stack
         uses: haskell/actions/setup@v2
-      ￼ with:
-￼         ghc-version: '9.0.2'
-￼         enable-stack: true
-￼         stack-version: 'latest'
-
-        uses: mstksg/setup-stack@v1
+        with:
+          ghc-version: '9.0.2'
+          enable-stack: true
+          stack-version: 'latest'
 
       - name: Cache Key
         id: cache_key

@@ -4,9 +4,52 @@ github: Javran/sxako
 license: BSD3
 author: Javran Cheng
 maintainer: javran.c@gmail.com
-copyright: "Copyright: (c) 2019 Javran Cheng"
+copyright: "Copyright: (c) 2019-Present Javran Cheng"
 
 description: description
+
+ghc-options:
+  - -Wall
+
+default-extensions:
+  - BangPatterns
+  - BinaryLiterals
+  - BlockArguments
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveGeneric
+  - DeriveTraversable
+  - DerivingVia
+  - EmptyCase
+  - EmptyDataDecls
+  - ExistentialQuantification
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - InstanceSigs
+  - KindSignatures
+  - LambdaCase
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - NoUnicodeSyntax
+  - NumericUnderscores
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - PolyKinds
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - TypeSynonymInstances
 
 dependencies:
 - aeson
@@ -33,9 +76,6 @@ library:
   source-dirs: src
   dependencies:
     - primitive
-  ghc-options:
-    - -Wall
-    - -O2
 
 executables:
   demo:
@@ -55,7 +95,6 @@ executables:
       - http-client-tls
 
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts
@@ -73,7 +112,6 @@ tests:
       - hspec-attoparsec
       - raw-strings-qq
     ghc-options:
-      - -Wall
       - -O2
       - -threaded
       - -rtsopts

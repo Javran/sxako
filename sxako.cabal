@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 09aa2b943af3abb63a7831a3fe4de95bd85f972ec26f5283483b95abb7d0ab93
+-- hash: ca8a632f75ec37f1987f2066ea6094d11589c45cd92ba90f210a931fa8573e2e
 
 name:           sxako
 version:        0.1.0.0
@@ -13,7 +13,7 @@ homepage:       https://github.com/Javran/sxako#readme
 bug-reports:    https://github.com/Javran/sxako/issues
 author:         Javran Cheng
 maintainer:     javran.c@gmail.com
-copyright:      Copyright: (c) 2019 Javran Cheng
+copyright:      Copyright: (c) 2019-Present Javran Cheng
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -46,7 +46,46 @@ library
       Paths_sxako
   hs-source-dirs:
       src
-  ghc-options: -Wall -O2
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingVia
+      EmptyCase
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoUnicodeSyntax
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeSynonymInstances
+  ghc-options: -Wall
   build-depends:
       aeson
     , attoparsec
@@ -79,6 +118,45 @@ executable demo
       Paths_sxako
   hs-source-dirs:
       exe
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingVia
+      EmptyCase
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoUnicodeSyntax
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeSynonymInstances
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       SVGFonts
@@ -125,6 +203,45 @@ test-suite hspec
       Paths_sxako
   hs-source-dirs:
       test
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingVia
+      EmptyCase
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoUnicodeSyntax
+      NumericUnderscores
+      OverloadedStrings
+      PartialTypeSignatures
+      PolyKinds
+      RankNTypes
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeSynonymInstances
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -main-is Spec
   build-depends:
       QuickCheck

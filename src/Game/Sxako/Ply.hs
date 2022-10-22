@@ -103,7 +103,7 @@ instance Read Ply where
     pTo <- getCoord
     look >>= \case
       ch : _
-        | ch `elem` "nbrq"
+        | ch `elem` ("nbrq" :: [] Char)
           , Just (_, pPiece) <- charToPiece ch ->
           PlyPromo {pFrom, pTo, pPiece} <$ get
       _ -> pure PlyNorm {pFrom, pTo}

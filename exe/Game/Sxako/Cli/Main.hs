@@ -11,6 +11,13 @@ import qualified Game.Sxako.Cli.TestDataGen as TestDataGen
 import System.Environment
 import System.Exit
 
+{- Copy this to new sub-command module as a starter kit. -}
+_subCmdMain :: String -> IO ()
+_subCmdMain cmdHelpPrefix =
+  getArgs >>= \case
+    _ -> do
+      die $ cmdHelpPrefix <> "..."
+
 main :: IO ()
 main =
   getArgs >>= \case

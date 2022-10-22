@@ -1,22 +1,15 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Ply
-  ( Ply (..)
-  , GameResult (..)
-  , DrawReason (..)
-  , attackingSquares
-  , legalPlies
-  , getCheckType
-  , isCastlePly
-  , isCapturePly
-  , legalPliesMap
-  , legalPliesEither
-  )
-where
+module Game.Sxako.Ply (
+  Ply (..),
+  GameResult (..),
+  DrawReason (..),
+  attackingSquares,
+  legalPlies,
+  getCheckType,
+  isCastlePly,
+  isCapturePly,
+  legalPliesMap,
+  legalPliesEither,
+) where
 
 import Control.Applicative
 import Control.Monad
@@ -216,11 +209,11 @@ legalPliesEither
         noHeavyPieceOrPawn :: Halfboard -> Bool
         noHeavyPieceOrPawn hb =
           all (\pt -> hbAt hb pt == Bitboard 0) [Pawn, Rook, Queen]
-        countBishopAndKnight
-          :: Halfboard
-          -> ( Int {- knights -}
-             , (Int {- dark bishops -}, Int {- light bishops -})
-             )
+        countBishopAndKnight ::
+          Halfboard ->
+          ( Int {- knights -}
+          , (Int {- dark bishops -}, Int {- light bishops -})
+          )
         countBishopAndKnight hb = (knightCount, (darkB, lightB))
           where
             (Sum darkB, Sum lightB) =
@@ -249,16 +242,18 @@ legalPliesEither
             let (wKnights, (wDBishops, wLBishops)) = countBishopAndKnight hbW
                 (bKnights, (bDBishops, bLBishops)) = countBishopAndKnight hbB
              in (wKnights + wDBishops + wLBishops + bKnights + bDBishops + bLBishops <= 1)
-                  || (-- no knights
-                      (wKnights, bKnights) == (0, 0)
+                  || ( -- no knights
+                       (wKnights, bKnights) == (0, 0)
                         &&
                         -- exactly one bishop on both sides
                         wDBishops + wLBishops == 1
                         && bDBishops + bLBishops == 1
                         &&
                         -- same color bishops
-                        ((wDBishops, bDBishops) == (1, 1)
-                           || (wLBishops, bLBishops) == (1, 1)))
+                        ( (wDBishops, bDBishops) == (1, 1)
+                            || (wLBishops, bLBishops) == (1, 1)
+                        )
+                     )
 
 {-
   Auxilary function to figure out squares being attacked.
@@ -532,8 +527,9 @@ pawnPlies
                 Just cSq <-
                   withRankAndFile @Int
                     pNext2
-                    (\rInd fInd ->
-                       fromRankAndFile rInd <$> [fInd -1, fInd + 1])
+                    ( \rInd fInd ->
+                        fromRankAndFile rInd <$> [fInd - 1, fInd + 1]
+                    )
                 case at bd1 cSq of
                   Just (c, Pawn) | c == opposite activeColor -> pure cSq
                   _ -> []
@@ -565,12 +561,14 @@ pawnPlies
                   let Just epCaptureSq =
                         withRankAndFile @Int
                           pNext
-                          (\rInd fInd ->
-                             fromRankAndFile
-                               (case oppoColor of
-                                  White -> rInd + 1
-                                  Black -> rInd -1)
-                               fInd)
+                          ( \rInd fInd ->
+                              fromRankAndFile
+                                ( case oppoColor of
+                                    White -> rInd + 1
+                                    Black -> rInd - 1
+                                )
+                                fInd
+                          )
                    in setBoardAt (oppoColor, Pawn) epCaptureSq False bd1
                 else
                   let Just p = targetSq

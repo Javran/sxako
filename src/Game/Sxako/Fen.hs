@@ -1,15 +1,10 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Fen
-  ( Record (..)
-  , fenP
-  , initRecord
-  , dragonRecord
-  , encodeFen
-  )
-where
+module Game.Sxako.Fen (
+  Record (..),
+  fenP,
+  initRecord,
+  dragonRecord,
+  encodeFen,
+) where
 
 import Control.Applicative
 import Control.Monad

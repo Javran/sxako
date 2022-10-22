@@ -1,23 +1,18 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Board
-  ( Board
-  , Halfboard
-  , fromPlacement2d
-  , emptyHb
-  , hbAt
-  , at
-  , infoOccupied
-  , getHalfboard
-  , pprBoard
-  , unpackToFenOrd
-  , setBoardAt
-  , emptyBoard
-  , swapBoardSide
-  )
-where
+module Game.Sxako.Board (
+  Board,
+  Halfboard,
+  fromPlacement2d,
+  emptyHb,
+  hbAt,
+  at,
+  infoOccupied,
+  getHalfboard,
+  pprBoard,
+  unpackToFenOrd,
+  setBoardAt,
+  emptyBoard,
+  swapBoardSide,
+) where
 
 import Control.Monad
 import Control.Monad.ST.Strict
@@ -68,10 +63,11 @@ fromPlacement2d ps2d = runST $ do
   let pairs :: [] (Coord, Piece)
       pairs =
         catMaybes
-          (zipWith
-             (\mcp c -> (c,) <$> mcp)
-             (concat $ toList $ fmap toList ps2d)
-             (concat fenCoords))
+          ( zipWith
+              (\mcp c -> (c,) <$> mcp)
+              (concat $ toList $ fmap toList ps2d)
+              (concat fenCoords)
+          )
   forM_ pairs $ \(coord, (c, pt)) -> do
     let hb = case c of
           White -> whiteHb

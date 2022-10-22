@@ -1,10 +1,6 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-
-module Game.Sxako.Cli.ParsePgn
-  ( subCmdMain
-  )
-where
+module Game.Sxako.Cli.ParsePgn (
+  subCmdMain,
+) where
 
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString as BS

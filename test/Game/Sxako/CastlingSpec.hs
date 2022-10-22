@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.CastlingSpec where
 
 import Control.Monad
@@ -28,7 +26,7 @@ spec = do
   describe "minusCastleRight" $ do
     let mkExample (i, (a, b, c)) =
           specify ("example #" <> show i) $
-            (read a `minusCastleRight` read b) `shouldBe` (read c)
+            (read a `minusCastleRight` read b) `shouldBe` read c
     mapM_ mkExample $
       zip
         [0 :: Int ..]

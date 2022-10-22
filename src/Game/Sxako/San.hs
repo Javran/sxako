@@ -1,18 +1,12 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module Game.Sxako.San
-  ( San (..)
-  , Disamb (..)
-  , CheckType (..)
-  , sanP
-  , legalSansEither
-  )
-where
+module Game.Sxako.San (
+  San (..),
+  Disamb (..),
+  CheckType (..),
+  sanP,
+  legalSansEither,
+) where
 
 {-
   Short Algebraic Notation
@@ -57,27 +51,28 @@ instance Read San where
 
 instance Show San where
   show x =
-    (case x of
-       SNorm {sPieceFrom, sFrom, sCapture, sTo, sPromo} ->
-         concat
-           [ if sPieceFrom == Pawn
-               then ""
-               else [pieceToChar (White, sPieceFrom)]
-           , case sFrom of
-               Nothing -> ""
-               Just (DisambByFile fInd) -> [['a' .. 'h'] !! fInd]
-               Just (DisambByRank rInd) -> [['1' .. '8'] !! rInd]
-               Just (DisambByCoord c) -> show c
-           , if sCapture then "x" else ""
-           , show sTo
-           , case sPromo of
-               Nothing -> ""
-               Just p -> '=' : [pieceToChar (White, p)]
-           ]
-       SCastle {sSide} ->
-         case sSide of
-           KingSide -> "O-O"
-           QueenSide -> "O-O-O")
+    ( case x of
+        SNorm {sPieceFrom, sFrom, sCapture, sTo, sPromo} ->
+          concat
+            [ if sPieceFrom == Pawn
+                then ""
+                else [pieceToChar (White, sPieceFrom)]
+            , case sFrom of
+                Nothing -> ""
+                Just (DisambByFile fInd) -> [['a' .. 'h'] !! fInd]
+                Just (DisambByRank rInd) -> [['1' .. '8'] !! rInd]
+                Just (DisambByCoord c) -> show c
+            , if sCapture then "x" else ""
+            , show sTo
+            , case sPromo of
+                Nothing -> ""
+                Just p -> '=' : [pieceToChar (White, p)]
+            ]
+        SCastle {sSide} ->
+          case sSide of
+            KingSide -> "O-O"
+            QueenSide -> "O-O-O"
+    )
       <> showCheck
     where
       showCheck = case sCheck x of
@@ -142,8 +137,9 @@ checkP :: Parser (Maybe CheckType)
 checkP =
   option Nothing $
     Just
-      <$> ((Check <$ char '+')
-             <|> (Checkmate <$ char '#'))
+      <$> ( (Check <$ char '+')
+              <|> (Checkmate <$ char '#')
+          )
 
 sanP :: Parser San
 sanP = castleP <|> normalMoveP
@@ -210,16 +206,16 @@ legalSansEither r@Record {placement} = convert <$> legalPliesEither r
 
       and each of which are handled in a particular way.
      -}
-    partitionPlies
-      :: [PlyRec]
-      -> ( ( {- all castle plies -}
-             [SanRec]
-           , {- all pawn promotion plies -}
-             [PlyRec]
-           )
-         , {- all of the rest -}
-           [PlyRec]
-         )
+    partitionPlies ::
+      [PlyRec] ->
+      ( ( {- all castle plies -}
+          [SanRec]
+        , {- all pawn promotion plies -}
+          [PlyRec]
+        )
+      , {- all of the rest -}
+        [PlyRec]
+      )
     partitionPlies xs = first mconcat $ partitionEithers (go <$> xs)
       where
         go pr@(p, _) =

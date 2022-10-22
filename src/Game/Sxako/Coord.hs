@@ -1,5 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
 
 {-

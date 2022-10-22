@@ -1,10 +1,6 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Cli.Render
-  ( subCmdMain
-  )
-where
+module Game.Sxako.Cli.Render (
+  subCmdMain,
+) where
 
 import qualified Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
@@ -76,14 +72,14 @@ renderRecord record = do
 
   See details in: https://groups.google.com/g/diagrams-discuss/c/r8ePb2ZhPq8
  -}
-meridaMeta
-  :: M.Map
-       Piece
-       ( {- char corresponding to the Chess piece -}
-         Char
-       , {- Trail indices of the outline -}
-         [Int]
-       )
+meridaMeta ::
+  M.Map
+    Piece
+    ( {- char corresponding to the Chess piece -}
+      Char
+    , {- Trail indices of the outline -}
+      [Int]
+    )
 meridaMeta =
   M.fromList
     [ ((White, Pawn), ('p', [3]))
@@ -112,13 +108,16 @@ _mainFindTrailIndices = do
       pathComponents :: Path V2 Double -> Diagram B
       pathComponents p =
         hcat $
-          (\(i, t) ->
-             (strokeP
-                (let opts' = (def :: TextOpts Double) {textFont = lFont}
-                  in show i # svgText opts' # fit_height 20 # drop_rect)
-                # lw 1
-                # alignBL)
-               <> strokeLocTrail t # fc red # lw none
-               <> square 70 # lw 1 # bg white)
+          ( \(i, t) ->
+              ( strokeP
+                  ( let opts' = (def :: TextOpts Double) {textFont = lFont}
+                     in show i # svgText opts' # fit_height 20 # drop_rect
+                  )
+                  # lw 1
+                  # alignBL
+              )
+                <> strokeLocTrail t # fc red # lw none
+                <> square 70 # lw 1 # bg white
+          )
             <$> zip [0 :: Int ..] (pathTrails p)
   mainWith (vcat $ fmap pathComponents paths)

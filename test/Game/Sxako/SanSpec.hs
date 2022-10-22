@@ -1,7 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.SanSpec where
 
 import Control.Monad
@@ -39,13 +35,14 @@ genSan =
     genNorm =
       SNorm <$> elements @PieceType universe
         <*> oneof
-          (pure Nothing :
-           (fmap . fmap)
-             Just
-             [ DisambByFile <$> gen07
-             , DisambByRank <$> gen07
-             , DisambByCoord <$> genCoord
-             ])
+          ( pure Nothing :
+            (fmap . fmap)
+              Just
+              [ DisambByFile <$> gen07
+              , DisambByRank <$> gen07
+              , DisambByCoord <$> genCoord
+              ]
+          )
         <*> elements [False, True]
         <*> genCoord
         <*> elements (Nothing : fmap Just [Knight .. Queen])
@@ -85,7 +82,7 @@ spec = do
       mkTest "Rdxb1" $
         SNorm Rook (Just (DisambByFile d)) True b1 Nothing Nothing
       mkTest "R2xb1+" $
-        SNorm Rook (Just (DisambByRank (2 -1))) True b1 Nothing (Just Check)
+        SNorm Rook (Just (DisambByRank (2 - 1))) True b1 Nothing (Just Check)
       mkTest "Qg3xf4#" $
         SNorm Queen (Just (DisambByCoord g3)) True f4 Nothing (Just Checkmate)
       mkTest "exd5" $

@@ -1,12 +1,7 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.TestData
-  ( TestData (..)
-  , loadTestDataList
-  )
-where
+module Game.Sxako.TestData (
+  TestData (..),
+  loadTestDataList,
+) where
 
 import Data.Aeson
 import qualified Data.Map.Strict as M
@@ -40,9 +35,10 @@ instance ToJSON TestData where
 
   toEncoding TestData {tdTag, tdPosition, tdLegalPlies} =
     pairs
-      ("tag" .= tdTag
-         <> "position" .= tdPosition
-         <> maybe mempty ("legal-plies" .=) tdLegalPlies)
+      ( "tag" .= tdTag
+          <> "position" .= tdPosition
+          <> maybe mempty ("legal-plies" .=) tdLegalPlies
+      )
 
 loadTestDataList :: FilePath -> IO [TestData]
 loadTestDataList src = do

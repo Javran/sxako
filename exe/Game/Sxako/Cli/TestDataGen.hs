@@ -1,8 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.Cli.TestDataGen where
 
 import Control.Monad
@@ -136,17 +131,18 @@ subCmdMain cmdHelpPrefix =
           tds <-
             concat
               <$> withStockfish
-                (\sf ->
-                   forM (zip [0 :: Int ..] puzzles) $ \(ind, (pzId, record, ms)) -> do
-                     let prefix = "Lichess Puzzle #" <> pzId <> ", "
-                         l = length ms
-                         tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
-                     rs <- snapshotPuzzle sf record ms
-                     when (ind `rem` 100 == 0) $
-                       hPutStrLn stderr $ "Processing " <> show (ind + 1) <> " of " <> show (length puzzles) <> " ..."
-                     forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
-                       let tdTag = T.pack $ prefix <> tag
-                       pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps})
+                ( \sf ->
+                    forM (zip [0 :: Int ..] puzzles) $ \(ind, (pzId, record, ms)) -> do
+                      let prefix = "Lichess Puzzle #" <> pzId <> ", "
+                          l = length ms
+                          tags = "init" : zipWith (\i p -> show i <> "/" <> show l <> ": " <> show p) [1 :: Int ..] ms
+                      rs <- snapshotPuzzle sf record ms
+                      when (ind `rem` 100 == 0) $
+                        hPutStrLn stderr $ "Processing " <> show (ind + 1) <> " of " <> show (length puzzles) <> " ..."
+                      forM (zip tags rs) $ \(tag, (tdPosition, lps)) -> do
+                        let tdTag = T.pack $ prefix <> tag
+                        pure TestData {tdTag, tdPosition, tdLegalPlies = Just lps}
+                )
           outputTestData mOutputFp tds
     "fill" : inputFp : mOut
       | Just mOutputFp <- zeroOrOne mOut -> do

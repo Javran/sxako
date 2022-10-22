@@ -1,9 +1,5 @@
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Game.Sxako.Cli.Dev (
-    subCmdMain,
+  subCmdMain,
 ) where
 
 import System.Environment
@@ -11,6 +7,6 @@ import System.Exit
 
 subCmdMain :: String -> IO ()
 subCmdMain cmdHelpPrefix =
-    getArgs >>= \case
-        _ -> do
-            die $ cmdHelpPrefix <> "..."
+  getArgs >>= \case
+    _ -> do
+      die $ cmdHelpPrefix <> "..."

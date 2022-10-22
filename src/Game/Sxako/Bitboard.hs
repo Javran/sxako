@@ -1,9 +1,6 @@
-{-# LANGUAGE DerivingVia #-}
-
-module Game.Sxako.Bitboard
-  ( Bitboard (..)
-  )
-where
+module Game.Sxako.Bitboard (
+  Bitboard (..),
+) where
 
 import Control.Monad
 import Data.Bits

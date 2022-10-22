@@ -1,19 +1,15 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
-
-module Game.Sxako.Pgn
-  ( TagPair
-  , tagPairP
-  , stringLitP
-  , sanSuffixP
-  , MovetextElem (..)
-  , mtElemP
-  , MovetextResult (..)
-  , movetextResultP
-  , pgnP
-  , manyPgnsP
-  )
-where
+module Game.Sxako.Pgn (
+  TagPair,
+  tagPairP,
+  stringLitP,
+  sanSuffixP,
+  MovetextElem (..),
+  mtElemP,
+  MovetextResult (..),
+  movetextResultP,
+  pgnP,
+  manyPgnsP,
+) where
 
 {-
   TODO: parsing PGN file.
@@ -84,11 +80,13 @@ newlineP = lf <|> (cr *> option () lf)
 stringLitP :: Parser T.Text
 stringLitP =
   tr
-    <$> (char '"'
-           *> many
-             (noEscapeChunk
-                <|> charToBuilder <$> escapedChar)
-             <* char '"')
+    <$> ( char '"'
+            *> many
+              ( noEscapeChunk
+                  <|> charToBuilder <$> escapedChar
+              )
+              <* char '"'
+        )
   where
     tr :: [Builder.Builder] -> T.Text
     tr =
@@ -122,9 +120,10 @@ stringLitP =
 tagPairP :: Parser TagPair
 tagPairP =
   tok (char '[')
-    *> ((,)
+    *> ( (,)
           <$> (decodeLatin1 <$> tok (Parser.takeWhile1 isTagSymbol))
-            <*> tok stringLitP)
+            <*> tok stringLitP
+       )
     <* char ']'
   where
     {-
@@ -144,8 +143,9 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
     tagPairLine :: Parser [TagPair]
     tagPairLine =
       many1
-        (tagPairP
-           <* skipWhile nonNlSpace)
+        ( tagPairP
+            <* skipWhile nonNlSpace
+        )
         <* newlineP
     nonNlSpace ch = Parser.isSpace ch && ch /= '\r' && ch /= '\n'
 
@@ -181,7 +181,6 @@ data MovetextElem
   | MtCommentary T.Text
   | MtRav [MovetextElem]
   deriving (Show)
-
 
 {-
   Parsing suffix of a SAN ply as NAG.
@@ -246,9 +245,11 @@ movetextResultP :: Parser MovetextResult
 movetextResultP =
   MtrUnknown <$ char '*'
     <|> MtrWon Black <$ string "0-1"
-    <|> (char '1'
-           *> (MtrWon White <$ string "-0"
-                 <|> MtrDrawn <$ "/2-1/2"))
+    <|> ( char '1'
+            *> ( MtrWon White <$ string "-0"
+                  <|> MtrDrawn <$ "/2-1/2"
+               )
+        )
     <?> "movetextResultP"
 
 movetextSectionP :: Parser ([MovetextElem], MovetextResult)

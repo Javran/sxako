@@ -1,17 +1,11 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Cli.Stockfish
-  ( SfProcess
-  , startStockfish
-  , stopStockfish
-  , withStockfish
-  , getAllLegalPlies
-  , getNextPosition
-  )
-where
+module Game.Sxako.Cli.Stockfish (
+  SfProcess,
+  startStockfish,
+  stopStockfish,
+  withStockfish,
+  getAllLegalPlies,
+  getNextPosition,
+) where
 
 {-
   Communication with stockfish through UCI protocol and stockfish-specific commands.
@@ -119,16 +113,17 @@ getCurrentPosition (SfProcess p) = do
   hPutStrLn hIn "d"
   Just endFenRaw <-
     fix
-      (\loop cur -> do
-         raw <- hGetLine hOut
-         let cur' =
-               cur <|> do
-                 guard $ "Fen: " `isPrefixOf` raw
-                 Just (drop 5 raw)
-         -- very ugly way of checking end of the response, but I don't have anything better.
-         if "Checkers: " `isPrefixOf` raw
-           then pure cur'
-           else loop cur')
+      ( \loop cur -> do
+          raw <- hGetLine hOut
+          let cur' =
+                cur <|> do
+                  guard $ "Fen: " `isPrefixOf` raw
+                  Just (drop 5 raw)
+          -- very ugly way of checking end of the response, but I don't have anything better.
+          if "Checkers: " `isPrefixOf` raw
+            then pure cur'
+            else loop cur'
+      )
       Nothing
   let sfRecord = read @Record endFenRaw
   pure sfRecord

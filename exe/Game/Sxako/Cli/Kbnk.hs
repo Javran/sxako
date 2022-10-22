@@ -1,13 +1,6 @@
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
-
-module Game.Sxako.Cli.Kbnk
-  ( subCmdMain
-  )
-where
+module Game.Sxako.Cli.Kbnk (
+  subCmdMain,
+) where
 
 import Control.Monad.State.Strict
 import qualified Data.Aeson as Aeson

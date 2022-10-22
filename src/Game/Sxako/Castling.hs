@@ -1,6 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE LambdaCase #-}
-
 {-
   A simple bitset representing the availability of castling.
 
@@ -8,20 +5,19 @@
 
  -}
 
-module Game.Sxako.Castling
-  ( Castling (..)
-  , none
-  , whiteKingSide
-  , whiteQueenSide
-  , blackKingSide
-  , blackQueenSide
-  , allAllowed
-  , castleAvailable
-  , removeCastleRight
-  , getCastleRight
-  , minusCastleRight
-  )
-where
+module Game.Sxako.Castling (
+  Castling (..),
+  none,
+  whiteKingSide,
+  whiteQueenSide,
+  blackKingSide,
+  blackQueenSide,
+  allAllowed,
+  castleAvailable,
+  removeCastleRight,
+  getCastleRight,
+  minusCastleRight,
+) where
 
 import Data.Bits
 import Data.Word
@@ -58,10 +54,11 @@ minusCastleRight a b = a .&. complement b
 
 removeCastleRight :: Color -> Castling -> Castling
 removeCastleRight c =
-  (`minusCastleRight`
-     case c of
-       White -> whiteKingSide .|. whiteQueenSide
-       Black -> blackKingSide .|. blackQueenSide)
+  ( `minusCastleRight`
+      case c of
+        White -> whiteKingSide .|. whiteQueenSide
+        Black -> blackKingSide .|. blackQueenSide
+  )
 
 {-
   Ordering matters as we are respecting FEN castling notations.
@@ -84,10 +81,11 @@ instance Show Castling where
       then "-"
       else
         foldr
-          (\(ch, m) r ->
-             if m .&. c /= none
-               then (ch :) . r
-               else r)
+          ( \(ch, m) r ->
+              if m .&. c /= none
+                then (ch :) . r
+                else r
+          )
           id
           symTable
           ""
@@ -96,14 +94,16 @@ instance Read Castling where
   readsPrec _ =
     readP_to_S $
       (none <$ char '-')
-        <++ (foldr (.|.) none
-               <$> mapM
-                 (\(ch, m) ->
-                    {-
-                      using lookahead rather than optional
-                      to avoid unwanted branches.
-                     -}
-                    look >>= \case
-                      c : _ | c == ch -> m <$ get
-                      _ -> pure none)
-                 symTable)
+        <++ ( foldr (.|.) none
+                <$> mapM
+                  ( \(ch, m) ->
+                      {-
+                        using lookahead rather than optional
+                        to avoid unwanted branches.
+                       -}
+                      look >>= \case
+                        c : _ | c == ch -> m <$ get
+                        _ -> pure none
+                  )
+                  symTable
+            )

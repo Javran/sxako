@@ -1,14 +1,13 @@
-module Game.Sxako.Board.Halfboard
-  ( Halfboard
-  , empty
-  , at
-  , modifyBitboard
-  , thaw
-  , unsafeRead
-  , unsafeWrite
-  , unsafeFreeze
-  )
-where
+module Game.Sxako.Board.Halfboard (
+  Halfboard,
+  empty,
+  at,
+  modifyBitboard,
+  thaw,
+  unsafeRead,
+  unsafeWrite,
+  unsafeFreeze,
+) where
 
 import Control.Monad.Primitive
 import qualified Data.Vector as V

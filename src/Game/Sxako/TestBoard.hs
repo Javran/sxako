@@ -1,7 +1,6 @@
-module Game.Sxako.TestBoard
-  ( TestBoard (..)
-  )
-where
+module Game.Sxako.TestBoard (
+  TestBoard (..),
+) where
 
 import Control.Monad
 import Data.List

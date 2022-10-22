@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Game.Sxako.Cli.Tablebase where
 
 import GHC.Generics

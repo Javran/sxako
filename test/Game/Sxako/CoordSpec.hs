@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Game.Sxako.CoordSpec where
 
 import Control.Monad

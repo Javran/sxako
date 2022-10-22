@@ -1,23 +1,18 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
-
-module Game.Sxako.Common
-  ( EightElems
-  , PieceType (..)
-  , Color (..)
-  , Piece
-  , Side (..)
-  , Placement2D
-  , Square
-  , CheckType(..)
-  , universe
-  , charToPiece
-  , pieceToChar
-  , opposite
-  , readsByAttoparsecChar8
-  )
-where
+module Game.Sxako.Common (
+  EightElems,
+  PieceType (..),
+  Color (..),
+  Piece,
+  Side (..),
+  Placement2D,
+  Square,
+  CheckType (..),
+  universe,
+  charToPiece,
+  pieceToChar,
+  opposite,
+  readsByAttoparsecChar8,
+) where
 
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC

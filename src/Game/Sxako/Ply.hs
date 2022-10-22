@@ -90,6 +90,7 @@ instance Show Ply where
       PlyPromo {pPiece} -> [pieceToChar (Black, pPiece)]
 
 instance Read Ply where
+  {- The read instance accepts long algebraic notation as in UCI protocol. -}
   readsPrec _ = readP_to_S $ do
     let getCoord = readS_to_P @Coord reads
     pFrom <- getCoord

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 06cdd090d18147cd1a56e373a16a05310cb6348df8e22d83d074b6567a4c4140
+-- hash: 09aa2b943af3abb63a7831a3fe4de95bd85f972ec26f5283483b95abb7d0ab93
 
 name:           sxako
 version:        0.1.0.0
@@ -68,6 +68,7 @@ library
 executable demo
   main-is: Main.hs
   other-modules:
+      Game.Sxako.Cli.Dev
       Game.Sxako.Cli.Kbnk
       Game.Sxako.Cli.Main
       Game.Sxako.Cli.ParsePgn

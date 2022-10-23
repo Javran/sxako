@@ -183,6 +183,26 @@ type PlyRec = (Ply, Record)
 type SanRec = (San, Record)
 
 {-
+  TODO: Note that currently we only have a "picky" API for applying a San,
+  we need some sort of way to allow user to only specify piece type and target location.
+  In this API resulting value would be a list to ambiguity,
+  so that `San` is closer to a query than a precise move.
+
+  In this form, `from`, `capture` and `check` are all optional.
+  But if they are specified, it must be accounted for in the result.
+
+  e.g. `Bh7` could mean `Bxh7`, `Bxh7+`, `Bxh7#`, `Bbh7`, `Bbxh7+` etc.
+  but if one gives `Bxh7+`, those without captures and checks are excluded from the results.
+  (Checkmate and check without mate are considiered different and incompatible notations,
+  this decision is somewhat arbitrary, we might revisit later.)
+
+  Note: King is allowed to move 2 squares to indicate castling should the current board state allow.
+
+  Note: resulting list must pair resulting board with precise San.
+
+ -}
+
+{-
   TODO: currently doing this the stupid way.
  -}
 legalPliesWithMapping :: Record -> (M.Map Ply Record, (M.Map Ply San, M.Map San Ply))

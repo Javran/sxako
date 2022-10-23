@@ -6,6 +6,7 @@ module Game.Sxako.San (
   CheckType (..),
   sanP,
   legalSansEither,
+  legalPliesWithMapping,
 ) where
 
 {-
@@ -18,7 +19,9 @@ import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Bifunctor
 import Data.Char
 import Data.Either
+import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
+import Data.Tuple
 import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord
@@ -180,6 +183,37 @@ type PlyRec = (Ply, Record)
 type SanRec = (San, Record)
 
 {-
+  TODO: currently doing this the stupid way.
+ -}
+legalPliesWithMapping :: Record -> (M.Map Ply Record, (M.Map Ply San, M.Map San Ply))
+legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
+  (Left _, Left _) -> mempty
+  (Right sans, Right plies) ->
+    let sMap :: M.Map Record San
+        pMap :: M.Map Record Ply
+        sMap = M.fromList $ fmap swap sans
+        pMap = M.fromList $ fmap swap plies
+        merged :: M.Map Record (San, Ply)
+        merged =
+          M.map unsafeConvert $
+            M.merge
+              (M.mapMaybeMissing $ \_k x -> Just (Just x, Nothing))
+              (M.mapMaybeMissing $ \_k y -> Just (Nothing , Just y))
+              (M.zipWithMatched $ \_k x y -> (Just x, Just y))
+              sMap
+              pMap
+          where
+            unsafeConvert = \case
+              (Just s, Just p) -> (s, p)
+              v -> error $ "some parts are missing: " <> show v
+        pairs :: [(San, Ply)]
+        pairs = M.elems merged
+     in if M.size sMap /= M.size pMap || length sans /= M.size sMap
+          then error $ "length mismatched: " <> show (length sans, M.size sMap, M.size pMap)
+          else (M.fromList plies, (M.fromList (fmap swap pairs), M.fromList pairs))
+  _ -> error "result is inconsistent"
+
+{-
   Either gives all possible next plies, or
   conclude the game according to rules.
 
@@ -190,6 +224,9 @@ type SanRec = (San, Record)
 
   - otherwise we try different approaches of disambiguation
     according to SAN spec.
+
+  TODO: separate adjudication logic.
+
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
 legalSansEither r@Record {placement} = convert <$> legalPliesEither r

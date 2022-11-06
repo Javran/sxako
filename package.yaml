@@ -83,17 +83,18 @@ executables:
     main: Main.hs
     source-dirs: exe
     dependencies:
-      - sxako
+      - SVGFonts
       - colour
       - diagrams-core
       - diagrams-lib
       - diagrams-rasterific
-      - SVGFonts
-      - typed-process
-      - random
-      - uri-encode
       - http-client
       - http-client-tls
+      - random
+      - sxako
+      - timeit
+      - typed-process
+      - uri-encode
 
     ghc-options:
       - -O2

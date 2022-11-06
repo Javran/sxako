@@ -2,11 +2,15 @@ module Game.Sxako.Cli.ParsePgn (
   subCmdMain,
 ) where
 
+import Control.DeepSeq
+import Control.Exception (evaluate)
+import Control.Monad
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString as BS
 import Game.Sxako.Pgn
 import System.Environment
 import System.Exit
+import System.TimeIt (timeItT)
 import Text.Printf
 
 subCmdMain :: String -> IO ()
@@ -16,18 +20,21 @@ subCmdMain cmdHelpPrefix =
       raw <- BS.readFile pgnFp
       let parser = do
             -- fuck BOM
-            _ <- option () (() <$ string "\239\187\191")
+            _ <- option () (void (string "\239\187\191"))
             ps <- manyPgnsP
             leftover <- manyTill' anyChar endOfInput
             pure (ps, leftover)
-      case Parser.parseOnly parser raw of
+      -- forcing input.
+      raw' <- evaluate $!! raw
+      -- forcing output.
+      (t, parsed) <- timeItT $ evaluate $!! Parser.parseOnly parser raw'
+      case parsed of
         Left msg ->
           die $ "Failed when parsing: " <> msg
         Right (r, leftover) ->
           if null leftover
             then do
-              mapM_ (\l -> print l >> putStrLn "") r
-              printf "Parsed %d records, all succeeded.\n" (length r)
+              printf "Parsed %d records in %s seconds (CPU time), all succeeded.\n" (length r) (show t)
             else do
               printf
                 "Parsed %d records, with leftover length %d.\n"

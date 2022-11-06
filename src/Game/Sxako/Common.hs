@@ -12,12 +12,16 @@ module Game.Sxako.Common (
   pieceToChar,
   opposite,
   readsByAttoparsecChar8,
+  NFData,
+  Generic,
 ) where
 
+import Control.DeepSeq (NFData)
 import Data.Attoparsec.ByteString.Char8 as Parser
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as M
 import Data.Tuple
+import GHC.Generics (Generic)
 
 {-
   TODO: we should probably get rid of fixed-vector usage.
@@ -44,9 +48,13 @@ data PieceType
   | Rook
   | Queen
   | King
-  deriving (Enum, Eq, Ord, Bounded, Show)
+  deriving (Enum, Eq, Ord, Bounded, Show, Generic)
 
-data Color = White | Black deriving (Enum, Eq, Ord, Bounded, Show)
+instance NFData PieceType
+
+data Color = White | Black deriving (Enum, Eq, Ord, Bounded, Show, Generic)
+
+instance NFData Color
 
 opposite :: Color -> Color
 opposite = \case
@@ -58,7 +66,9 @@ type Piece = (Color, PieceType)
 universe :: (Enum a, Bounded a) => [a]
 universe = [minBound .. maxBound]
 
-data Side = KingSide | QueenSide deriving (Eq, Ord, Show)
+data Side = KingSide | QueenSide deriving (Eq, Ord, Show, Generic)
+
+instance NFData Side
 
 {-
   2D list of a Chess board - used for intermediate representations.
@@ -101,4 +111,6 @@ readsByAttoparsecChar8 parser raw =
     Right (r, left) -> [(r, BSC.unpack left)]
 
 data CheckType = Check | Checkmate
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
+
+instance NFData CheckType

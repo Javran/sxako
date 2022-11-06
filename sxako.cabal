@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ca8a632f75ec37f1987f2066ea6094d11589c45cd92ba90f210a931fa8573e2e
+-- hash: 53a6d68ce1d25ac29f088aeea0360bfbaa410724b7e318aabd9a8a394bc9eb1f
 
 name:           sxako
 version:        0.1.0.0
@@ -92,6 +92,7 @@ library
     , base
     , bytestring
     , containers
+    , deepseq
     , hashable
     , lzma
     , mtl
@@ -166,6 +167,7 @@ executable demo
     , bytestring
     , colour
     , containers
+    , deepseq
     , diagrams-core
     , diagrams-lib
     , diagrams-rasterific
@@ -250,6 +252,7 @@ test-suite hspec
     , base
     , bytestring
     , containers
+    , deepseq
     , hashable
     , hspec
     , hspec-attoparsec

@@ -55,6 +55,7 @@ import Data.Char
 import Data.Functor
 import qualified Data.Text as T
 import Data.Text.Encoding
+import Control.DeepSeq
 import Game.Sxako.Common
 import Game.Sxako.San
 
@@ -180,7 +181,9 @@ data MovetextElem
   | MtSan San [Int {- Int for NAG, suffix annotation will be translated into NAG. -}]
   | MtCommentary T.Text
   | MtRav [MovetextElem]
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance NFData MovetextElem
 
 {-
   Parsing suffix of a SAN ply as NAG.
@@ -239,7 +242,9 @@ data MovetextResult
   = MtrWon Color
   | MtrDrawn
   | MtrUnknown
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
+
+instance NFData MovetextResult
 
 movetextResultP :: Parser MovetextResult
 movetextResultP =

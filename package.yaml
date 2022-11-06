@@ -57,7 +57,9 @@ dependencies:
 - base
 - bytestring
 - containers
+- deepseq
 - hashable
+- lzma
 - mtl
 - resourcet
 - split
@@ -65,7 +67,6 @@ dependencies:
 - vector
 - writer-cps-mtl
 - yaml
-- lzma
 
 data-files: 
 - data/ChessMerida.svg

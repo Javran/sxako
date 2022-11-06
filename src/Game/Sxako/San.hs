@@ -41,13 +41,17 @@ data San
       { sSide :: Side
       , sCheck :: Maybe CheckType
       }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
+
+instance NFData San
 
 data Disamb
   = DisambByFile Int
   | DisambByRank Int
   | DisambByCoord Coord
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
+
+instance NFData Disamb
 
 instance Read San where
   readsPrec _ = readsByAttoparsecChar8 sanP

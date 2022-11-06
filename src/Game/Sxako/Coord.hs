@@ -52,7 +52,7 @@ import Text.ParserCombinators.ReadP
   - high bits (3~5) represents rank
  -}
 newtype Coord = Coord Word8
-  deriving (Eq, Ord, Hashable) via Word8
+  deriving (Eq, Ord, Hashable, NFData) via Word8
 
 toWord8 :: Coord -> Word8
 toWord8 (Coord c) = c

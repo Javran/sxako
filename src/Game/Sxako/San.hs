@@ -188,8 +188,11 @@ type SanRec = (San, Record)
 
 {-
   TODO: Note that currently we only have a "picky" API for applying a San,
-  we need some sort of way to allow user to only specify piece type and target location.
-  In this API resulting value would be a list to ambiguity,
+  meaning checks, captures must be marked exactly to find the next board.
+
+  But in future we need some sort of way to allow user to only specify
+  piece type and target location.
+  In this proposed API, resulting value would be a list to address ambiguity,
   so that `San` is closer to a query than a precise move.
 
   In this form, `from`, `capture` and `check` are all optional.
@@ -201,6 +204,9 @@ type SanRec = (San, Record)
   this decision is somewhat arbitrary, we might revisit later.)
 
   Note: King is allowed to move 2 squares to indicate castling should the current board state allow.
+
+  Note: to potentially support Chess960, we might internally switch to use
+  king-captures-his-own-rook move to indicate castling.
 
   Note: resulting list must pair resulting board with precise San.
 

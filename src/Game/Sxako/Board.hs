@@ -47,6 +47,25 @@ import Game.Sxako.Coord
   I choose to use a pair of boxed vectors so to allow more sharing.
  -}
 
+{-
+  TODO: we can make board representation more compact.
+  This idea is inspired from Stockfish source code:
+
+  We will have 7 bitboards for:
+  1. "white" board, marking all squares occupied by white's pieces (including pawns)
+  2. "black" board, similar to "white" board
+  3. "king" board, marking all squares occupied by kings regardless of color
+  4. "queen" board, similar
+  5. "rook" board, similar
+  6. "bishop" board, similar
+  7. "knight" board, similar
+
+  Note the lack of a "pawn" board - this bit of info can be inferred.
+
+  Note that we can even eliminate "queen" board by recording queen's locations
+  in both "rook" board and "bishop" board.
+ -}
+
 -- type Halfboard = Vec FixedVector
 
 {-

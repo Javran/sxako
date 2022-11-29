@@ -214,6 +214,10 @@ type SanRec = (San, Record)
 
 {-
   TODO: currently doing this the stupid way.
+
+  By "stupid", the current way performs movegen twice, and find Ply-San pairs
+  by matching resulting game record. Ideally this should be done during movegen.
+
  -}
 legalPliesWithMapping :: Record -> (M.Map Ply Record, (M.Map Ply San, M.Map San Ply))
 legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
@@ -256,6 +260,17 @@ legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
     according to SAN spec.
 
   TODO: separate adjudication logic.
+
+  TODO: make sure to only give GameResult if there are no moves available.
+
+  As
+  - this makes it a bit easier if we have to convert resulting value to a list.
+  - we make it more clear that we don't deal with 3-fold reptition or other forms of draws,
+    for lack of information.
+
+  For this it is probably better that the resulting type is
+
+  > Either GameResult (NonEmpty (San, Record))
 
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]

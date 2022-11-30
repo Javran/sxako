@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aa2218342dd51f4a4d1966d7768e5e6988b0826bfc318280a21f997d740aa8e4
+-- hash: c4561a1da9cbfa0fd276b54ff2b3b606b3c70992d842b7d94ee41148dfb8679f
 
 name:           sxako
 version:        0.1.0.0
@@ -111,6 +111,8 @@ executable demo
       Game.Sxako.Cli.Brick
       Game.Sxako.Cli.Brick.ChessBomb
       Game.Sxako.Cli.Brick.Config
+      Game.Sxako.Cli.Brick.Stockfish
+      Game.Sxako.Cli.Brick.Stockfish.Types
       Game.Sxako.Cli.Dev
       Game.Sxako.Cli.Kbnk
       Game.Sxako.Cli.Main

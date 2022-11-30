@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c19adb1738b37fdde9347024e563815a0158c7709df654cbd1d82e16479e4907
+-- hash: a3f63a214258d2982a23b80a19cd810150d4d521d8045d1b8c3722ab08de6593
 
 name:           sxako
 version:        0.1.0.0
@@ -108,6 +108,7 @@ library
 executable demo
   main-is: Main.hs
   other-modules:
+      Game.Sxako.Cli.Brick
       Game.Sxako.Cli.Dev
       Game.Sxako.Cli.Kbnk
       Game.Sxako.Cli.Main
@@ -162,29 +163,38 @@ executable demo
   build-depends:
       SVGFonts
     , aeson
+    , async
     , attoparsec
     , base
+    , brick
     , bytestring
     , colour
     , containers
     , deepseq
+    , dhall
     , diagrams-core
     , diagrams-lib
     , diagrams-rasterific
+    , dlist
     , hashable
     , http-client
     , http-client-tls
     , lzma
     , mtl
+    , process
     , random
     , resourcet
+    , safe-exceptions
     , split
     , sxako
     , text
+    , time
     , timeit
     , typed-process
     , uri-encode
+    , utility-ht
     , vector
+    , vty
     , writer-cps-mtl
     , yaml
   default-language: Haskell2010

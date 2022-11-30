@@ -84,17 +84,31 @@ executables:
     source-dirs: exe
     dependencies:
       - SVGFonts
+      - aeson
+      - async
+      - brick
+      - bytestring
       - colour
+      - containers
+      - dhall
       - diagrams-core
       - diagrams-lib
       - diagrams-rasterific
+      - dlist
       - http-client
       - http-client-tls
+      - mtl
+      - process
       - random
+      - safe-exceptions
       - sxako
+      - text
+      - time
       - timeit
       - typed-process
       - uri-encode
+      - utility-ht
+      - vty
 
     ghc-options:
       - -O2

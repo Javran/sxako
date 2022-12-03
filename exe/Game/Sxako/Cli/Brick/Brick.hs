@@ -35,8 +35,8 @@ import System.Environment
 import System.Exit
 import Text.Printf
 
-pieceToChar' :: Piece -> Char
-pieceToChar' (c, pt) =
+pieceToCharUnicode :: Piece -> Char
+pieceToCharUnicode (c, pt) =
   ( case c of
       White -> "♙♘♗♖♕♔"
       Black -> "♟♞♝♜♛♚"
@@ -68,6 +68,8 @@ renderRecord
     , fullMove
     } = (uiBoard, uiExtra)
     where
+      useUnicodeChar = False
+      pToChar = if useUnicodeChar then pieceToCharUnicode else pieceToChar
       uiBoard =
         joinBorders $
           ( border
@@ -78,13 +80,14 @@ renderRecord
           )
             <+> padTop (Pad 1) auxCol
         where
-          auxCol = hLimit 3 $ vBox $ intersperse hBorder $ fmap (mkSq . (: [])) ['8', '7' .. '1']
-          auxRow = vLimit 1 $ hBox $ intersperse vBorder $ fmap (mkSq . (: [])) ['a' .. 'h']
+          sp = vLimit 1 $ hLimit 3 $ str " "
+          auxCol = hLimit 3 $ vBox $ intersperse sp $ fmap (mkSq . (: [])) ['8', '7' .. '1']
+          auxRow = vLimit 1 $ hBox $ intersperse sp $ fmap (mkSq . (: [])) ['a' .. 'h']
           renderRank rankCoords =
             vLimit 1 $
               hBox $
                 intersperse vBorder $
-                  fmap (\coord -> mkSq [maybe ' ' pieceToChar $ at placement coord]) rankCoords
+                  fmap (\coord -> mkSq [maybe ' ' pToChar $ at placement coord]) rankCoords
           mkSq n = joinBorders $ vLimit 1 $ hLimit 3 $ str $ " " <> n <> " "
       uiExtra =
         joinBorders $

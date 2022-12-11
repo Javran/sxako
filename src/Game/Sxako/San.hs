@@ -19,6 +19,7 @@ import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Bifunctor
 import Data.Char
 import Data.Either
+import Data.Foldable
 import qualified Data.Map.Merge.Strict as M
 import qualified Data.Map.Strict as M
 import Data.Tuple
@@ -182,10 +183,6 @@ sanP = castleP <|> normalMoveP
           , sCheck
           }
 
-type PlyRec = (Ply, Record)
-
-type SanRec = (San, Record)
-
 {-
   TODO: Note that currently we only have a "picky" API for applying a San,
   meaning checks, captures must be marked exactly to find the next board.
@@ -226,13 +223,13 @@ legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
     let sMap :: M.Map Record San
         pMap :: M.Map Record Ply
         sMap = M.fromList $ fmap swap sans
-        pMap = M.fromList $ fmap swap plies
+        pMap = M.fromList $ fmap swap (toList plies)
         merged :: M.Map Record (San, Ply)
         merged =
           M.map unsafeConvert $
             M.merge
               (M.mapMaybeMissing $ \_k x -> Just (Just x, Nothing))
-              (M.mapMaybeMissing $ \_k y -> Just (Nothing , Just y))
+              (M.mapMaybeMissing $ \_k y -> Just (Nothing, Just y))
               (M.zipWithMatched $ \_k x y -> (Just x, Just y))
               sMap
               pMap
@@ -244,8 +241,12 @@ legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
         pairs = M.elems merged
      in if M.size sMap /= M.size pMap || length sans /= M.size sMap
           then error $ "length mismatched: " <> show (length sans, M.size sMap, M.size pMap)
-          else (M.fromList plies, (M.fromList (fmap swap pairs), M.fromList pairs))
+          else (M.fromList (toList plies), (M.fromList (fmap swap pairs), M.fromList pairs))
   _ -> error "result is inconsistent"
+
+type PlyRec = (Ply, Record)
+
+type SanRec = (San, Record)
 
 {-
   Either gives all possible next plies, or
@@ -274,7 +275,7 @@ legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
 
  -}
 legalSansEither :: Record -> Either GameResult [(San, Record)]
-legalSansEither r@Record {placement} = convert <$> legalPliesEither r
+legalSansEither r@Record {placement} = convert . toList <$> legalPliesEither r
   where
     {-
       TODO: quick and dirty for now.

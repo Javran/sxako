@@ -9,6 +9,9 @@ module Game.Sxako.Ply (
   isCapturePly,
   legalPliesMap,
   legalPliesEither,
+  concludeNoPlies,
+  concludeFiftyMoves,
+  concludeInsufficientMaterial,
 ) where
 
 import Control.Applicative
@@ -24,6 +27,7 @@ import Data.Word
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
+import qualified Data.List.NonEmpty as NE
 import Game.Sxako.Common
 import Game.Sxako.Coord as Coord
 import Game.Sxako.Fen
@@ -181,80 +185,120 @@ isCapturePly Record {placement, enPassantTarget} p =
     targetSq = at placement (pTo p)
 
 {-
-  TODO: to be tested.
+  Concludes a game that has no legal plies.
 
-  Either returns a non-empty list of possible next plies,
-  or returns a Left to indicate that the game has concluded.
+  Note that:
+
+  - The result of this function is only correct
+    when the input Record has no legal plies.
+
+  - Only checkmates and stalemates are possible results
+    from this function.
+    Otherwise 50-moves rule is not taken into account
+    since we can still perform legal moves from those positions.
 
  -}
-legalPliesEither :: Record -> Either GameResult [(Ply, Record)]
-legalPliesEither
-  record@Record
-    { activeColor
-    , placement
-    , halfMove
-    } = case legalPlies record of
-    [] ->
-      -- the active color has no legal move.
-      Left $
-        if hasSafeKings activeColor placement
-          then ResultDraw Stalemate
-          else ResultCheckmate (opposite activeColor)
-    xs@(_ : _) ->
-      if
-          | halfMove > 100 -> Left $ ResultDraw FiftyMoves
-          | insuffMat -> Left $ ResultDraw InsufficientMaterial
-          | otherwise -> pure xs
+concludeNoPlies :: Record -> GameResult
+concludeNoPlies Record {activeColor, placement} =
+  if hasSafeKings activeColor placement
+    then ResultDraw Stalemate
+    else ResultCheckmate (opposite activeColor)
+
+{-
+  Attempts to conclude a game by the 50-moves rule.
+ -}
+concludeFiftyMoves :: Record -> Maybe GameResult
+concludeFiftyMoves Record {halfMove} =
+  ResultDraw FiftyMoves <$ guard (halfMove > 100)
+
+{-
+  Attempts to conclude (in particular, draw) a game by insufficient material.
+ -}
+concludeInsufficientMaterial :: Record -> Maybe GameResult
+concludeInsufficientMaterial Record {placement} =
+  ResultDraw InsufficientMaterial <$ guard insuffMat
+  where
+    [hbW, hbB] = fmap (getHalfboard placement) [White, Black]
+    noHeavyPieceOrPawn :: Halfboard -> Bool
+    noHeavyPieceOrPawn hb =
+      all (\pt -> hbAt hb pt == Bitboard 0) [Pawn, Rook, Queen]
+    countBishopAndKnight ::
+      Halfboard ->
+      ( Int {- knights -}
+      , (Int {- dark bishops -}, Int {- light bishops -})
+      )
+    countBishopAndKnight hb = (knightCount, (darkB, lightB))
       where
-        [hbW, hbB] = fmap (getHalfboard placement) [White, Black]
-        noHeavyPieceOrPawn :: Halfboard -> Bool
-        noHeavyPieceOrPawn hb =
-          all (\pt -> hbAt hb pt == Bitboard 0) [Pawn, Rook, Queen]
-        countBishopAndKnight ::
-          Halfboard ->
-          ( Int {- knights -}
-          , (Int {- dark bishops -}, Int {- light bishops -})
-          )
-        countBishopAndKnight hb = (knightCount, (darkB, lightB))
-          where
-            (Sum darkB, Sum lightB) =
-              foldMap (\c -> if isDark c then (1, 0) else (0, 1)) $
-                allSetCoords (hbAt hb Bishop)
-            knightCount = popCount (hbAt hb Knight)
-        {-
-          The following are cases of insufficient materials:
+        (Sum darkB, Sum lightB) =
+          foldMap (\c -> if isDark c then (1, 0) else (0, 1)) $
+            allSetCoords (hbAt hb Bishop)
+        knightCount = popCount (hbAt hb Knight)
+    {-
+      The following are cases of insufficient materials:
 
-          - king versus king
-          - king and bishop versus king
-          - king and knight versus king
-          - king and bishop versus king and bishop with the bishops on the same color.
+      - king versus king
+      - king and bishop versus king
+      - king and knight versus king
+      - king and bishop versus king and bishop with the bishops on the same color.
 
-          Observation:
-          (1) does not qualify if any of queen, rook, pawn remains
-          (2) otherwise count (knight, (light bishop, dark bishop)) for both sides,
-            which should give us sufficient info to perform this IM check.
-         -}
-        insuffMat =
-          -- Observation (1)
-          noHeavyPieceOrPawn hbW
-            && noHeavyPieceOrPawn hbB
-            &&
-            -- Observation (2)
-            let (wKnights, (wDBishops, wLBishops)) = countBishopAndKnight hbW
-                (bKnights, (bDBishops, bLBishops)) = countBishopAndKnight hbB
-             in (wKnights + wDBishops + wLBishops + bKnights + bDBishops + bLBishops <= 1)
-                  || ( -- no knights
-                       (wKnights, bKnights) == (0, 0)
-                        &&
-                        -- exactly one bishop on both sides
-                        wDBishops + wLBishops == 1
-                        && bDBishops + bLBishops == 1
-                        &&
-                        -- same color bishops
-                        ( (wDBishops, bDBishops) == (1, 1)
-                            || (wLBishops, bLBishops) == (1, 1)
-                        )
-                     )
+      Observation:
+      (1) does not qualify if any of queen, rook, pawn remains
+      (2) otherwise count (knight, (light bishop, dark bishop)) for both sides,
+        which should give us sufficient info to perform this IM check.
+     -}
+    insuffMat =
+      -- Observation (1)
+      noHeavyPieceOrPawn hbW
+        && noHeavyPieceOrPawn hbB
+        &&
+        -- Observation (2)
+        let (wKnights, (wDBishops, wLBishops)) = countBishopAndKnight hbW
+            (bKnights, (bDBishops, bLBishops)) = countBishopAndKnight hbB
+         in (wKnights + wDBishops + wLBishops + bKnights + bDBishops + bLBishops <= 1)
+              || ( -- no knights
+                   (wKnights, bKnights) == (0, 0)
+                    &&
+                    -- exactly one bishop on both sides
+                    wDBishops + wLBishops == 1
+                    && bDBishops + bLBishops == 1
+                    &&
+                    -- same color bishops
+                    ( (wDBishops, bDBishops) == (1, 1)
+                        || (wLBishops, bLBishops) == (1, 1)
+                    )
+                 )
+
+{-
+  Computes all legal plies given a position.
+
+  The game is concluded (if `Left` is result's head)
+  if and only there are no legal moves from this position,
+  without taking into account 50-moves rule or whether materials are insufficient.
+  (use the corresponding `concludeXXX` functions from this module
+  for those specific adjudications.)
+
+  Regarding this design choice:
+
+  We have to make it clear that game conclusion and whether
+  there are legal moves available from the same position
+  are different concepts:
+
+  - A game is "hard-concluded" in case of checkmate or stalemate - no more legal moves to proceed.
+  - Otherwise we can still apply legal plies to it (let's call this "soft-conclusion")
+
+  To make this library as flexible as possible, we should allow a game to proceed as long as
+  there are legal plies, rather than forcefully terminating the game.
+
+  For use cases that do require draw adjudications, extra functions are supplied
+  (`concludeXXXX` functions) to accomplish those tasks.
+
+  TODO: to be tested.
+
+ -}
+legalPliesEither :: Record -> Either GameResult (NE.NonEmpty (Ply, Record))
+legalPliesEither r = case NE.nonEmpty $ legalPlies r of
+  Nothing -> Left $ concludeNoPlies r
+  Just xs -> pure xs
 
 {-
   Auxilary function to figure out squares being attacked.

@@ -244,6 +244,14 @@ legalPliesWithMapping r = case (legalSansEither r, legalPliesEither r) of
           else (M.fromList (toList plies), (M.fromList (fmap swap pairs), M.fromList pairs))
   _ -> error "result is inconsistent"
 
+_todo :: a
+_todo = error "TODO"
+
+legalSansWithMapping :: Record -> (M.Map Ply Record, (M.Map Ply San, M.Map San Ply))
+legalSansWithMapping r = (lm, _todo)
+  where
+    lm = legalPliesMap r
+
 type PlyRec = (Ply, Record)
 
 type SanRec = (San, Record)

@@ -20,6 +20,7 @@ import Control.Monad.Writer.CPS
 import Data.Aeson
 import Data.Bits
 import Data.Hashable
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import qualified Data.Text as T
@@ -27,7 +28,6 @@ import Data.Word
 import Game.Sxako.Bitboard
 import Game.Sxako.Board
 import Game.Sxako.Castling
-import qualified Data.List.NonEmpty as NE
 import Game.Sxako.Common
 import Game.Sxako.Coord as Coord
 import Game.Sxako.Fen
@@ -153,10 +153,12 @@ legalPliesMap = M.fromList . legalPlies
   but I doubt it would worth the effort.
  -}
 getCheckType :: Record -> Maybe CheckType
-getCheckType r@Record {activeColor, placement} = do
-  guard $ not (hasSafeKings activeColor placement)
-  let hasLegalPlies = not . null . legalPlies $ r
-  pure $ if hasLegalPlies then Check else Checkmate
+getCheckType r@Record {activeColor, placement} =
+  ( case legalPlies r of
+      [] -> Checkmate
+      _ : _ -> Check
+  )
+    <$ guard (not (hasSafeKings activeColor placement))
 
 isCastlePly :: Record -> Ply -> Maybe Side
 isCastlePly Record {activeColor, placement} p = do

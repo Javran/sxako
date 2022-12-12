@@ -175,6 +175,68 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
     + a special case is when comments appear right before anything else for movetext section,
       in which case we should have a "pretext" field to contain it.
 
+  TODO: plan for second round parsing, especially how to deal with RAVs
+
+  for example, we have the following: (letters are plies)
+
+  > A B C (F G) () (H I J (K L M)) D E
+
+  For simplicity let's do some simplification:
+  - Ignore all commentaries
+  - Ignore move numbers
+  - Ignore move suffixes & NAGs
+  - Keep only Sans
+
+  For now the goal is to just get a bunch of "game trees"
+  (therefore plenty of positions that we can run tests on)
+  from PGN files to allow us more comprehensive testing and benchmarking of the library.
+
+  Ref:
+  > The alternate move sequence given by an RAV is one that may be legally played
+  > by first unplaying the move that appears immediately prior to the RAV
+
+  So the whole thing should produce a tree of plies that contains exactly the following:
+
+  A - B - C - D - E
+        \ F - G
+        \ H - I - J
+                \ K - L - M
+
+
+  now, how to convert values:
+
+  For MovetextElem, we only have two things left if we were to only keep Sans:
+
+  MovetextElem
+    = MtSan San _
+    | MtRav [MovetextElem]
+
+  or just
+
+  newtype SimpleSan = Either San [SimpleSan]
+
+  if given the same input as previous example:
+
+  > A B C (F G) () (H I J (K L M)) D E
+
+  We'll expect to have (ignoring newtype constructors):
+
+  > [A, B, C, [F, G], [], [H, I, J, [K, L, M]], D, E] :: [SimpleSan]
+
+  Right constructs should all be groupped together and attached to
+  its Left prefix:
+
+  - A, {}
+  - B, {}
+  - C, {[F, G], [], [H, I, J, [K, L, M]]}
+  - D, {}
+  - E, {}
+
+  TODO: in this example we need B to link to C, F, H.
+
+  TODO: what to do if we don't have a prefix of a prefix?
+    say C (F G) is the whole sequence.
+
  -}
 data MovetextElem
   = MtMoveNum Int

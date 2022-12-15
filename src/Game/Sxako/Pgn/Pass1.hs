@@ -20,7 +20,7 @@ fromMovetextElem = \case
   MtCommentary {} -> Nothing
   MtRav xs -> Just (Simp $ Right $ mapMaybe fromMovetextElem xs)
 
-newtype PlyNode a = PN (a, [PlyNode a])
+newtype PlyNode a = PN (a, [PlyNode a]) deriving (Show)
 
 unreachable :: a
 unreachable = error "unreachable"
@@ -54,5 +54,38 @@ parse = \case
        -}
       hdPns <- parse xs1
       (rs :: [] [PlyNode a]) <- mapM parse rights
-      -- TODO: need to "flatten" this somehow.
-      pure $ PN (x1, hdPns) : fmap (error "TODO") rs
+      {-
+        flattening is actually straightforward, notice that
+        the following encodes the same ply tree:
+
+        - A B (C) (D) (E)
+        - A B (C (D)) (E)
+        - A B (C) (D (E))
+
+        so probably just concat-ing them together is sufficient.
+
+       -}
+      pure $ PN (x1, hdPns) : concat rs
+
+{-
+  TODO: parse the following as a proof of concept
+
+  A B C (F G) () (H I J (K L M)) D E (N O (P)) Q
+ -}
+
+example0 :: [Simp Char]
+example0 =
+  [ l 'A'
+  , l 'B'
+  , l 'C'
+  , r [l 'F', l 'G']
+  , r []
+  , r [l 'H', l 'I', l 'J', r [l 'K', l 'L', l 'M']]
+  , l 'D'
+  , l 'E'
+  , r [l 'N', l 'O', r [l 'P']]
+  , l 'Q'
+  ]
+  where
+    l ch = Simp (Left ch)
+    r xs = Simp (Right xs)

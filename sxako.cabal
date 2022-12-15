@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5b407c54b303f7f4956f53061a40d5e736951ad28ac10d52d72b5b181b6b5a59
+-- hash: 812ec5a35c38c6be3639e4d8453d902e7a970fe5cc4f4cb71b979c65a8835ecf
 
 name:           sxako
 version:        0.1.0.0
@@ -192,6 +192,7 @@ executable demo
     , random
     , resourcet
     , safe-exceptions
+    , shower
     , split
     , sxako
     , text

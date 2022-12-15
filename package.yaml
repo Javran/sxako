@@ -109,6 +109,7 @@ executables:
       - uri-encode
       - utility-ht
       - vty
+      - shower
 
     ghc-options:
       - -O2

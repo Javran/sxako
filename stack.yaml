@@ -12,3 +12,6 @@ extra-deps:
 - monoid-extras-0.6.1
 - fsnotify-0.4.1.0
 - lens-5.2
+- shower-0.2.0.2
+
+

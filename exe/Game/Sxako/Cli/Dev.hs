@@ -8,8 +8,10 @@ import Game.Sxako.Board
 import Game.Sxako.Fen
 import Game.Sxako.Ply
 import Game.Sxako.San
+import qualified Game.Sxako.Pgn.Pass1 as P1
 import System.Environment
 import System.Exit
+import Shower
 
 {-
   TODO: interpret stockfish plies (long notation).
@@ -51,5 +53,7 @@ subCmdMain cmdHelpPrefix =
           r
           plies
       pprBoard (placement fin)
+    ["pgn"] -> do
+      printer (P1.parse P1.example0)
     _ -> do
       die $ cmdHelpPrefix <> "..."

@@ -1,4 +1,4 @@
-resolver: lts-19.30
+resolver: lts-19.33
 packages:
 - .
 
@@ -12,6 +12,6 @@ extra-deps:
 - monoid-extras-0.6.1
 - fsnotify-0.4.1.0
 - lens-5.2
-- shower-0.2.0.2
-
+- git: https://github.com/monadfix/shower.git
+  commit: 2d71ea1532398f9b099545ece172f3c5ad93a8f0
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 812ec5a35c38c6be3639e4d8453d902e7a970fe5cc4f4cb71b979c65a8835ecf
+-- hash: 8f41a6b0b68ca495102544e6700f9baf4a9575b0d9ca0d8db402545ae6dd4499
 
 name:           sxako
 version:        0.1.0.0
@@ -217,7 +217,7 @@ test-suite hspec
       Game.Sxako.CommonSpec
       Game.Sxako.CoordSpec
       Game.Sxako.FenSpec
-      Game.Sxako.PgnSpec
+      Game.Sxako.Pgn.Pass0Spec
       Game.Sxako.PlySpec
       Game.Sxako.SanSpec
       Game.Sxako.TestBoardSpec

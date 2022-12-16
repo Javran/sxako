@@ -64,26 +64,3 @@ parse = \case
 
        -}
       pure $ Node x1 hdPns : concat rs
-
-{-
-  TODO: parse the following as a proof of concept
-
-  A B C (F G) () (H I J (K L M)) D E (N O (P)) Q
- -}
-
-example0 :: [Simp Char]
-example0 =
-  [ l 'A'
-  , l 'B'
-  , l 'C'
-  , r [l 'F', l 'G']
-  , r []
-  , r [l 'H', l 'I', l 'J', r [l 'K', l 'L', l 'M']]
-  , l 'D'
-  , l 'E'
-  , r [l 'N', l 'O', r [l 'P']]
-  , l 'Q'
-  ]
-  where
-    l ch = Simp (Left ch)
-    r xs = Simp (Right xs)

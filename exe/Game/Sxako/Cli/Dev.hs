@@ -6,10 +6,8 @@ import Control.Monad
 import qualified Data.Map.Strict as M
 import Game.Sxako.Board
 import Game.Sxako.Fen
-import qualified Game.Sxako.Pgn.Pass1 as P1
 import Game.Sxako.Ply
 import Game.Sxako.San
-import Shower
 import System.Environment
 import System.Exit
 
@@ -53,7 +51,6 @@ subCmdMain cmdHelpPrefix =
           r
           plies
       pprBoard (placement fin)
-    ["pgn"] -> do
-      printer (P1.parse P1.example0)
+    ["pgn"] -> pure ()
     _ -> do
       die $ cmdHelpPrefix <> "..."

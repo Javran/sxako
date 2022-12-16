@@ -6,12 +6,12 @@ import Control.Monad
 import qualified Data.Map.Strict as M
 import Game.Sxako.Board
 import Game.Sxako.Fen
+import qualified Game.Sxako.Pgn.Pass1 as P1
 import Game.Sxako.Ply
 import Game.Sxako.San
-import qualified Game.Sxako.Pgn.Pass1 as P1
+import Shower
 import System.Environment
 import System.Exit
-import Shower
 
 {-
   TODO: interpret stockfish plies (long notation).

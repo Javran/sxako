@@ -1,7 +1,7 @@
 module Game.Sxako.Pgn.Pass1 where
 
-import Data.List
 import Data.Maybe
+import Data.Tree
 import Game.Sxako.Pgn.Pass0
 import Game.Sxako.San
 
@@ -20,12 +20,10 @@ fromMovetextElem = \case
   MtCommentary {} -> Nothing
   MtRav xs -> Just (Simp $ Right $ mapMaybe fromMovetextElem xs)
 
-newtype PlyNode a = PN (a, [PlyNode a]) deriving (Show)
-
 unreachable :: a
 unreachable = error "unreachable"
 
-parse :: forall a. [Simp a] -> Either String [PlyNode a]
+parse :: forall a. [Simp a] -> Either String [Tree a]
 parse = \case
   [] -> pure []
   Simp x0 : xs0 -> case x0 of
@@ -53,7 +51,7 @@ parse = \case
           + head of r, then tail of r
        -}
       hdPns <- parse xs1
-      (rs :: [] [PlyNode a]) <- mapM parse rights
+      (rs :: [] [Tree a]) <- mapM parse rights
       {-
         flattening is actually straightforward, notice that
         the following encodes the same ply tree:
@@ -65,7 +63,7 @@ parse = \case
         so probably just concat-ing them together is sufficient.
 
        -}
-      pure $ PN (x1, hdPns) : concat rs
+      pure $ Node x1 hdPns : concat rs
 
 {-
   TODO: parse the following as a proof of concept

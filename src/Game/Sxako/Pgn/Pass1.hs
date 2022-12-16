@@ -27,8 +27,33 @@ parse :: forall a. [Simp a] -> Either String [Tree a]
 parse = \case
   [] -> pure []
   Simp x0 : xs0 -> case x0 of
-    Right _ -> Left "cannot start with RAV"
+    Right _ -> Left "cannot start with RAVs"
     Left x1 -> do
+      {-
+        The key is to realize that whenever we see the following sequence
+        (in which all letters are moves, `...` could be many moves omitted):
+
+        A0 (B0 B1 ...) (C0 C1 ...) (D0 D1 ...) A1 ...
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        consecutive RAVs can be groupped to the move right prior to that
+        (marked by `{}`):
+
+        {A0 (B0 B1 ...) (C0 C1 ...) (D0 D1 ...)} A1 ...
+
+        w.l.o.g. we are assuming RAVs are non-empty.
+
+        Now we are facing following variations
+        (assuming main line is always the first):
+
+        - A0 [A1 ...] (main line)
+        - B0 [B1 ...]
+        - C0 [C1 ...]
+        - D0 [D1 ...]
+
+        Note we can recurse those [ ... ] parts.
+
+       -}
       let (rightsPre :: [Simp a], xs1) =
             span
               ( \case
@@ -40,17 +65,18 @@ parse = \case
           rights =
             mapMaybe
               ( \case
-                  (Simp (Left _)) -> unreachable
+                  (Simp (Left _)) ->
+                    -- not possible since it's removed by use of `span`.
+                    unreachable
                   (Simp (Right [])) -> Nothing
                   (Simp (Right ys@(_ : _))) -> Just ys
               )
               rightsPre
-      {-
-        - x1, then xs1
-        - for r <- rights,
-          + head of r, then tail of r
-       -}
       hdPns <- parse xs1
+      {-
+        TODO: in case PGN is ill-formed, we might choose to parse as much as we can
+        instead of failing the whole thing, which is a non-goal for now.
+       -}
       (rs :: [] [Tree a]) <- mapM parse rights
       {-
         flattening is actually straightforward, notice that

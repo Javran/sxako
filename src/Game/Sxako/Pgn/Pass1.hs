@@ -99,12 +99,11 @@ parse = \case
   Tree a => (a, [Tree a]) => (a, [] (Tree a)) => (a, f (Tree a)) where f ~ [].
 
   Keys might duplicate info however, if we switch to f ~ Map a
-
  -}
-newtype PlyNode a = PlyNode (a, M.Map a (PlyNode a))
+newtype PlyNode a = PlyNode (M.Map a (PlyNode a))
 
-densify :: forall a. Ord a => [Tree a] -> [PlyNode a]
-densify = error "TODO" . aux
+densify :: forall a. Ord a => [Tree a] -> PlyNode a
+densify = PlyNode . M.map densify . aux
   where
     aux :: [Tree a] -> M.Map a [Tree a]
     aux = M.unionsWith (<>) . fmap (\(Node x xs) -> M.singleton x xs)

@@ -1,5 +1,6 @@
 module Game.Sxako.Pgn.Pass1 where
 
+import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Tree
 import Game.Sxako.Pgn.Pass0
@@ -90,3 +91,20 @@ parse = \case
 
        -}
       pure $ Node x1 hdPns : concat rs
+
+{-
+  TODO: `Tree a` keeps all info but subForest are lists -
+  we probably want Map instead so it's easier to merge variations together.
+
+  Tree a => (a, [Tree a]) => (a, [] (Tree a)) => (a, f (Tree a)) where f ~ [].
+
+  Keys might duplicate info however, if we switch to f ~ Map a
+
+ -}
+newtype PlyNode a = PlyNode (a, M.Map a (PlyNode a))
+
+densify :: forall a. Ord a => [Tree a] -> [PlyNode a]
+densify = error "TODO" . aux
+  where
+    aux :: [Tree a] -> M.Map a [Tree a]
+    aux = M.unionsWith (<>) . fmap (\(Node x xs) -> M.singleton x xs)

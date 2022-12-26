@@ -1,16 +1,17 @@
 module Game.Sxako.Pgn.Pass1Spec where
 
+import qualified Data.Map.Strict as M
 import Data.Tree
 import Game.Sxako.Pgn.Pass1
 import Test.Hspec
 
 spec :: Spec
 spec = do
-  describe "parse" do
-    let l ch = Simp (Left ch)
-        r xs = Simp (Right xs)
-        n = Node
+  let l ch = Simp (Left ch)
+      r xs = Simp (Right xs)
+      n = Node
 
+  describe "parse" do
     specify "single line" do
       parse [l 'A', l 'B', l 'C']
         `shouldBe` Right
@@ -109,3 +110,32 @@ spec = do
                   ]
               ]
       parse inp `shouldBe` Right [expect]
+  describe "densify" do
+    specify "example" do
+      let pn = PlyNode . M.fromList
+          trees =
+            [ n 'A' [n 'B' [n 'C' [], n 'D' [n 'E' []]]]
+            , n 'B' [n 'E' [n 'A' []]]
+            , n 'A' [n 'C' [n 'D' []]]
+            , n 'A' [n 'B' [n 'D' [n 'G' []]]]
+            , n 'B' [n 'H' []]
+            , n 'I' [n 'J' [n 'K' []]]
+            ]
+      densify trees
+        `shouldBe` pn
+          [
+            ( 'A'
+            , pn
+                [ ('B', pn [('C', pn []), ('D', pn [('E', pn []), ('G', pn [])])])
+                , ('C', pn [('D', pn [])])
+                ]
+            )
+          ,
+            ( 'B'
+            , pn
+                [ ('E', pn [('A', pn [])])
+                , ('H', pn [])
+                ]
+            )
+          , ('I', pn [('J', pn [('K', pn [])])])
+          ]

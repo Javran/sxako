@@ -100,7 +100,7 @@ parse = \case
 
   Keys might duplicate info however, if we switch to f ~ Map a
  -}
-newtype PlyNode a = PlyNode (M.Map a (PlyNode a))
+newtype PlyNode a = PlyNode (M.Map a (PlyNode a)) deriving (Show, Eq)
 
 densify :: forall a. Ord a => [Tree a] -> PlyNode a
 densify = PlyNode . M.map densify . aux

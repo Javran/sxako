@@ -92,16 +92,11 @@ parse = \case
        -}
       pure $ Node x1 hdPns : concat rs
 
-{-
-  TODO: `Tree a` keeps all info but subForest are lists -
-  we probably want Map instead so it's easier to merge variations together.
-
-  Tree a => (a, [Tree a]) => (a, [] (Tree a)) => (a, f (Tree a)) where f ~ [].
-
-  Keys might duplicate info however, if we switch to f ~ Map a
- -}
 newtype PlyNode a = PlyNode (M.Map a (PlyNode a)) deriving (Show, Eq)
 
+{-
+  Organizes input variations together into a forest indexed by plies.
+ -}
 densify :: forall a. Ord a => [Tree a] -> PlyNode a
 densify = PlyNode . M.map densify . aux
   where

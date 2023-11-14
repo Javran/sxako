@@ -1,8 +1,8 @@
-module Game.Sxako.Cli.Brick.Brick (
-  main,
-  mainWith,
-  mainWithArgs,
-) where
+module Game.Sxako.Cli.Brick.Brick
+  ( main
+  , mainWith
+  , mainWithArgs
+  ) where
 
 import Brick
 import qualified Brick.BChan
@@ -13,7 +13,6 @@ import Control.Concurrent.Async
 import Control.Monad
 import Control.Monad.State
 import Data.Coerce
-import Data.Functor
 import Data.List
 import Data.Monoid
 import qualified Data.Sequence as Seq
@@ -71,43 +70,44 @@ renderRecord
       useUnicodeChar = False
       pToChar = if useUnicodeChar then pieceToCharUnicode else pieceToChar
       uiBoard =
-        joinBorders $
-          ( border
-              ( hLimit 31 $
-                  vBox (intersperse hBorder (fmap renderRank fenCoords))
-              )
-              <=> padLeft (Pad 1) auxRow
-          )
-            <+> padTop (Pad 1) auxCol
+        joinBorders
+          $ ( border
+                ( hLimit 31
+                    $ vBox (intersperse hBorder (fmap renderRank fenCoords))
+                )
+                <=> padLeft (Pad 1) auxRow
+            )
+          <+> padTop (Pad 1) auxCol
         where
           sp = vLimit 1 $ hLimit 3 $ str " "
           auxCol = hLimit 3 $ vBox $ intersperse sp $ fmap (mkSq . (: [])) ['8', '7' .. '1']
           auxRow = vLimit 1 $ hBox $ intersperse sp $ fmap (mkSq . (: [])) ['a' .. 'h']
           renderRank rankCoords =
-            vLimit 1 $
-              hBox $
-                intersperse vBorder $
-                  fmap (\coord -> mkSq [maybe ' ' pToChar $ at placement coord]) rankCoords
+            vLimit 1
+              $ hBox
+              $ intersperse vBorder
+              $ fmap (\coord -> mkSq [maybe ' ' pToChar $ at placement coord]) rankCoords
           mkSq n = joinBorders $ vLimit 1 $ hLimit 3 $ str $ " " <> n <> " "
       uiExtra =
-        joinBorders $
-          border $
-            joinBorders $
-              vLimit 1 $
-                str
-                  ( case activeColor of
-                      White -> "w"
-                      Black -> "b"
-                  )
-                  <+> vBorder
-                  <+> str (show castling)
-                  <+> vBorder
-                  <+> str (maybe "-" show enPassantTarget)
-                  <+> vBorder
-                  <+> str (show halfMove)
-                  <+> vBorder
-                  <+> str (show fullMove)
+        joinBorders
+          $ border
+          $ joinBorders
+          $ vLimit 1
+          $ str
+            ( case activeColor of
+                White -> "w"
+                Black -> "b"
+            )
+          <+> vBorder
+          <+> str (show castling)
+          <+> vBorder
+          <+> str (maybe "-" show enPassantTarget)
+          <+> vBorder
+          <+> str (show halfMove)
+          <+> vBorder
+          <+> str (show fullMove)
 
+ui :: ProgState -> Widget n
 ui ProgState {psStockfish, psGameExtra} =
   case psStockfish of
     Nothing -> initScreen
@@ -139,18 +139,19 @@ ui ProgState {psStockfish, psGameExtra} =
                in str (bPrefix <> T.unpack bn)
                     <=> str (wPrefix <> T.unpack wn)
                     <=> str ("Last update: " <> show zt)
-       in vCenter $
-            vBox
-              ( hCenter board :
-                hCenter (padTop (Pad 1) extra) :
-                hCenter gameExtra :
-                hCenter stats0 :
-                hCenter stats1 :
-                fmap (hCenter . str . renderPv) sfPvs
+       in vCenter
+            $ vBox
+              ( hCenter board
+                  : hCenter (padTop (Pad 1) extra)
+                  : hCenter gameExtra
+                  : hCenter stats0
+                  : hCenter stats1
+                  : fmap (hCenter . str . renderPv) sfPvs
               )
   where
     initScreen = center $ str "Initializing ..."
 
+eventHandler :: BrickEvent n TuiEvent -> EventM n ProgState ()
 eventHandler = \case
   AppEvent (TSfEvent se) ->
     state \s -> ((), s {psStockfish = Just se})
@@ -167,7 +168,7 @@ mainWith mRc mEvent = do
   tz <- getCurrentTimeZone
   Just configFp <- lookupEnv "SXAKO_BRICK_CONFIG_PATH"
   cfg@Cfg.Config {} <- inputFile auto configFp
-  (mIn, mqOut, sfWorker) <- start cfg
+  (mIn, mqOut, _sfWorker) <- start cfg
   case mRc of
     Just rc ->
       putMVar mIn (SfInFen rc Nothing)
@@ -181,13 +182,13 @@ mainWith mRc mEvent = do
           , appAttrMap = \_ -> attrMap defAttr []
           }
 
-  fin <- do
+  _fin <- do
     eventChan <- Brick.BChan.newBChan 512
 
     case mEvent of
       Just eventPath -> do
         mgr <- newTlsManager
-        gameFetcher <- async $ forever do
+        _gameFetcher <- async $ forever do
           resp <- Cb.getGameInfo mgr eventPath
           case resp of
             Left err -> die err
@@ -230,6 +231,6 @@ mainWithArgs = \case
   ["event", eventPath] -> mainWith Nothing (Just eventPath)
   [url]
     | Just ep <- stripPrefix "https://www.chess.com/events/" url -> do
-      putStrLn $ "Redirecting with event path: " <> ep
-      mainWithArgs ["event", ep]
+        putStrLn $ "Redirecting with event path: " <> ep
+        mainWithArgs ["event", ep]
   _ -> die "<prog> brick <fen> ..."

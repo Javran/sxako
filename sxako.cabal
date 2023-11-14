@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 925d05be717ef6de9100d7d38d3bf7e00cc421de9e037975a10ec6f963a7aa88
+-- hash: 861059540a232c2a2647a420dde416f7a16d174f74732b897154a73994429484
 
 name:           sxako
 version:        0.1.0.0
@@ -87,7 +87,7 @@ library
       TypeApplications
       TypeFamilies
       TypeSynonymInstances
-  ghc-options: -Wall
+  ghc-options: -Wall -Wno-incomplete-uni-patterns
   build-depends:
       aeson
     , attoparsec
@@ -166,7 +166,7 @@ executable demo
       TypeApplications
       TypeFamilies
       TypeSynonymInstances
-  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       SVGFonts
     , aeson
@@ -264,7 +264,7 @@ test-suite hspec
       TypeApplications
       TypeFamilies
       TypeSynonymInstances
-  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N -main-is Spec
+  ghc-options: -Wall -Wno-incomplete-uni-patterns -O2 -threaded -rtsopts -with-rtsopts=-N -main-is Spec
   build-depends:
       QuickCheck
     , aeson

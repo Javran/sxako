@@ -1,17 +1,4 @@
-resolver: lts-19.33
+resolver: lts-21.20
 packages:
 - .
-
-extra-deps:
-- SVGFonts-1.8.0.1
-- diagrams-core-1.5.0.1
-- diagrams-lib-1.4.5.3
-- diagrams-rasterific-1.4.2.2
-- active-0.2.0.16
-- dual-tree-0.2.3.1
-- monoid-extras-0.6.1
-- fsnotify-0.4.1.0
-- lens-5.2
-- git: https://github.com/monadfix/shower.git
-  commit: 2d71ea1532398f9b099545ece172f3c5ad93a8f0
 

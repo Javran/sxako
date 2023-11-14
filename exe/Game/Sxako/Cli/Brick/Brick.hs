@@ -1,8 +1,8 @@
-module Game.Sxako.Cli.Brick.Brick (
-  main,
-  mainWith,
-  mainWithArgs,
-) where
+module Game.Sxako.Cli.Brick.Brick
+  ( main
+  , mainWith
+  , mainWithArgs
+  ) where
 
 import Brick
 import qualified Brick.BChan
@@ -11,6 +11,7 @@ import Brick.Widgets.Center
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Monad
+import Control.Monad.State
 import Data.Coerce
 import Data.Functor
 import Data.List
@@ -19,12 +20,11 @@ import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 import Data.Time.LocalTime
 import Dhall hiding (maybe, string, void)
-
+import Game.Sxako.Board
 import qualified Game.Sxako.Cli.Brick.ChessBomb as Cb
 import qualified Game.Sxako.Cli.Brick.Config as Cfg
 import Game.Sxako.Cli.Brick.Stockfish
 import Game.Sxako.Cli.Brick.Stockfish.Types
-import Game.Sxako.Board
 import Game.Sxako.Common
 import Game.Sxako.Coord (fenCoords)
 import Game.Sxako.Fen
@@ -71,42 +71,42 @@ renderRecord
       useUnicodeChar = False
       pToChar = if useUnicodeChar then pieceToCharUnicode else pieceToChar
       uiBoard =
-        joinBorders $
-          ( border
-              ( hLimit 31 $
-                  vBox (intersperse hBorder (fmap renderRank fenCoords))
-              )
-              <=> padLeft (Pad 1) auxRow
-          )
-            <+> padTop (Pad 1) auxCol
+        joinBorders
+          $ ( border
+                ( hLimit 31
+                    $ vBox (intersperse hBorder (fmap renderRank fenCoords))
+                )
+                <=> padLeft (Pad 1) auxRow
+            )
+          <+> padTop (Pad 1) auxCol
         where
           sp = vLimit 1 $ hLimit 3 $ str " "
           auxCol = hLimit 3 $ vBox $ intersperse sp $ fmap (mkSq . (: [])) ['8', '7' .. '1']
           auxRow = vLimit 1 $ hBox $ intersperse sp $ fmap (mkSq . (: [])) ['a' .. 'h']
           renderRank rankCoords =
-            vLimit 1 $
-              hBox $
-                intersperse vBorder $
-                  fmap (\coord -> mkSq [maybe ' ' pToChar $ at placement coord]) rankCoords
+            vLimit 1
+              $ hBox
+              $ intersperse vBorder
+              $ fmap (\coord -> mkSq [maybe ' ' pToChar $ at placement coord]) rankCoords
           mkSq n = joinBorders $ vLimit 1 $ hLimit 3 $ str $ " " <> n <> " "
       uiExtra =
-        joinBorders $
-          border $
-            joinBorders $
-              vLimit 1 $
-                str
-                  ( case activeColor of
-                      White -> "w"
-                      Black -> "b"
-                  )
-                  <+> vBorder
-                  <+> str (show castling)
-                  <+> vBorder
-                  <+> str (maybe "-" show enPassantTarget)
-                  <+> vBorder
-                  <+> str (show halfMove)
-                  <+> vBorder
-                  <+> str (show fullMove)
+        joinBorders
+          $ border
+          $ joinBorders
+          $ vLimit 1
+          $ str
+            ( case activeColor of
+                White -> "w"
+                Black -> "b"
+            )
+          <+> vBorder
+          <+> str (show castling)
+          <+> vBorder
+          <+> str (maybe "-" show enPassantTarget)
+          <+> vBorder
+          <+> str (show halfMove)
+          <+> vBorder
+          <+> str (show fullMove)
 
 ui ProgState {psStockfish, psGameExtra} =
   case psStockfish of
@@ -139,23 +139,25 @@ ui ProgState {psStockfish, psGameExtra} =
                in str (bPrefix <> T.unpack bn)
                     <=> str (wPrefix <> T.unpack wn)
                     <=> str ("Last update: " <> show zt)
-       in vCenter $
-            vBox
-              ( hCenter board :
-                hCenter (padTop (Pad 1) extra) :
-                hCenter gameExtra :
-                hCenter stats0 :
-                hCenter stats1 :
-                fmap (hCenter . str . renderPv) sfPvs
+       in vCenter
+            $ vBox
+              ( hCenter board
+                  : hCenter (padTop (Pad 1) extra)
+                  : hCenter gameExtra
+                  : hCenter stats0
+                  : hCenter stats1
+                  : fmap (hCenter . str . renderPv) sfPvs
               )
   where
     initScreen = center $ str "Initializing ..."
 
-eventHandler s@ProgState {} = \case
-  AppEvent (TSfEvent se) -> continue $ s {psStockfish = Just se}
-  AppEvent (TGameInfoEvent v) -> continue $ s {psGameExtra = Just v}
+eventHandler = \case
+  AppEvent (TSfEvent se) ->
+    state \s -> ((), s {psStockfish = Just se})
+  AppEvent (TGameInfoEvent v) ->
+    state \s -> ((), s {psGameExtra = Just v})
   e ->
-    resizeOrQuit s e
+    resizeOrQuit e
 
 mainWith :: Maybe Record -> Maybe String -> IO ()
 mainWith mRc mEvent = do
@@ -175,7 +177,7 @@ mainWith mRc mEvent = do
           { appDraw = \r -> [ui r]
           , appHandleEvent = eventHandler
           , appChooseCursor = neverShowCursor
-          , appStartEvent = pure
+          , appStartEvent = pure ()
           , appAttrMap = \_ -> attrMap defAttr []
           }
 
@@ -228,6 +230,6 @@ mainWithArgs = \case
   ["event", eventPath] -> mainWith Nothing (Just eventPath)
   [url]
     | Just ep <- stripPrefix "https://www.chess.com/events/" url -> do
-      putStrLn $ "Redirecting with event path: " <> ep
-      mainWithArgs ["event", ep]
+        putStrLn $ "Redirecting with event path: " <> ep
+        mainWithArgs ["event", ep]
   _ -> die "<prog> brick <fen> ..."

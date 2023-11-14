@@ -1,10 +1,9 @@
-module Game.Sxako.Cli.Brick.Stockfish
-  ( SfStat (..)
-  , SfState (..)
-  , SfIn (..)
-  , start
-  )
-where
+module Game.Sxako.Cli.Brick.Stockfish (
+  SfStat (..),
+  SfState (..),
+  SfIn (..),
+  start,
+) where
 
 import Control.Applicative
 import Control.Concurrent.Async

@@ -54,6 +54,7 @@ module Game.Sxako.Pgn.Pass0 (
  -}
 
 import Control.Applicative
+import Control.DeepSeq
 import Data.Attoparsec.ByteString.Char8 as Parser
 import Data.Bifunctor
 import qualified Data.ByteString.Builder as Builder
@@ -62,7 +63,6 @@ import Data.Char
 import Data.Functor
 import qualified Data.Text as T
 import Data.Text.Encoding
-import Control.DeepSeq
 import Game.Sxako.Common
 import Game.Sxako.San
 
@@ -208,7 +208,6 @@ tagPairSectionP = (concat <$> many tagPairLine) <* newlineP
         \ F - G
         \ H - I - J
                 \ K - L - M
-
 
   now, how to convert values:
 

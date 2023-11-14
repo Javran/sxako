@@ -10,6 +10,7 @@ description: description
 
 ghc-options:
   - -Wall
+  - -Wno-incomplete-uni-patterns
 
 default-extensions:
   - BangPatterns
